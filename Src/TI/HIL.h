@@ -1,5 +1,6 @@
 #pragma once
 #include "Types.h"
+#include "MSPInterface.h"
 
 #define HIL_UNIMP           printf("### HIL: UNIMPLEMENTED: %s\n", __FUNCTION__)
 #define HIL_UNIMP_RET0      HIL_UNIMP; return 0
@@ -25,35 +26,26 @@ uint16_t regulationOn = 0;
 uint16_t prevInstruction = 0;
 bool TCLK_saved = 1;
 
-void _pins(MSP430_PinState test, MSP430_PinState rst) {
-    bool br = _desc.callbacks.sbw.pins(_desc.ctx, test, rst);
-    if (!br) throw std::runtime_error("sbw.pins callback failed");
-}
-
 void _sbwio(bool tms, bool tdi) {
     // With no `tclk` specified, use the value for TMS, so that the line stays constant
     // between registering the TMS value and outputting the TDI value
-    bool br = _desc.callbacks.sbw.io(_desc.ctx, tms, tms, tdi, false);
-    if (!br) throw std::runtime_error("sbw.io callback failed");
+    _msp.sbwIO(tms, tms, tdi, false);
 }
 
 void _sbwio_r(bool tms, bool tdi) {
     // With no `tclk` specified, use the value for TMS, so that the line stays constant
     // between registering the TMS value and outputting the TDI value
-    bool br = _desc.callbacks.sbw.io(_desc.ctx, tms, tms, tdi, true);
-    if (!br) throw std::runtime_error("sbw.io callback failed");
+    _msp.sbwIO(tms, tms, tdi, true);
 }
 
 void _sbwioTclk(bool tms, bool tclk) {
-    bool br = _desc.callbacks.sbw.io(_desc.ctx, tms, TCLK_saved, tclk, false);
-    if (!br) throw std::runtime_error("sbw.io callback failed");
+    _msp.sbwIO(tms, TCLK_saved, tclk, false);
     TCLK_saved = tclk;
 }
 
 uint64_t _read(uint8_t w) {
     uint8_t b[8];
-    bool br = _desc.callbacks.sbw.read(_desc.ctx, &b, w/8+(w%8?1:0));
-    if (!br) throw std::runtime_error("sbw.pins callback failed");
+    _msp.sbwRead(&b, w/8+(w%8?1:0));
     
     if (w == 8) {
         return b[0]<<0;
@@ -202,8 +194,7 @@ uint64_t sbw_Shift_R(uint64_t Data, int16_t Bits)
 }
 
 void _flush() {
-    bool br = _desc.callbacks.sbw.read(_desc.ctx, nullptr, 0);
-    if (!br) throw std::runtime_error("sbw.pins callback failed");
+    _msp.sbwRead(nullptr, 0);
 }
 
 // HIL common methods (common = identical implementations for JTAG/SBW )
@@ -1309,7 +1300,7 @@ void EnableLpmx5()
         test_reg_3V();
         reg_3V = IHIL_SetReg_16Bits_R(devicePowerSettings.powerTestReg3VDefault);
 
-        IHIL_SetReg_16Bits(reg_3V & ~devicePowerSettings.powerTestReg3VMask|
+        IHIL_SetReg_16Bits((reg_3V & ~devicePowerSettings.powerTestReg3VMask)|
                        devicePowerSettings.enableLpmx5TestReg3V);
 
         IHIL_Delay_1ms(20);
@@ -1321,7 +1312,7 @@ void EnableLpmx5()
         test_reg();
         reg_test = IHIL_SetReg_32Bits_R(devicePowerSettings.powerTestRegDefault);
 
-        IHIL_SetReg_32Bits(reg_test & ~devicePowerSettings.powerTestRegMask|
+        IHIL_SetReg_32Bits((reg_test & ~devicePowerSettings.powerTestRegMask)|
         devicePowerSettings.enableLpmx5TestReg);
 
         IHIL_Delay_1ms(20);
@@ -1336,7 +1327,7 @@ void DisableLpmx5()
         test_reg_3V();
         reg_3V = IHIL_SetReg_16Bits_R(devicePowerSettings.powerTestReg3VDefault);
 
-        IHIL_SetReg_16Bits(reg_3V & ~devicePowerSettings.powerTestReg3VMask|
+        IHIL_SetReg_16Bits((reg_3V & ~devicePowerSettings.powerTestReg3VMask)|
             devicePowerSettings.disableLpmx5TestReg3V);
         IHIL_Delay_1ms(20);
     }
@@ -1347,7 +1338,7 @@ void DisableLpmx5()
         test_reg();
         IHIL_SetReg_32Bits(devicePowerSettings.powerTestRegDefault);
 
-        IHIL_SetReg_32Bits(reg_test & ~devicePowerSettings.powerTestRegMask|
+        IHIL_SetReg_32Bits((reg_test & ~devicePowerSettings.powerTestRegMask)|
             devicePowerSettings.disableLpmx5TestReg);
 
         IHIL_Delay_1ms(20);
@@ -1509,42 +1500,42 @@ void _hil_Release() {
 
 void qDriveSbw(void) {
     // TEST=0, RST=1
-    _pins(MSP430_PinState_Out0, MSP430_PinState_Out1);
+    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out1);
 }
 
 void _hil_EntrySequences_RstHigh_SBW() {
     // TEST=0, RST=0
-    _pins(MSP430_PinState_Out0, MSP430_PinState_Out0);
+    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out0);
     IHIL_Delay_1ms(5);
     
     // RST=1
-    _pins(MSP430_PinState_Out0, MSP430_PinState_Out1);
+    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out1);
     IHIL_Delay_1ms(5);
     
     // TEST=1
-    _pins(MSP430_PinState_Out1, MSP430_PinState_Out1);
+    _msp.sbwPins(MSPInterface::PinState::Out1, MSPInterface::PinState::Out1);
     IHIL_Delay_1ms(100);
     
     // TEST pulse 1->0->1
-    _pins(MSP430_PinState_Pulse01, MSP430_PinState_Out1);
+    _msp.sbwPins(MSPInterface::PinState::Pulse01, MSPInterface::PinState::Out1);
     IHIL_Delay_1ms(5);
 }
 
 void _hil_EntrySequences_RstLow_SBW() {
     // TEST=0, RST=0
-    _pins(MSP430_PinState_Out0, MSP430_PinState_Out0);
+    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out0);
     IHIL_Delay_1ms(5);
     
     // TEST=1
-    _pins(MSP430_PinState_Out1, MSP430_PinState_Out0);
+    _msp.sbwPins(MSPInterface::PinState::Out1, MSPInterface::PinState::Out0);
     IHIL_Delay_1ms(100);
     
     // RST=1
-    _pins(MSP430_PinState_Out1, MSP430_PinState_Out1);
+    _msp.sbwPins(MSPInterface::PinState::Out1, MSPInterface::PinState::Out1);
     IHIL_Delay_1ms(5);
     
     // TEST pulse 1->0->1
-    _pins(MSP430_PinState_Pulse01, MSP430_PinState_Out1);
+    _msp.sbwPins(MSPInterface::PinState::Pulse01, MSPInterface::PinState::Out1);
     IHIL_Delay_1ms(5);
 }
 

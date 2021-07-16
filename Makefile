@@ -2,9 +2,10 @@ NAME=MSPProbeSim
 OBJECTS=Src/main.o
 
 CXX      = g++
-CXXFLAGS = -O0 -g3 -Wall -std=c++17 -include Src/TI/Prefix.h $(IDIRS)
+CXXFLAGS = -O0 -g3 -Wall -std=c++17 $(IDIRS)
 LFLAGS   = -ludev -lpthread
-IDIRS    = -iquote Lib/Toastbox					\
+IDIRS    = -iquote Src							\
+           -iquote Lib/Toastbox					\
            -iquote Lib/VirtualUSBDevice/src		\
            -iquote Lib/MSPDebugStack
 

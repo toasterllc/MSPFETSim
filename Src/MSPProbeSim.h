@@ -1,17 +1,17 @@
 #pragma once
 #include <climits>
 #include "VirtualUSBDevice.h"
-#include "TI/Descriptor.h"
-#include "TI/USBTypes.h"
+#include "MSPInterface.h"
 
 class MSPProbeSim {
 public:
-    MSPProbeSim() : _device(_deviceInfo) {
+    MSPProbeSim(MSPInterface& msp) :
+    _msp(msp), _usb(_usbDeviceInfo) {
     }
     
     void run() {
         try {
-            _device.start();
+            _usb.start();
         } catch (std::exception& e) {
             throw RuntimeError(
                 "Failed to start VirtualUSBDevice: %s"                                  "\n"
@@ -23,16 +23,19 @@ public:
         }
         
         for (;;) {
-            VirtualUSBDevice::Msg msg = _device.read();
+            VirtualUSBDevice::Msg msg = _usb.read();
             _handleMessage(std::move(msg));
         }
     }
     
     void stop() {
-        _device.stop();
+        _usb.stop();
     }
     
 private:
+    
+    #include "TI/FW.h"
+    
     void _handleMessage(VirtualUSBDevice::Msg&& msg) {
         // Endpoint 0
         if (!msg.cmd.base.ep) _handleRequestEP0(std::move(msg));
@@ -54,7 +57,7 @@ private:
             if (payloadLen != sizeof(USB::CDC::LineCoding))
                 throw RuntimeError("SET_LINE_CODING: payloadLen doesn't match sizeof(USB::CDC::LineCoding)");
             printf("SET_LINE_CODING\n");
-            return _device.reply(msg, nullptr, 0);
+            return _usb.reply(msg, nullptr, 0);
         }
         
         case USB::CDC::Request::GET_LINE_CODING: {
@@ -62,14 +65,14 @@ private:
             if (payloadLen != sizeof(USB::CDC::LineCoding))
                 throw RuntimeError("SET_LINE_CODING: payloadLen doesn't match sizeof(USB::CDC::LineCoding)");
             abort(); // TODO: fix
-//            return _device.reply(msg, &LineCoding, sizeof(LineCoding));
+//            return _usb.reply(msg, &LineCoding, sizeof(LineCoding));
         }
         
         case USB::CDC::Request::SET_CONTROL_LINE_STATE: {
             const bool dtePresent = req.wValue&1;
             printf("SET_CONTROL_LINE_STATE:\n");
             printf("  dtePresent=%d\n", dtePresent);
-            return _device.reply(msg, nullptr, 0);
+            return _usb.reply(msg, nullptr, 0);
         }
         
         default:
@@ -102,36 +105,29 @@ private:
             throw RuntimeError("invalid endpoint: %02x", ep);
         }
         
-        _device.reply(msg, nullptr, 0);
+//        _usb.reply(msg, nullptr, 0);
         return true;
     }
     
+    MSPInterface _msp;
+    VirtualUSBDevice _usb;
+    
     static inline const USB::DeviceDescriptor* _DeviceDescriptor =
-        (const USB::DeviceDescriptor*)TI::Descriptor::abromDeviceDescriptor;
+        (const USB::DeviceDescriptor*)Descriptor::abromDeviceDescriptor;
     
-    static inline const USB::ConfigurationDescriptor* _ConfigurationDescriptors[] = {
-        (USB::ConfigurationDescriptor*)&TI::Descriptor::abromConfigurationDescriptorGroup,
-    };
+    static inline const USB::ConfigurationDescriptor** _ConfigurationDescriptors = Descriptor::configDescs;
+    static inline const size_t _ConfigurationDescriptorsCount = std::size(Descriptor::configDescs);
     
-    static inline const USB::StringDescriptor* _StringDescriptors[] = {
-        &TI::Descriptor::String0,
-        &TI::Descriptor::String1,
-        &TI::Descriptor::String2,
-        &TI::Descriptor::String3,
-        &TI::Descriptor::String4,
-        &TI::Descriptor::String5,
-        &TI::Descriptor::String6,
-    };
+    static inline const USB::StringDescriptor** _StringDescriptors = Descriptor::stringDescs;
+    static inline const size_t _StringDescriptorsCount = std::size(Descriptor::stringDescs);
     
-    static inline const VirtualUSBDevice::Info _deviceInfo = {
+    static inline const VirtualUSBDevice::Info _usbDeviceInfo = {
         .deviceDesc             = _DeviceDescriptor,
         .deviceQualifierDesc    = nullptr,
         .configDescs            = _ConfigurationDescriptors,
-        .configDescsCount       = std::size(_ConfigurationDescriptors),
+        .configDescsCount       = _ConfigurationDescriptorsCount,
         .stringDescs            = _StringDescriptors,
-        .stringDescsCount       = std::size(_StringDescriptors),
+        .stringDescsCount       = _StringDescriptorsCount,
         .throwOnErr             = true,
     };
-    
-    VirtualUSBDevice _device;
 };

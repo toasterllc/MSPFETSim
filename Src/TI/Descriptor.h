@@ -1,15 +1,14 @@
 #pragma once
-#include "USBTypes.h"
+#include "USB.h"
 
-namespace TI::Descriptor {
-using namespace USBTypes;
+struct Descriptor {
 
 #define SIZEOF_DEVICE_DESCRIPTOR        0x12
 
 /*-----------------------------------------------------------------------------+
 | Device Descriptor                                                            |
 |-----------------------------------------------------------------------------*/
-BYTE const abromDeviceDescriptor[SIZEOF_DEVICE_DESCRIPTOR] = {
+static const inline BYTE abromDeviceDescriptor[SIZEOF_DEVICE_DESCRIPTOR] = {
     SIZEOF_DEVICE_DESCRIPTOR,               // Length of this descriptor
     DESC_TYPE_DEVICE,                       // Type code of this descriptor
     0x00, 0x02,                             // Release of USB spec
@@ -31,7 +30,7 @@ BYTE const abromDeviceDescriptor[SIZEOF_DEVICE_DESCRIPTOR] = {
 /*-----------------------------------------------------------------------------+
 | Configuration Descriptor                                                     |
 |-----------------------------------------------------------------------------*/
-const struct abromConfigurationDescriptorGroup abromConfigurationDescriptorGroup=
+static const inline struct abromConfigurationDescriptorGroup abromConfigurationDescriptorGroup=
 {
     /* Generic part */
     {
@@ -232,25 +231,29 @@ const struct abromConfigurationDescriptorGroup abromConfigurationDescriptorGroup
 
 };
 
+static const inline USB::ConfigurationDescriptor* configDescs[] = {
+    (USB::ConfigurationDescriptor*)&abromConfigurationDescriptorGroup,
+};
+
 /*-----------------------------------------------------------------------------+
 | String Descriptor                                                            |
 |-----------------------------------------------------------------------------*/
-constexpr auto String0 = USB::SupportedLanguagesDescriptorMake({0x0409});
-constexpr auto String1 = USB::StringDescriptorMake("Texas Instruments");        // Manufacturer
-constexpr auto String2 = USB::StringDescriptorMake("MSP Tools Driver");         // Product
-constexpr auto String3 = USB::StringDescriptorMake("MSPProbeSim");              // Serial Number
-constexpr auto String4 = USB::StringDescriptorMake("MSP430 USB");               // Configuration String
-constexpr auto String5 = USB::StringDescriptorMake("MSP Debug Interface");      // Interface String
-constexpr auto String6 = USB::StringDescriptorMake("MSP Application UART");     // Interface String
+static constexpr auto stringDesc0 = USB::SupportedLanguagesDescriptorMake({0x0409});
+static constexpr auto stringDesc1 = USB::StringDescriptorMake("Texas Instruments");        // Manufacturer
+static constexpr auto stringDesc2 = USB::StringDescriptorMake("MSP Tools Driver");         // Product
+static constexpr auto stringDesc3 = USB::StringDescriptorMake("MSPProbeSim");              // Serial Number
+static constexpr auto stringDesc4 = USB::StringDescriptorMake("MSP430 USB");               // Configuration String
+static constexpr auto stringDesc5 = USB::StringDescriptorMake("MSP Debug Interface");      // Interface String
+static constexpr auto stringDesc6 = USB::StringDescriptorMake("MSP Application UART");     // Interface String
 
-const USB::StringDescriptor* Strings[] = {
-    &String0,
-    &String1,
-    &String2,
-    &String3,
-    &String4,
-    &String5,
-    &String6,
+static const inline USB::StringDescriptor* stringDescs[] = {
+    &stringDesc0,
+    &stringDesc1,
+    &stringDesc2,
+    &stringDesc3,
+    &stringDesc4,
+    &stringDesc5,
+    &stringDesc6,
 };
 
-} // TI::Descriptor
+};

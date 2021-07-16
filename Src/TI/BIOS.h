@@ -215,13 +215,6 @@ void BIOS_PrepareTx(uint16_t size)
     bios_tx_record_.state[bios_tx_record_.active] |= BIOS_TX_TO_SEND;
 }
 
-//********************************************
-void BIOS_StartTx(void)
-{
-    bios_global_timer_[BIOS_TIMER_TX].count = BIOS_TX_TIMEOUT;
-    BIOS_usbTxData();
-}
-
 void BIOS_usbTxData (void)
 {
     uint8_t first_cannel;
@@ -282,6 +275,12 @@ void BIOS_usbTxData (void)
         }
         while(!(bios_tx_record_.state[bios_tx_record_.cannel_to_send] & BIOS_TX_TO_SEND) && (bios_tx_record_.cannel_to_send != first_cannel));
     }
+}
+
+void BIOS_StartTx(void)
+{
+    bios_global_timer_[BIOS_TIMER_TX].count = BIOS_TX_TIMEOUT;
+    BIOS_usbTxData();
 }
 
 int16_t BIOS_UsbRxData()
