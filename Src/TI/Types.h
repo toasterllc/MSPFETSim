@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../../../../Bios/include/modules.h"
-#include "../../../../Bios/include/protocol.h"
-#include "../../../../Bios/include/error_def.h"
-#include "../../../../Bios/include/ConfigureParameters.h"
-#include "../../../../Bios/src/fw/fet/FetVersion.h"
-#include "../../../../Bios/src/fw/fet/communicationDefs.h"
-#include "../../../../Bios/src/hal/JTAG_defs.h"
-#include "../../../../Bios/src/hal/EEM_defs.h"
+#include "Bios/include/modules.h"
+#include "Bios/include/protocol.h"
+#include "Bios/include/error_def.h"
+#include "Bios/include/ConfigureParameters.h"
+#include "Bios/src/fw/fet/FetVersion.h"
+#include "Bios/src/fw/fet/communicationDefs.h"
+#include "Bios/src/hal/JTAG_defs.h"
+#include "Bios/src/hal/EEM_defs.h"
 
 static constexpr int16_t SW_0 = (VERSION_MAJOR - 1) << 14 | (VERSION_MINOR << 8) | VERSION_PATCH;
 static constexpr int16_t SW_1 = VERSION_BUILD;
