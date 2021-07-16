@@ -253,4 +253,4 @@ const USB::StringDescriptor* Strings[] = {
     &String6,
 };
 
-} // TIDescriptor
+} // TI::Descriptor

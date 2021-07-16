@@ -134,7 +134,10 @@ $(PCH_COMPILED): $(PCH_HEADER)
 %.o: %.cpp $(PCH_COMPILED)
 	$(CXX) -c -o $@ $< $(USE_PCH) $(CXXFLAGS) $(INCLUDES) $(DEFINES)
 
-$(BSLLIB):
+$(LIBTHIRD):
+	mkdir -p $(LIBTHIRD)
+
+$(BSLLIB): $(LIBTHIRD)
 	$(MAKE) -C ./ThirdParty/BSL430_DLL
 
 install:

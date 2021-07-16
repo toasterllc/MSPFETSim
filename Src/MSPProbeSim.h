@@ -1,8 +1,8 @@
 #pragma once
 #include <climits>
 #include "VirtualUSBDevice.h"
-#include "ti/Descriptor.h"
-#include "ti/USBTypes.h"
+#include "TI/Descriptor.h"
+#include "TI/USBTypes.h"
 
 class MSPProbeSim {
 public:
@@ -107,20 +107,20 @@ private:
     }
     
     static inline const USB::DeviceDescriptor* _DeviceDescriptor =
-        (const USB::DeviceDescriptor*)TIDescriptor::abromDeviceDescriptor;
+        (const USB::DeviceDescriptor*)TI::Descriptor::abromDeviceDescriptor;
     
     static inline const USB::ConfigurationDescriptor* _ConfigurationDescriptors[] = {
-        (USB::ConfigurationDescriptor*)&TIDescriptor::abromConfigurationDescriptorGroup,
+        (USB::ConfigurationDescriptor*)&TI::Descriptor::abromConfigurationDescriptorGroup,
     };
     
     static inline const USB::StringDescriptor* _StringDescriptors[] = {
-        &TIDescriptor::String0,
-        &TIDescriptor::String1,
-        &TIDescriptor::String2,
-        &TIDescriptor::String3,
-        &TIDescriptor::String4,
-        &TIDescriptor::String5,
-        &TIDescriptor::String6,
+        &TI::Descriptor::String0,
+        &TI::Descriptor::String1,
+        &TI::Descriptor::String2,
+        &TI::Descriptor::String3,
+        &TI::Descriptor::String4,
+        &TI::Descriptor::String5,
+        &TI::Descriptor::String6,
     };
     
     static inline const VirtualUSBDevice::Info _deviceInfo = {
