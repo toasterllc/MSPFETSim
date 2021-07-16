@@ -1,5 +1,5 @@
 NAME=MSPProbeSim
-OBJECTS=src/main.o
+OBJECTS=Src/main.o
 
 CXX      = g++
 CXXFLAGS = -O0 -g3 -Wall -std=c++17 -include Src/TI/Prefix.h $(IDIRS)
@@ -12,4 +12,4 @@ all: ${OBJECTS}
 	$(CXX) $(CXXFLAGS) $? -o $(NAME) $(LFLAGS)
 
 clean:
-	rm -Rf *.o $(NAME)
+	rm -Rf Src/*.o $(NAME)
