@@ -1,0 +1,164 @@
+/*
+ * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
+ *
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *    Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ *    Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ *    Neither the name of Texas Instruments Incorporated nor the names of
+ *    its contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+//**************************************************************
+// BSL SW low level functions
+//**************************************************************
+#include "BSL_Device_File.h"
+
+#define ARG1 R12
+#define ARG2 R13
+#define ARG3 R14
+#define ARG4 R15
+
+#define RET_low  R12
+#define RET_high r13
+
+EXTERN version_array
+EXTERN __program_start
+
+              COMMON   ZAREA
+;--------------------------------------------------------------
+               ;BSL Z-Area
+;--------------------------------------------------------------
+BSL_Entry_JMP JMP    __program_start            ; BSL ENTRY AREA
+              JMP    BSL_ACTION0
+              JMP    $                          ;BSL_ACTION1 unused
+              JMP    $                          ;BSL_ACTION2 unused
+              JMP    $                          ;BSL_ACTION3 unused
+              JMP    $                          ;BSL_ACTION4 unused
+              JMP    $                          ;BSL_ACTION5 unused
+              JMP    $                          ;BSL_ACTION6 unused
+
+              RSEG ZAREA_CODE
+//**************************************************************
+// Name       :BSL_ACTION0
+// Function   :BSL Action 0 is a function caller
+// Arguments  :r15, Function ID
+//                - 0: Get Software ID
+//                - 1: Unlock BSL Flash area
+// Returns    :r14, Low Word
+//            :r15, High Word
+//**************************************************************
+BSL_ACTION0:
+              CMP      #0xDEAD, ARG2
+              JNE      RETURN_ERROR
+              CMP      #0xBEEF, ARG3
+              JNE      RETURN_ERROR
+              JMP      RETURN_TO_BSL           ; 2 == return to BSL
+RETURN_ERROR
+              CLR      RET_low
+              CLR      RET_high
+              RETA
+
+//**************************************************************
+// Name       :RETURN_TO_BSL
+// Function   :Returns to a BSL function after that function has made
+//            :an external function call
+// Arguments  none
+// Returns    :none
+//**************************************************************
+RETURN_TO_BSL
+              POP.W    RET_low                 ; remove first word from return addr
+              POP.W    RET_high                ; remove second word from return addr
+
+              RETA                             ; should now return to the BSL location
+
+;--------------------------------------------------------------
+               ;BSL Signature Area
+;--------------------------------------------------------------
+ PUBLIC BslEntryLoc                             ;location of BSL Entry Address
+ PUBLIC BslProtectVecLoc                        ;location of BSL_Protect() vector
+ PUBLIC PBSLSigLoc                              ;location of primary BSL signature
+ PUBLIC SBSLSigLoc                              ;location of secondary BSL signature
+ PUBLIC PJTAGLOCK_KEY                           ;location of primary JTAG Lock Key
+ PUBLIC SJTAGLOCK_KEY                           ;location of secondary JTAG Lock Key
+
+ PUBLIC BSL_REQ_JTAG_OPEN
+ PUBLIC BSL_REQ_APP_CALL
+
+//**************************************************************
+// Name       :BSL_Protect
+// Function   :Protects the BSL memory and protects the SYS module
+// Arguments  :none
+// Returns    :0 in R12.0 for lock (keep JTAGLOCK_KEY state)
+//            :1 in R12.0 for unlock (overwrite JTAGLOCK_KEY) : BSL_REQ_JTAG_OPEN
+//            :0 in R12.1 for no appended call
+//            :1 in R12.1 for appended call via BSLENTRY : BSL_REQ_APP_CALL
+//**************************************************************
+BSL_REQ_JTAG_OPEN  EQU  0x0001                  ;Return Value for BSLUNLOCK Function to open JTAG
+BSL_REQ_APP_CALL   EQU  0x0002                   ;Return Value for BSLUNLOCK Function to Call BSL again
+
+BSL_Protect:
+              CLR.W    RET_low                  ; clears JTAG_OPEN, keeping KEY state
+              BIS     #SYSBSLPE+SYSBSLSIZE0+SYSBSLSIZE1 , &SYSBSLC ; protects BSL
+              mov.w   #0x9628,   &USBKEYPID
+              bis.w   #PSEIEN,   &USBPHYCTL
+              bit.w   #PUR_IN,   &USBCNF
+              jnz     REQUEST_BSL               ; if PUR_IN set, request BSL
+              cmp.w   #0xFFFF,   &0xFFFE        ; otherwise, test for blank RESET
+              jne     JUST_RETA                ; if not blank, skip delay and start
+              ;---------------------------------------------------------------------
+              ; Delay for USB power-up
+              mov.w   #300, R11
+DELAY_LOOP    dec.w   R11
+              jnz     DELAY_LOOP
+              ;---------------------------------------------------------------------
+              bit.w   #USBBGVBV, &USBPWRCTL     ; test for USB power
+              jz      JUST_RETA                 ; no power, jump to just start
+REQUEST_BSL   BIS.W   #BSL_REQ_APP_CALL, RET_low
+JUST_RETA     bic.w   #PSEIEN,   &USBPHYCTL
+#ifdef LOCK_USB_CORRECTLY
+              mov.w   #0x0000,   &USBKEYPID     ; lock USB Correctly
+#else
+ #ifdef LOCK_USB_LEGACY
+              mov.b   #0x00,     &USBKEY
+ #else
+ #error "define either legacy or correct USB module closing"
+ #endif
+#endif
+              RETA
+
+              COMMON   BSLSIG
+                 DW       0xFFFF
+BslProtectVecLoc DW       BSL_Protect           ;adress of function
+PBSLSigLoc       DW       03CA5h                ;1st BSL signature
+SBSLSigLoc       DW       0C35Ah                ;2nd BSL signature
+                 DW       0xFFFF
+BslEntryLoc      DW       BSL_Entry_JMP
+
+              COMMON   JTAGLOCK_KEY
+PJTAGLOCK_KEY DW       0xFFFF                   ; Primary Key Location
+SJTAGLOCK_KEY DW       0xFFFF                   ; Secondary Key Location
+                                                ; set default unlock JTAG with option to lock with writting
+                                                ; a value <> 0x0000 or 0xFFFF
+              END

@@ -1,0 +1,105 @@
+//*****************************************************************
+//
+// XLINK command file for IAR Embedded Workbench for MSP430.
+//
+// This file describes the BSL memory locations, and RAM
+//*****************************************************************
+
+
+// ---------------------------------------------------------
+// Stack and heap sizes.
+// ---------------------------------------------------------
+
+// Uncomment for command line use
+//-D_STACK_SIZE=80
+//-D_DATA16_HEAP_SIZE=80
+//-D_DATA20_HEAP_SIZE=80
+
+
+// ---------------------------------------------------------
+// Define cpu.
+// ---------------------------------------------------------
+
+-cmsp430
+
+// ---------------------------------------------------------
+// Read-write memory.
+// ---------------------------------------------------------
+
+-Z(DATA)DATA16_I,DATA16_Z,DATA16_N,DATA16_HEAP+_DATA16_HEAP_SIZE=2400-33FF
+-Z(DATA)DATA20_I,DATA20_Z,DATA20_N,DATA20_HEAP+_DATA20_HEAP_SIZE
+-Z(DATA)CSTACK+_STACK_SIZE#
+
+
+// ---------------------------------------------------------
+// Read only memory
+// ---------------------------------------------------------
+
+// ---------------------------------------------------------
+// Version Info
+
+-Z(CONST)BSL430_VERSION_VENDOR=1010-1010
+-Z(CONST)BSL430_VERSION_CI=1011-1011
+-Z(CONST)BSL430_VERSION_API=1012-1012
+-Z(CONST)BSL430_VERSION_PI=1013-1013
+
+// BSL Signatures
+-Z(CONST)BSLSIG=0x17F0-17FB
+  //  contains:
+  //  BSL Start Vector
+  //  BSL Unlock Function Vector
+  //  BSL Unlock Signature 1
+  //  BSL Unlock Signature 2
+-Z(CONST)JTAGLOCK_KEY=0x17FC-17FF
+  //  if it contains:
+  //  0x0000 0x0000 or
+  //  0xFFFF 0xFFFF the JTAG will be unlocked otherwise JTAG is locked
+
+
+// ---------------------------------------------------------
+// Code
+
+-Z(CODE)CSTART,ISR_CODE=1010-17EF
+
+// ---------------------------------------------------------
+// Constant data
+
+-Z(CONST)DATA16_C,DATA16_ID,DIFUNCT=1010-17EF
+
+
+// ---------------------------------------------------------
+// All memory 0 - 0xFFFFF
+// ---------------------------------------------------------
+
+// -------------------------------------------------------------------
+//  BSL Memory
+// -------------------------------------------------------------------
+-Z(CODE)ZAREA=1000-100F
+-Z(CODE)ZAREA_CODE=1010-17FF
+-Z(CODE)BSL0=1010-11FF
+-Z(CODE)BSL1=1200-13FF
+-Z(CODE)BSL2=1400-15FF
+-Z(CODE)BSL3=1600-17EF
+
+// ---------------------------------------------------------
+// Code
+
+-P(CODE)CODE=1010-17EF
+//-P(CODE)CODE=1070-17AB
+//-P(CODE)VCORE=17AC-17EF
+
+// ---------------------------------------------------------
+// Constant data
+-Z(CONST)DATA20_C,DATA20_ID=1010-17EF
+
+
+// ---------------------------------------------------------
+// Interrupt vectors
+// ---------------------------------------------------------
+
+-Z(CODE)INTVEC=FF80-FFFF
+-Z(CODE)RESET=FFAE-FFAF
+
+// ---------------------------------------------------------
+// The end
+// ---------------------------------------------------------

@@ -1,0 +1,7 @@
+*.o
+*.so
+*.a
+*.gch
+*.xcodeproj
+MSPProbeSim
+.gdb_history

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<workspace>
+  <project>
+    <path>$WS_DIR$\FET_Bios.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\FET_ComChannel.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\FET_DCDC.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\FET_Hal.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\FetDcdcController.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\MSP-FET_Hil.ewp</path>
+  </project>
+  <batchBuild>
+    <batchDefinition>
+      <name>All</name>
+      <member>
+        <project>eZ-FetHil</project>
+        <configuration>Debug</configuration>
+      </member>
+      <member>
+        <project>FetDCDC</project>
+        <configuration>Debug</configuration>
+      </member>
+      <member>
+        <project>NgUifBios</project>
+        <configuration>Debug</configuration>
+      </member>
+      <member>
+        <project>NgUifHal</project>
+        <configuration>Debug</configuration>
+      </member>
+    </batchDefinition>
+  </batchBuild>
+</workspace>

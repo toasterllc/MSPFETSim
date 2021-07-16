@@ -1,0 +1,12 @@
+[submodule "lib/Toastbox"]
+	path = lib/Toastbox
+	url = git@github.com:heytoaster/Toastbox.git
+[submodule "lib/VirtualUSBDevice"]
+	path = lib/VirtualUSBDevice
+	url = git@github.com:heytoaster/VirtualUSBDevice.git
+[submodule "Lib/Toastbox"]
+	path = Lib/Toastbox
+	url = git@github.com:heytoaster/Toastbox.git
+[submodule "Lib/VirtualUSBDevice"]
+	path = Lib/VirtualUSBDevice
+	url = git@github.com:heytoaster/VirtualUSBDevice.git

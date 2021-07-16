@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Phys Connection Headers">
+      <UniqueIdentifier>{194c4325-48e9-4cfd-9ebd-6dfa5816a5c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Phys Connection Source">
+      <UniqueIdentifier>{58e1a238-aed1-4ace-838f-23296b566bf6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BSL Connection Headers">
+      <UniqueIdentifier>{ec54b1c2-bdff-428c-a0e3-baa56e815549}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\BSL Connection Source">
+      <UniqueIdentifier>{17500bde-fc6e-4a00-b225-ba91988f4dea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Misc Headers">
+      <UniqueIdentifier>{1cedb7fc-ffdd-4e65-b6d4-6fe41599a81c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\PacketHandler Headers">
+      <UniqueIdentifier>{fb04c1eb-5e15-428e-a3b0-e6f221355f7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PacketHandler Source">
+      <UniqueIdentifier>{b51158f2-cd5f-44ec-a691-7608c6a65e0f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Connections\MSPBSL_Connection.cpp">
+      <Filter>Source Files\BSL Connection Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Connections\MSPBSL_Connection5xx.cpp">
+      <Filter>Source Files\BSL Connection Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Connections\MSPBSL_Connection5xxUSB.cpp">
+      <Filter>Source Files\BSL Connection Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Connections\MSPBSL_Connection5438Family.cpp">
+      <Filter>Source Files\BSL Connection Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Connections\MSPBSL_ConnectionFRAMFamily.cpp">
+      <Filter>Source Files\BSL Connection Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Packet_Handlers\MSPBSL_PacketHander.cpp">
+      <Filter>Source Files\PacketHandler Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Packet_Handlers\MSPBSL_PacketHandler5xxUART.cpp">
+      <Filter>Source Files\PacketHandler Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Packet_Handlers\MSPBSL_PacketHandler5xxUSB.cpp">
+      <Filter>Source Files\PacketHandler Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Physical_Interfaces\MSPBSL_PhysicalInterfaceSerialUART.cpp">
+      <Filter>Source Files\Phys Connection Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Physical_Interfaces\MSPBSL_PhysicalInterfaceUSB.cpp">
+      <Filter>Source Files\Phys Connection Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility_Classes\MSPBSL_CRCEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MSPBSL_Factory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Connections\MSPBSL_Connection5xxUART.cpp">
+      <Filter>Source Files\BSL Connection Source</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Connections\MSPBSL_Connection.h">
+      <Filter>Header Files\BSL Connection Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Connections\MSPBSL_Connection5xx.h">
+      <Filter>Header Files\BSL Connection Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Connections\MSPBSL_Connection5xxUSB.h">
+      <Filter>Header Files\BSL Connection Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Connections\MSPBSL_Connection5438Family.h">
+      <Filter>Header Files\BSL Connection Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Connections\MSPBSL_ConnectionFRAMFamily.h">
+      <Filter>Header Files\BSL Connection Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet_Handlers\MSPBSL_PacketHandler.h">
+      <Filter>Header Files\PacketHandler Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet_Handlers\MSPBSL_PacketHandler5xxUART.h">
+      <Filter>Header Files\PacketHandler Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet_Handlers\MSPBSL_PacketHandler5xxUSB.h">
+      <Filter>Header Files\PacketHandler Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Physical_Interfaces\MSPBSL_PhysicalInterface.h">
+      <Filter>Header Files\Phys Connection Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Physical_Interfaces\MSPBSL_PhysicalInterfaceSerialUART.h">
+      <Filter>Header Files\Phys Connection Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Physical_Interfaces\MSPBSL_PhysicalInterfaceUSB.h">
+      <Filter>Header Files\Phys Connection Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility_Classes\MSPBSL_CRCEngine.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MSPBSL_Factory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility_Classes\MSPBSL_TestResetControl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
