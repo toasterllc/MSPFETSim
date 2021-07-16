@@ -1,22 +1,22 @@
 #include "MSPProbeSim.h"
 #include "MSPInterface.h"
 
-class MSPInterfaceDummy : public MSPInterface {
-    void sbwPins(PinState test, PinState rst) {
-        printf("sbwPins\n");
+class MSPInterfaceSBWDummy : public MSPInterfaceSBW {
+    void pins(PinState test, PinState rst) override {
+        printf("SBW pins()\n");
     }
     
-    void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) {
-        printf("sbwIO\n");
+    void io(bool tms, bool tclk, bool tdi, bool tdoRead) override {
+        printf("SBW io()\n");
     }
     
-    void sbwRead(void* buf, size_t len) {
-        printf("sbwRead\n");
+    void read(void* buf, size_t len) override {
+        printf("SBW read()\n");
     }
 };
 
 int main(int argc, const char* argv[]) {
-    MSPInterfaceDummy msp;
+    MSPInterfaceSBWDummy msp;
     MSPProbeSim probeSim(msp);
     try {
         probeSim.run();
