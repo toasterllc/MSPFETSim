@@ -9,30 +9,37 @@ public:
         Pulse01,
     };
     
-    void open() {}
-    void close() {}
+    virtual ~MSPInterface() {}
     
-    size_t readLenMax() const { return 0; }
+    virtual void open() {}
+    virtual void close() {}
+    virtual size_t readLenMax() const { return 0; }
     
-    // sbwPins(): Sets the state of the SBW pins
-    void sbwPins(PinState test, PinState rst) { _unimplemented(); }
+protected:
+    void _unimplemented() const {
+        throw std::runtime_error("unimplemented function");
+    }
+};
+
+class MSPInterfaceJTAG : public MSPInterface {
+};
+
+class MSPInterfaceSBW : public MSPInterface {
+public:
+    // pins(): Sets the state of the SBW pins
+    virtual void pins(PinState test, PinState rst) { _unimplemented(); }
     
-    // sbwIO(): Performs a single SBW IO cycle
+    // io(): Performs a single SBW IO cycle
     //   If tdoRead=true, the TDO output bit should be shifted into persistent storage
-    //   for later retrieval via `sbwRead()`.
-    void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) { _unimplemented(); }
+    //   for later retrieval via `read()`.
+    virtual void io(bool tms, bool tclk, bool tdi, bool tdoRead) { _unimplemented(); }
     
-    // sbwRead(): Retrieves data previously stored via sbwIO()
-    //   For optimal performance, IO operations should be queued until sbwRead() is called, at
+    // read(): Retrieves data previously stored via io()
+    //   For optimal performance, IO operations should be queued until read() is called, at
     //   which point the queued operations should be flushed to the device.
     //   
     //   len==0 is valid and must flush outstanding IO operations without returning any data.
     //   
     //   The maximum length that the device can store/read can be configured via `readLenMax`.
-    void sbwRead(void* buf, size_t len) { _unimplemented(); }
-    
-private:
-    void _unimplemented() const {
-        throw std::runtime_error("unimplemented function");
-    }
+    virtual void read(void* buf, size_t len) { _unimplemented(); }
 };

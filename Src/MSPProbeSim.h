@@ -6,7 +6,10 @@
 class MSPProbeSim {
 public:
     MSPProbeSim(MSPInterface& msp) :
-    _msp(msp), _usb(_usbDeviceInfo) {
+    _msp(msp),
+    _jtag(dynamic_cast<MSPInterfaceJTAG*>(&_msp)),
+    _sbw(dynamic_cast<MSPInterfaceSBW*>(&_msp)),
+    _usb(_usbDeviceInfo) {
     }
     
     void run() {
@@ -109,7 +112,9 @@ private:
         return true;
     }
     
-    MSPInterface _msp;
+    MSPInterface& _msp;
+    MSPInterfaceJTAG*const _jtag = nullptr;
+    MSPInterfaceSBW*const _sbw = nullptr;
     VirtualUSBDevice _usb;
     
     static inline const USB::DeviceDescriptor* _DeviceDescriptor =

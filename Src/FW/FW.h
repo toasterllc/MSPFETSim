@@ -10,8 +10,8 @@
 #define int     BADTYPE
 #define long    BADTYPE
 
-#include "FW/USB.h"
-#include "FW/Descriptor.h"
+#include "USB.h"
+#include "Descriptor.h"
 
 #undef char
 #undef short

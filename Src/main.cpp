@@ -10,7 +10,7 @@ class MSPInterfaceDummy : public MSPInterface {
         printf("sbwIO\n");
     }
     
-    void sbwRead(void* buf, size_t len) { {
+    void sbwRead(void* buf, size_t len) {
         printf("sbwRead\n");
     }
 };
