@@ -734,7 +734,7 @@ uint8_t USBCDC_bytesInUSBBuffer(BYTE intfNum) {
 BYTE USBCDC_sendData (const BYTE* data, WORD size, BYTE intfNum) {
     printf("[FW] SENDING DATA LEN: %zu\n", (size_t)size);
     assert(intfNum == DEBUG_CHANNEL);
-    _handleReply(data, size);
+    _writeReply(data, size);
     return (kUSBCDC_sendStarted);
 }
 

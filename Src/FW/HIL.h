@@ -1,6 +1,7 @@
 #pragma once
 #include "Types.h"
 #include "MSPInterface.h"
+#include "RuntimeError.h"
 
 #define HIL_UNIMP           printf("### HIL: UNIMPLEMENTED: %s\n", __FUNCTION__)
 #define HIL_UNIMP_RET0      HIL_UNIMP; return 0
@@ -310,7 +311,7 @@ int16_t IHIL_SetProtocol(uint16_t protocol_id) {
 //        _Distinct_Methods.BlowFuse = _hil_2w_BlowFuse_Dma;
     
     } else {
-        throw std::runtime_error("invalid protocol");
+        throw RuntimeError("invalid protocol: %d", protocol_id);
     }
     
     jtagReleased = 0;
@@ -337,7 +338,7 @@ void IHIL_SetPsaTCLK(uint16_t tclkValue) {
 //        }
     
     } else {
-        throw std::runtime_error("invalid protocol");
+        throw RuntimeError("invalid protocol: %d", gprotocol_id);
     }
 }
 
