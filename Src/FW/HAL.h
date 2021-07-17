@@ -1681,7 +1681,7 @@ HAL_FUNCTION_UNIMP(_hal_CheckDapLockArm)
 HAL_FUNCTION_UNIMP(_hal_UnlockDap)
 HAL_FUNCTION_UNIMP(_hal_UssSyncConditional)
 
-static inline const HalFuncInOut HALFns[] = {
+static const inline HalFuncInOut HALFns[] = {
     &MSPProbeSim::_hal_Zero,
     &MSPProbeSim::_hal_Init,
     &MSPProbeSim::_hal_SetVcc,

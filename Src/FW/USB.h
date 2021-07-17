@@ -724,34 +724,27 @@ BYTE cdcSendDataInBackground (BYTE* dataBuf, WORD size, BYTE intfNum, ULONG ulTi
 }
 
 uint8_t USBCDC_bytesInUSBBuffer(BYTE intfNum) {
-    assert(!_state.msgs.queue.empty());
-    const Msg& msg = *_state.msgs.queue.front();
+    assert(intfNum == DEBUG_CHANNEL);
+    assert(!_msgs.empty());
+    _Msg& msg = _msgs.front();
     assert(msg.len <= std::numeric_limits<uint8_t>::max());
     return msg.len;
 }
 
 BYTE USBCDC_sendData (const BYTE* data, WORD size, BYTE intfNum) {
     printf("[FW] SENDING DATA LEN: %zu\n", (size_t)size);
-    
-    MsgPtr respPtr = std::make_unique<Msg>();
-    Msg& resp = *respPtr;
-    
-    assert(size <= sizeof(resp.data));
-    memcpy(resp.data, data, size);
-    resp.len = size;
-    
-    // Add the message to the queue
-    _state.resps.queue.push_back(std::move(respPtr));
-    _state.resps.signal.notify_all();
-    
+    assert(intfNum == DEBUG_CHANNEL);
+    _handleReply(data, size);
     return (kUSBCDC_sendStarted);
 }
 
 BYTE USBCDC_receiveData(BYTE* data, WORD size, BYTE intfNum) {
-    const Msg& msg = *_state.msgs.queue.front();
+    assert(intfNum == DEBUG_CHANNEL);
+    assert(!_msgs.empty());
+    _Msg& msg = _msgs.front();
     assert(size <= msg.len);
     memcpy(data, msg.data, size);
-    _state.msgs.queue.pop_front();
+    _msgs.pop_front();
     return kUSBCDC_receiveCompleted;
 }
 
