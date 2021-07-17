@@ -41,7 +41,7 @@ public:
     
 private:
     
-    #include "FW/FW.h"
+    #include "Firmware/Firmware.h"
     
     struct _Msg {
         uint8_t data[512];
