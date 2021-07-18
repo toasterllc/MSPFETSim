@@ -28,8 +28,12 @@ public:
         
         for (;;) {
             _dequeueUSBRequest();
-            // Call V3OP_Scheduler until there's no work to do
-            while (V3OP_Scheduler());
+            
+            // Call V3OP_Scheduler some number of times, or until there's no work to do
+            for (int i=0; i<10; i++) {
+                bool br = V3OP_Scheduler();
+                if (!br) break;
+            }
         }
     }
     
