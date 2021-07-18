@@ -17,12 +17,12 @@ class MSPInterfaceDummy : public MSPInterface {
 };
 
 int main(int argc, const char* argv[]) {
-//    MSPInterfaceDummy msp;
     try {
         libusb_device* usbDevice = STMBridge::FindUSBDevice();
         if (!usbDevice) throw RuntimeError("no matching USB devices");
         Defer(libusb_unref_device(usbDevice));
         
+//        MSPInterfaceDummy msp;
         STMBridge msp(usbDevice);
         MSPProbeSim probeSim(msp);
         probeSim.run();
