@@ -242,7 +242,7 @@ int16_t IHIL_SetProtocol(uint16_t protocol_id) {
     gprotocol_id = protocol_id;
     initGeneric();
     
-    if (protocol_id == JTAG) {
+    if (gprotocol_id == JTAG) {
 //        _Distinct_Methods.TapReset = _hil_4w_TapReset;
 //        _Distinct_Methods.CheckJtagFuse = _hil_4w_CheckJtagFuse;
 //        _Distinct_Methods.Instr = _hil_generic_Instr;
@@ -274,7 +274,7 @@ int16_t IHIL_SetProtocol(uint16_t protocol_id) {
 //        }
 //        _Distinct_Methods.BlowFuse = _hil_4w_BlowFuse;
     
-    } else if (protocol_id == SPYBIWIRE) {
+    } else if (gprotocol_id == SPYBIWIRE) {
 //        // Functionality executed in FPGA bypass mode by Sub-MCU
 //        _Distinct_Methods.TapReset =            _hil_2w_TapReset_Dma;
 //        _Distinct_Methods.CheckJtagFuse =       _hil_2w_CheckJtagFuse_Dma;
@@ -311,7 +311,8 @@ int16_t IHIL_SetProtocol(uint16_t protocol_id) {
 //        _Distinct_Methods.BlowFuse = _hil_2w_BlowFuse_Dma;
     
     } else {
-        throw RuntimeError("invalid protocol: %d", protocol_id);
+        printf("### Unsupported protocol: %d\n", gprotocol_id);
+//        throw RuntimeError("invalid protocol: %d", protocol_id);
     }
     
     jtagReleased = 0;
@@ -338,7 +339,7 @@ void IHIL_SetPsaTCLK(uint16_t tclkValue) {
 //        }
     
     } else {
-        throw RuntimeError("invalid protocol: %d", gprotocol_id);
+        printf("### Unsupported protocol: %d\n", gprotocol_id);
     }
 }
 

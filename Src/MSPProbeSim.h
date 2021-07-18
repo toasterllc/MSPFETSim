@@ -27,7 +27,7 @@ public:
         BIOS_InitCom();
         
         for (;;) {
-            _dequeueUSBRequest();
+            _dequeueUSBRequest(10ms);
             
             // Call V3OP_Scheduler some number of times, or until there's no work to do
             for (int i=0; i<10; i++) {
@@ -52,9 +52,9 @@ public:
     
 //    using _Rep = _Msg;
     
-    void _dequeueUSBRequest() {
-        VirtualUSBDevice::Xfer xfer = _usb.read();
-        _handleUSBXfer(std::move(xfer));
+    void _dequeueUSBRequest(std::chrono::milliseconds timeout=0ms) {
+        auto xfer = _usb.read(timeout);
+        if (xfer) _handleUSBXfer(std::move(*xfer));
     }
     
     void _handleUSBXfer(VirtualUSBDevice::Xfer&& xfer) {

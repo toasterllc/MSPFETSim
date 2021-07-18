@@ -504,7 +504,54 @@ HAL_FUNCTION(_hal_GetJtagId)
 HAL_FUNCTION_UNIMP(_hal_SetDeviceChainInfo)
 HAL_FUNCTION_UNIMP(_hal_SetChainConfiguration)
 HAL_FUNCTION_UNIMP(_hal_GetNumOfDevices)
-HAL_FUNCTION_UNIMP(_hal_GetInterfaceMode)
+
+HAL_FUNCTION(_hal_GetInterfaceMode)
+{
+    uint16_t id=0, loopCount=7,i=0, protocol =0;
+
+    for (i = 0; i < loopCount; i++)
+    {
+        // set JTAG mode 1xx- 4xx
+        if(i == 0 || i == 3)// set JTAG
+        {
+            protocol = JTAG;
+        }
+        else
+	    {
+            // set SBW2 mode all devices
+			if(i == 2 || i == 5)
+			{
+                protocol = SPYBIWIRE;
+			}
+            // set SBW4 mode all devices
+			else if(i == 1|| i ==4 || i ==6)
+			{
+                protocol = SPYBIWIREJTAG;
+			}
+        }
+        IHIL_SetProtocol(protocol);
+        
+        // Run  4wire/SBW entry Sequence & Reset high
+        IHIL_Open(RSTHIGH);
+        // Reset TAP state machine -> Run-Test/Idle
+        IHIL_TapReset();
+        // Run Fuse Check
+        IHIL_CheckJtagFuse();
+        // shift out JTAG ID
+        id = cntrl_sig_capture_r();
+        // now check for vaild JTAG ID
+        if (jtagIdIsValid(id))
+        {
+            STREAM_put_word(id);
+            STREAM_put_word(protocol);
+            return 0;
+        }
+    }
+    // Error no mode found
+    STREAM_put_word(0xFFFF);
+    STREAM_put_word(0xAAAA);
+    return HALERR_UNDEFINED_ERROR;
+}
 
 HAL_FUNCTION(_hal_GetDeviceIdPtr)
 {
@@ -1541,7 +1588,246 @@ HAL_FUNCTION(_hal_WriteAllCpuRegsXv2)
 }
 
 HAL_FUNCTION_UNIMP(_hal_PsaXv2)
-HAL_FUNCTION_UNIMP(_hal_ExecuteFuncletXv2)
+
+#define startAddrOfs FlashWrite_o_[4]
+
+#define REG_ADDRESS 5
+#define REG_SIZE    6
+#define REG_LOCKA   8
+#define REG_TYPE    9
+
+#define TIMEOUT_COUNT   300u
+
+void setFuncletRegisters(const uint32_t* registerData)
+{
+    uint32_t  Rx;
+    uint16_t Mova;
+    uint16_t Rx_l;
+    uint16_t Register;
+
+    Mova  = 0x0080;
+    Rx = registerData[0];
+    Register = REG_ADDRESS;
+    Mova += (uint16_t)((Rx>>8) & 0x00000F00);
+    Mova += (Register & 0x000F);
+    Rx_l  = (uint16_t)Rx;
+    WriteCpuRegXv2(Mova, Rx_l);
+
+    Mova  = 0x0080;
+    Rx = registerData[1];
+    Register = REG_SIZE;
+    Mova += (uint16_t)((Rx>>8) & 0x00000F00);
+    Mova += (Register & 0x000F);
+    Rx_l  = (uint16_t)Rx;
+    WriteCpuRegXv2(Mova, Rx_l);
+
+    Mova  = 0x0080;
+    Rx = registerData[2]; // erase type
+    Register = REG_TYPE;
+    Mova += (uint16_t)((Rx>>8) & 0x00000F00);
+    Mova += (Register & 0x000F);
+    Rx_l  = (uint16_t)Rx;
+    WriteCpuRegXv2(Mova, Rx_l);
+
+    Mova  = 0x0080;
+    Rx = registerData[3];
+    Register = REG_LOCKA;
+    Mova += (uint16_t)((Rx>>8) & 0x00000F00);
+    Mova += (Register & 0x000F);
+    Rx_l  = (uint16_t)Rx;
+    WriteCpuRegXv2(Mova, Rx_l);
+}
+
+struct {
+    uint32_t lLen               = 0;
+    uint16_t ret_len            = 0;
+    uint32_t registerBackups[4] = {};
+    uint16_t allignNeed         = 0;
+    uint16_t dataL              = 0;
+    uint16_t dataH              = 0;
+} _hal_ExecuteFuncletXv2_staticVars;
+
+HAL_FUNCTION(_hal_ExecuteFuncletXv2)
+{
+    auto& lLen              = _hal_ExecuteFuncletXv2_staticVars.lLen;
+    auto& ret_len           = _hal_ExecuteFuncletXv2_staticVars.ret_len;
+    auto& registerBackups   = _hal_ExecuteFuncletXv2_staticVars.registerBackups;
+    auto& allignNeed        = _hal_ExecuteFuncletXv2_staticVars.allignNeed;
+    auto& dataL             = _hal_ExecuteFuncletXv2_staticVars.dataL;
+    auto& dataH             = _hal_ExecuteFuncletXv2_staticVars.dataH;
+    
+    uint8_t jtagMailboxIn = 0;
+
+    uint16_t tgtStart     =0x0 ;
+    uint32_t Addr          =0x0 ;
+    uint16_t LockA        =0x0 ;
+    uint16_t usType       =0x0 ;
+
+    uint16_t startAddr;
+    uint16_t Mova;
+    int16_t ret_value = 0;
+    StreamSafe stream_tmp;
+
+    if(flags & MESSAGE_NEW_MSG)
+    {
+        // get target RAM start
+        if(STREAM_get_word(&tgtStart) != 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_RAM_START);
+        }
+        STREAM_discard_bytes(2); // Ram size
+        /// get RAM Start + Code offset
+        if(STREAM_get_word(&startAddr)!= 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_OFFSET);
+        }
+        // get start addres as long value
+        if(STREAM_get_long(&Addr) != 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_ADDRESS);
+        }
+        // get length ot be flashed
+        if(STREAM_get_long(&lLen) != 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_LENGTH);
+        }
+        if(STREAM_get_word(&usType) != 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_TYPE);
+        }
+        // lock A handling
+        if(STREAM_get_word(&LockA) == -1)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_LOCKA);
+        }
+
+        if(STREAM_discard_bytes(4) == -1)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_LOCKA);
+        }
+
+        {
+            uint32_t registerValues[4] = {Addr, lLen, usType, LockA};
+            setFuncletRegisters(registerValues);
+        }
+
+        // i_SetPcRel
+        SetPcXv2(0x0080, startAddr);
+        IHIL_Tclk(1);
+        // prepare release & release
+        cntrl_sig_16bit();
+        IHIL_SetReg_16Bits(0x0401);
+        addr_capture();
+        cntrl_sig_release();
+        {
+            uint32_t Timeout = 0;
+            do
+            {
+                IHIL_Delay_1ms(5);    // Delay determined experimentally on FR5729 device
+                Timeout++;
+            }
+            while(i_ReadJmbOut() != 0xABADBABE && Timeout < TIMEOUT_COUNT);
+            if(Timeout >= TIMEOUT_COUNT)
+            {
+                ret_value = HALERR_EXECUTE_FUNCLET_EXECUTION_TIMEOUT;
+            }
+        }
+        if(lLen%2)
+        {
+             lLen--;  // allign lLen
+             allignNeed = 1;
+        }
+    }
+
+    // Excecute funclet
+    for(; lLen && (ret_value == 0); lLen--)
+    {
+      if (lLen%2)
+      {
+          ret_value = STREAM_get_word(&dataH);
+          i_WriteJmbIn32(dataL,dataH);
+      }
+      else
+      {
+          ret_value = STREAM_get_word(&dataL);
+      }
+    }
+
+    if(allignNeed && ret_value == 0 && lLen == 0 && flags & MESSAGE_LAST_MSG )
+    {
+         ret_value = STREAM_get_word(&dataL);
+         jtagMailboxIn = i_WriteJmbIn32(dataL,0xAAAA);
+
+         if(jtagMailboxIn == 1)
+         {
+            return (HALERR_EXECUTE_FUNCLET_FINISH_TIMEOUT);
+         }
+         allignNeed = 0;
+    }
+
+    if(flags & MESSAGE_LAST_MSG )//|| lLen == 0)
+    { // ExitFlashWrite
+        uint32_t Timeout = 0;
+        do
+        {
+            IHIL_Delay_1ms(10);     // Delay determined experimentally on FR5729 device
+            Timeout++;
+        }
+        while(i_ReadJmbOut() != 0xCAFEBABE && Timeout < TIMEOUT_COUNT);
+        if(Timeout >= TIMEOUT_COUNT)
+        {
+            ret_value = HALERR_EXECUTE_FUNCLET_FINISH_TIMEOUT;
+            //Setup values for watchdog control regsiters
+
+            uint8_t DummyIn[8] = {(uint8_t)(wdtctlAddress5xx & 0xFF), (uint8_t)((wdtctlAddress5xx >> 8) & 0xFF),
+                                    WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
+
+            STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
+            _hal_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+            STREAM_external_stream(&stream_tmp);
+
+            Mova = 0x0060 | ((10 << 8) & 0x0F00);
+            registerBackups[0] = ReadCpuRegXv2(Mova);
+            Mova = 0x0060 | ((11 << 8) & 0x0F00);
+            registerBackups[1] = ReadCpuRegXv2(Mova);
+
+            if( registerBackups[1] != 0 && registerBackups[0] != 0xFFFE)
+            {
+                ret_value = -10;
+            }
+        }
+        {
+            //Setup values for watchdog control regsiters
+            uint8_t DummyIn[8] = {(uint8_t)(wdtctlAddress5xx & 0xFF), (uint8_t)((wdtctlAddress5xx >> 8) & 0xFF),
+                                    WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
+
+            STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
+            _hal_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+            STREAM_external_stream(&stream_tmp);
+        }
+
+        STREAM_put_word(ret_len);
+    }
+    else if(ret_value == 1)
+    {
+        STREAM_out_change_type(RESPTYP_ACKNOWLEDGE);
+        ret_value = 0;
+    }
+    else
+    {
+         //Setup values for watchdog control regsiters
+         uint8_t DummyIn[8] = {(uint8_t)(wdtctlAddress5xx & 0xFF), (uint8_t)((wdtctlAddress5xx >> 8) & 0xFF),
+                                     WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
+
+         STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
+         _hal_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+         STREAM_external_stream(&stream_tmp);
+
+         ret_value = HALERR_EXECUTE_FUNCLET_EXECUTION_ERROR;
+    }
+    return(ret_value);
+}
+
 HAL_FUNCTION_UNIMP(_hal_UnlockDeviceXv2)
 
 HAL_FUNCTION(_hal_MagicPattern)
@@ -1643,6 +1929,76 @@ HAL_FUNCTION_UNIMP(_hal_WriteFramQuickXv2)
 HAL_FUNCTION_UNIMP(_hal_SendJtagMailboxXv2)
 HAL_FUNCTION_UNIMP(_hal_SingleStepJStateXv2)
 HAL_FUNCTION_UNIMP(_hal_PollJStateRegEt8)
+
+//struct {
+//    EnergyTraceRecordEt8_t buffer[NUM_RECORDS_TO_CAPTURE]   = {};
+//    uint16_t currentIndex                                   = 0;
+//} _hal_PollJStateRegEt8_staticVars;
+//
+//HAL_FUNCTION(_hal_PollJStateRegEt8) {
+//    auto& buffer = _hal_PollJStateRegEt8_staticVars.buffer;
+//    auto& currentIndex = _hal_PollJStateRegEt8_staticVars.currentIndex;
+//    
+//    double vcc = 0;
+//    double extVcc= 0 ;
+//    uint16_t mEtGatedMode = 0;
+//    uint16_t* syncWithRunVarAddress = 0;
+//
+//    if(STREAM_discard_bytes(8) == -1)
+//    {
+//            return -1;
+//    }
+//    // request shared var from bios to sync with RestoreContextRun function
+//
+//    STREAM_get_word(&mEtGatedMode);
+//
+//    if(mEtGatedMode)
+//    {
+//        syncWithRunVarAddress = getTargetRunningVar();
+//        if(syncWithRunVarAddress)
+//        {
+//             if(!(*syncWithRunVarAddress))
+//             {
+//                currentIndex = 0;
+//                return 2;
+//             }
+//        }
+//        else
+//        {
+//            return -1;
+//        }
+//    }
+//
+//    buffer[currentIndex].eventID = 8;
+//
+//    while(TA0R > 0xFFA0 || TA0R  < 2)
+//    {
+//        IHIL_Delay_1us(3);
+//    }
+//
+//    _DINT_FET();
+//
+//    buffer[currentIndex].TimeStamp = getTimeStamp();
+//    buffer[currentIndex].currentTicks = getIMeasure();
+//
+//    IHIL_GetVcc(&vcc, &extVcc);
+//
+//    _EINT_FET();
+//    buffer[currentIndex].voltage = (unsigned int)(vcc ? vcc : extVcc);
+//
+//    // Energy trace data is available send it first -> don't check LPMx.5 or Breakpoint hit
+//    if(++currentIndex == NUM_RECORDS_TO_CAPTURE)
+//    {
+//        currentIndex = 0;
+//        STREAM_put_word(ENERGYTRACE_INFO);                  // Event ID
+//        STREAM_put_byte(NUM_RECORDS_TO_CAPTURE);            // Number of records that is sent
+//        STREAM_put_byte(sizeof(EnergyTraceRecordEt8_t));    // Size of Record
+//        STREAM_put_bytes((void *)buffer, sizeof(EnergyTraceRecordEt8_t) * NUM_RECORDS_TO_CAPTURE);
+//        return 1;
+//    }
+//
+//    return 2;
+//}
 
 HAL_FUNCTION(_hal_ResetStaticGlobalVars)
 {

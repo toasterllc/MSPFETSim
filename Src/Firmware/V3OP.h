@@ -111,7 +111,25 @@ int16_t com_getLayerVersionCmp() {
 
 
 int16_t V3OP_SendException(uint8_t msg_id, uint16_t code, uint16_t* payload) {
-    V3OP_UNIMP_RET0;
+    uint16_t i;
+
+    if(STREAM_out_init(msg_id, RESPTYP_EXCEPTION) >= 0)
+    {
+        if(payload == NULL)
+        {
+            STREAM_put_word(code);
+        }
+        else
+        {
+            for(i = 0;(i < code) && (i < 126); i++)
+            {
+                STREAM_put_word(payload[i]);
+            }
+        }
+        STREAM_flush();
+        return(0);
+    }
+    return(-1);
 }
 
 int16_t V3OP_SetLoop(uint8_t *payload_incl_addr, uint8_t flags)
@@ -214,7 +232,7 @@ int16_t V3OP_KillLoop(uint8_t msg_id)
         {
             if(v3op_loop_array_[i].indata != NULL)
             {
-                free(v3op_loop_array_[i].indata);
+//                free(v3op_loop_array_[i].indata);
             }
             v3op_loop_array_[i].indata = NULL;
             v3op_loop_array_[i].addr = 0xFFFF;
@@ -266,7 +284,7 @@ void V3OP_KillAllLoops(void)
     {
         if(v3op_loop_array_[i].indata != NULL)
         {
-            free(v3op_loop_array_[i].indata);
+//            free(v3op_loop_array_[i].indata);
         }
         v3op_loop_array_[i].indata = NULL;
         v3op_loop_array_[i].addr = 0xFFFF;
