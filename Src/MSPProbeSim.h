@@ -7,8 +7,6 @@ class MSPProbeSim {
 public:
     MSPProbeSim(MSPInterface& msp) :
     _msp(msp),
-    _jtag(dynamic_cast<MSPInterfaceJTAG*>(&_msp)),
-    _sbw(dynamic_cast<MSPInterfaceSBW*>(&_msp)),
     _usb(_usbDeviceInfo) {
     }
     
@@ -39,7 +37,7 @@ public:
         _usb.stop();
     }
     
-private:
+public:
     
     #include "Firmware/Firmware.h"
     
@@ -201,8 +199,6 @@ private:
 //    }
     
     MSPInterface& _msp;
-    MSPInterfaceJTAG*const _jtag = nullptr;
-    MSPInterfaceSBW*const _sbw = nullptr;
     VirtualUSBDevice _usb;
     
     std::deque<_Msg> _msgs; // Messages host->device

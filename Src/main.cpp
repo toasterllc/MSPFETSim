@@ -1,24 +1,30 @@
 #include "MSPProbeSim.h"
 #include "MSPInterface.h"
+#include "STMBridge.h"
 
-class MSPInterfaceSBWDummy : public MSPInterfaceSBW {
-    void pins(PinState test, PinState rst) override {
+class MSPInterfaceDummy : public MSPInterface {
+    void sbwPins(PinState test, PinState rst) override {
         printf("SBW pins()\n");
     }
     
-    void io(bool tms, bool tclk, bool tdi, bool tdoRead) override {
+    void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
         printf("SBW io()\n");
     }
     
-    void read(void* buf, size_t len) override {
+    void sbwRead(void* buf, size_t len) override {
         printf("SBW read()\n");
     }
 };
 
 int main(int argc, const char* argv[]) {
-    MSPInterfaceSBWDummy msp;
-    MSPProbeSim probeSim(msp);
+//    MSPInterfaceDummy msp;
     try {
+        libusb_device* usbDevice = STMBridge::FindUSBDevice();
+        if (!usbDevice) throw RuntimeError("no matching USB devices");
+        Defer(libusb_unref_device(usbDevice));
+        
+        STMBridge msp(usbDevice);
+        MSPProbeSim probeSim(msp);
         probeSim.run();
     
     } catch (const std::exception& e) {
