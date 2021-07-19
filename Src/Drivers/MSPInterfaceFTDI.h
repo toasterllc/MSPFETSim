@@ -59,14 +59,20 @@ public:
 //        printf("  snapshot_str = %s\n", vers.snapshot_str);
 //        printf("\n\n");
         
-        struct ftdi_context ctx = {};
-        int ir = ftdi_init(&ctx);
-        if (ir < 0) throw RuntimeError("ftdi_init failed: %s", ftdi_get_error_string(&ctx));
-        Defer( ftdi_deinit(&ctx); );
+        static struct {
+            std::mutex lock;
+            struct ftdi_context* ctx = nullptr;
+        } FTDICtx;
+        
+        auto lock = std::unique_lock(FTDICtx.lock);
+        if (!FTDICtx.ctx) {
+            FTDICtx.ctx = ftdi_new();
+            if (!FTDICtx.ctx) throw RuntimeError("ftdi_new failed");
+        }
         
         struct ftdi_device_list* devs = nullptr;
-        ir = ftdi_usb_find_all(&ctx, &devs, 0, 0);
-        if (ir < 0) throw RuntimeError("ftdi_usb_find_all failed: %s", ftdi_get_error_string(&ctx));
+        int ir = ftdi_usb_find_all(FTDICtx.ctx, &devs, 0, 0);
+        if (ir < 0) throw RuntimeError("ftdi_usb_find_all failed: %s", ftdi_get_error_string(FTDICtx.ctx));
         Defer( if (devs) ftdi_list_free(&devs); );
         
         std::vector<USBDevice> r;
@@ -78,6 +84,9 @@ public:
     }
     
     MSPInterfaceFTDI(USBDevice&& dev) : _dev(std::move(dev)) {
+        _dev.open();
+        _dev.setBitmode(BITMODE_RESET, 0);
+        _dev.setBitmode(BITMODE_MPSSE, 0);
     }
     
     ~MSPInterfaceFTDI() {}
@@ -99,6 +108,8 @@ private:
         _usbDev(std::move(usbDev)) {
             int ir = ftdi_init(&_ctx);
             _checkErr(ir, "ftdi_init failed");
+            
+//            ftdi_set_interface(&_ctx, INTERFACE_ANY);
         }
         
 //        // Copy constructor: not allowed
@@ -118,14 +129,47 @@ private:
             ftdi_deinit(&_ctx);
         }
         
+//        void setInterface(uint8_t mode, uint8_t pinDirs) {
+//            int ir = ftdi_set_bitmode(&_ctx, pinDirs, mode);
+//            _checkErr(ir, "setBitmode failed");
+//        }
+        
         void open() {
+//            int ir = ftdi_set_interface(&_ctx, INTERFACE_A);
+//            if (ir) {
+//                abort();
+//            }
+//            
+//            // If `device` wasn't specified, use the first one with the default VID/PID
+//            struct ftdi_device_list* devices = NULL;
+//            int devicesCount = ftdi_usb_find_all(&_ctx, &devices, 0x403, 0x6014);
+//            if (devicesCount < 1) {
+//                abort();
+//            }
+//            
+//            // Open FTDI USB device
+//            ir = ftdi_usb_open_dev(&_ctx, devices[0].dev);
+//            if (ir) {
+//                abort();
+//            }
+            
             int ir = ftdi_usb_open_dev(&_ctx, _usbDev);
             _checkErr(ir, "ftdi_usb_open_dev failed");
+            
+//            printf("OPENED\n");
+//            
+//            ir = ftdi_tcioflush(&_ctx);
+//            _checkErr(ir, "ftdi_tcioflush failed");
         }
         
         void close() {
             int ir = ftdi_usb_close(&_ctx);
             _checkErr(ir, "ftdi_usb_close failed");
+        }
+        
+        void setBitmode(uint8_t mode, uint8_t pinDirs) {
+            int ir = ftdi_set_bitmode(&_ctx, pinDirs, mode);
+            _checkErr(ir, "setBitmode failed");
         }
         
 //        operator bool() const { return _s.dev; }
@@ -165,6 +209,12 @@ private:
         USBDevice _usbDev;
     };
     
+//    static struct ftdi_context _FTDIContextCreate() {
+//        struct ftdi_context ctx;
+//        int ir = ftdi_init(&ctx);
+//        _checkErr(ir, "ftdi_init failed");
+//        return ctx;
+//    }
     
     
 //    static libusb_context* _FTDICtx = nullptr;
