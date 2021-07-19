@@ -7,7 +7,7 @@
 #include "../../MDC/Code/STM32/Shared/STLoaderTypes.h"
 >>>>>>> ffcc230... Add USBDevice class. Started work on FTDI driver.:Src/Drivers/STMBridge.h
 
-class STMBridge : public MSPInterface {
+class MSPInterfaceMDC : public MSPInterface {
 public:
     
     static std::vector<USBDevice> GetDevices() {
@@ -20,7 +20,7 @@ public:
         return r;
     }
     
-    STMBridge(USBDevice&& dev) {
+    MSPInterfaceMDC(USBDevice&& dev) {
         assert(dev);
         _s.dev = std::move(dev);
         _s.dev.open();
@@ -28,17 +28,17 @@ public:
     }
     
 //    // Copy constructor: not allowed
-//    STMBridge(const STMBridge& x) = delete;
+//    MSPInterfaceMDC(const MSPInterfaceMDC& x) = delete;
 //    // Move constructor: use move assignment operator
-//    STMBridge(STMBridge&& x) { *this = std::move(x); }
+//    MSPInterfaceMDC(MSPInterfaceMDC&& x) { *this = std::move(x); }
 //    // Move assignment operator
-//    STMBridge& operator=(STMBridge&& x) {
+//    MSPInterfaceMDC& operator=(MSPInterfaceMDC&& x) {
 //        _s = x._s;
 //        x._s = {};
 //        return *this;
 //    }
 //    
-//    ~STMBridge() {
+//    ~MSPInterfaceMDC() {
 //        _reset();
 //    }
     
