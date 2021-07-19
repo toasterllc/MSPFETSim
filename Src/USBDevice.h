@@ -3,7 +3,7 @@
 
 class USBDevice {
 public:
-    static std::vector<USBDevice> GetAllDevices() {
+    static std::vector<USBDevice> GetDevices() {
         libusb_device** devs = nullptr;
         ssize_t devsCount = libusb_get_device_list(_USBCtx(), &devs);
         _CheckErr((int)devsCount, "libusb_get_device_list failed");

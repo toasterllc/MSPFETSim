@@ -1,6 +1,7 @@
 #include "MSPProbeSim.h"
 #include "MSPInterface.h"
 #include "Drivers/STMBridge.h"
+#include "Drivers/MSPInterfaceFTDI.h"
 
 class MSPInterfaceDummy : public MSPInterface {
     void sbwPins(PinState test, PinState rst) override {
@@ -18,12 +19,18 @@ class MSPInterfaceDummy : public MSPInterface {
 
 int main(int argc, const char* argv[]) {
     try {
-        auto devices = STMBridge::GetMatchingDevices();
-        if (devices.empty()) throw RuntimeError("no matching USB devices");
-        if (devices.size() > 1) throw RuntimeError("more than one matching USB device");
-        
 //        MSPInterfaceDummy msp;
-        STMBridge msp(std::move(devices[0]));
+        
+//        auto devices = STMBridge::GetDevices();
+//        if (devices.empty()) throw RuntimeError("no matching USB devices");
+//        if (devices.size() > 1) throw RuntimeError("more than one matching USB device");
+//        STMBridge msp(std::move(devices[0]));
+        
+        auto devices = MSPInterfaceFTDI::GetDevices();
+        if (devices.empty()) throw RuntimeError("no matching FTDI devices");
+        if (devices.size() > 1) throw RuntimeError("more than one matching FTDI device");
+        MSPInterfaceFTDI msp(std::move(devices[0]));
+        
         MSPProbeSim probeSim(msp);
         probeSim.run();
     

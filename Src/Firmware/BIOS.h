@@ -82,7 +82,7 @@ volatile BiosGlobalTimer bios_global_timer_[BIOS_TIMER_COUNT];
 
 uint16_t tempInDataRx[4][BIOS_RX_SIZE]= {0x0,0x0};
 
-BIOS_RxError_t BIOS_RxEr;
+BIOS_RxError_t BIOS_RxEr = {};
 
 int8_t bios_wb_control_ = 0;
 uint8_t bios_rx_char_ = 0;

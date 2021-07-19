@@ -10,9 +10,9 @@
 class STMBridge : public MSPInterface {
 public:
     
-    static std::vector<USBDevice> GetMatchingDevices() {
+    static std::vector<USBDevice> GetDevices() {
         std::vector<USBDevice> r;
-        for (USBDevice& d : USBDevice::GetAllDevices()) {
+        for (USBDevice& d : USBDevice::GetDevices()) {
             if (_DeviceMatches(d)) {
                 r.push_back(std::move(d));
             }

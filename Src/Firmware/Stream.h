@@ -34,7 +34,7 @@ typedef struct _StreamSafe_ StreamSafe;
 
 uint16_t sharedVariables_[128] = {};
 
-StreamInput stream_input_;
+StreamInput stream_input_ = {};
 
 void STREAM_resetSharedVariables()
 {
