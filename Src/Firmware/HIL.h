@@ -718,7 +718,13 @@ uint64_t SetReg8_64Bits(uint64_t data, uint16_t loopCount, uint16_t PG)     { HI
 // JTAG instruction register access
 void cntrl_sig_low_byte()               { IHIL_Instr(IR_CNTRL_SIG_LOW_BYTE); }
 void cntrl_sig_capture()                { IHIL_Instr(IR_CNTRL_SIG_CAPTURE); }
-uint8_t cntrl_sig_capture_r()           { return IHIL_Instr_R(IR_CNTRL_SIG_CAPTURE); }
+//uint8_t cntrl_sig_capture_r()           { return IHIL_Instr_R(IR_CNTRL_SIG_CAPTURE); }
+uint8_t cntrl_sig_capture_r()           {
+    #warning cleanup
+    const uint8_t r = IHIL_Instr_R(IR_CNTRL_SIG_CAPTURE);
+    printf("JTAG ID: %x\n", r);
+    return r;
+}
 void cntrl_sig_high_byte()              { IHIL_Instr(IR_CNTRL_SIG_HIGH_BYTE); }
 void cntrl_sig_16bit()                  { IHIL_Instr(IR_CNTRL_SIG_16BIT); }
 void cntrl_sig_release()                { IHIL_Instr(IR_CNTRL_SIG_RELEASE); }

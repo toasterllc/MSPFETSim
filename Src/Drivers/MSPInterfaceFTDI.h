@@ -88,17 +88,66 @@ public:
     _rstPin(rstPin),
     _dev(std::move(dev)) {
         _dev.open();
+        _dev.usbReset();
+        _dev.setEventChar(0, 0);
+        
         _dev.setBitmode(BITMODE_RESET, 0);
         _dev.setBitmode(BITMODE_MPSSE, 0);
+        
+        // TODO: these commands aren't all supported by all hardware
+        {
+            constexpr uint8_t initCmd[] = {
+                MPSSE::DisableClkDivideBy5,        // Use 60MHz master clock
+                MPSSE::DisableAdaptiveClocking,    // Disable adaptive clocking
+                MPSSE::Disable3PhaseDataClocking,  // Disable three-phase clocking
+                MPSSE::DisconnectTDITDOLoopback,   // Disable loopback
+                MPSSE::SetClkDivisor, 0x1D, 0x00,  // Set TCK frequency to 1MHz
+            };
+            
+            _dev.write(initCmd, sizeof(initCmd));
+        }
+        
+        // Clear our receive buffer
+        // For some reason this needs to happen after our first write,
+        // otherwise we don't receive anything.
+        // This is necessary in case an old process was doing IO and crashed, in which
+        // case there could still be data in the buffer.
+        for (;;) {
+            uint8_t tmp[128];
+            size_t ir = _dev.readAny(tmp, sizeof(tmp));
+            if (!ir) break;
+        }
+        
+        {
+            constexpr uint8_t initCmd[] = {
+                MPSSE::BadCommand,
+            };
+            _dev.write(initCmd, sizeof(initCmd));
+        }
+        
+        // Synchronize with FTDI by sending a bad command and ensuring we get the expected error
+        uint8_t resp[2];
+        _dev.read(resp, sizeof(resp));
+        printf("resp: %x %x\n", resp[0], resp[1]);
+//            if (!(resp[0]==MPSSE::BadCommandResp && resp[1]==MPSSE::BadCommand))
+//                throw RuntimeError("init sync failed (%x %x)", resp[0], resp[1]);
     }
     
     ~MSPInterfaceFTDI() {}
     
     struct MPSSE {
-        static constexpr uint8_t SetDataBitsL   = 0x80;
-        static constexpr uint8_t ReadDataBitsL  = 0x81;
-        static constexpr uint8_t SetDataBitsH   = 0x82;
-        static constexpr uint8_t ReadDataBitsH  = 0x83;
+        static constexpr uint8_t SetDataBitsL               = 0x80;
+        static constexpr uint8_t ReadDataBitsL              = 0x81;
+        static constexpr uint8_t SetDataBitsH               = 0x82;
+        static constexpr uint8_t ReadDataBitsH              = 0x83;
+        
+        static constexpr uint8_t DisableClkDivideBy5        = 0x8A;
+        static constexpr uint8_t DisableAdaptiveClocking    = 0x97;
+        static constexpr uint8_t Disable3PhaseDataClocking  = 0x8D;
+        static constexpr uint8_t DisconnectTDITDOLoopback   = 0x85;
+        static constexpr uint8_t SetClkDivisor              = 0x86;
+        static constexpr uint8_t BadCommandResp             = 0xFA;
+        static constexpr uint8_t BadCommand                 = 0xAB;
     };
     
     PinState _testState = PinState::In;
@@ -183,9 +232,7 @@ public:
     
     
     void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
-        if (_cmds.size() >= 64) {
-            _flush();
-        }
+        _flushIfNeeded();
         
         // Write TMS
         {
@@ -208,7 +255,13 @@ public:
             _setTest(PinState::Out0);
             if (tdoRead) _read();
             _setTest(PinState::Out1);
-            _setRst(PinState::Out0);
+            _setRst(tdi ? PinState::Out1 : PinState::Out0);
+        }
+    }
+    
+    void _flushIfNeeded() {
+        if (_cmds.size() >= 64) {
+            _flush();
         }
     }
     
@@ -332,16 +385,30 @@ private:
             _checkErr(ir, "ftdi_usb_close failed");
         }
         
+        void usbReset() {
+            int ir = ftdi_usb_reset(&_ctx);
+            _checkErr(ir, "ftdi_usb_reset failed");
+        }
+        
         void setBitmode(uint8_t mode, uint8_t pinDirs) {
             int ir = ftdi_set_bitmode(&_ctx, pinDirs, mode);
             _checkErr(ir, "ftdi_set_bitmode failed");
         }
         
         void read(void* data, size_t len) {
+            size_t off = 0;
+            while (off < len) {
+                int ir = ftdi_read_data(&_ctx, (uint8_t*)data+off, len-off);
+                _checkErr(ir, "ftdi_read_data failed");
+                printf("ftdi_read_data returned: %d\n", ir);
+                off += ir;
+            }
+        }
+        
+        size_t readAny(void* data, size_t len) {
             int ir = ftdi_read_data(&_ctx, (uint8_t*)data, len);
-            _checkErr(ir, "ftdi_write_data failed");
-            if ((size_t)ir != len)
-                throw RuntimeError("short read (attempted=%zu, read=%zu)", len, (size_t)ir);
+            _checkErr(ir, "ftdi_read_data failed");
+            return (size_t)ir;
         }
         
         void write(const void* data, size_t len) {
@@ -349,6 +416,11 @@ private:
             _checkErr(ir, "ftdi_write_data failed");
             if ((size_t)ir != len)
                 throw RuntimeError("short write (attempted=%zu, wrote=%zu)", len, (size_t)ir);
+        }
+        
+        void setEventChar(uint8_t eventch, uint8_t enable) {
+            int ir = ftdi_set_event_char(&_ctx, eventch, enable);
+            _checkErr(ir, "ftdi_set_event_char failed");
         }
         
 //        operator bool() const { return _s.dev; }
