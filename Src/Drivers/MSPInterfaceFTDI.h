@@ -83,7 +83,10 @@ public:
         return r;
     }
     
-    MSPInterfaceFTDI(USBDevice&& dev) : _dev(std::move(dev)) {
+    MSPInterfaceFTDI(uint8_t testPin, uint8_t rstPin, USBDevice&& dev) :
+    _testPin(testPin),
+    _rstPin(rstPin),
+    _dev(std::move(dev)) {
         _dev.open();
         _dev.setBitmode(BITMODE_RESET, 0);
         _dev.setBitmode(BITMODE_MPSSE, 0);
@@ -91,13 +94,175 @@ public:
     
     ~MSPInterfaceFTDI() {}
     
-    void sbwPins(MSPInterface::PinState test, MSPInterface::PinState rst) override {
+    struct MPSSE {
+        static constexpr uint8_t SetDataBitsL   = 0x80;
+        static constexpr uint8_t ReadDataBitsL  = 0x81;
+        static constexpr uint8_t SetDataBitsH   = 0x82;
+        static constexpr uint8_t ReadDataBitsH  = 0x83;
+    };
+    
+    PinState _testState = PinState::In;
+    PinState _rstState = PinState::In;
+    void _setPins(PinState t, PinState r) {
+        assert(t != PinState::Pulse01);
+        assert(r != PinState::Pulse01);
+        // Short-circuit if the state hasn't changed
+        if (t==_testState && r==_rstState) return;
+        _testState = t;
+        _rstState = r;
+        
+        const uint8_t dir =
+            (t!=PinState::In ? _testPin : 0) |
+            (r!=PinState::In ? _rstPin  : 0) ;
+        
+        const uint8_t val =
+            (t==PinState::Out1 ? _testPin : 0) |
+            (r==PinState::Out1 ? _rstPin  : 0) ;
+        
+        _cmds.push_back(MPSSE::SetDataBitsL);
+        _cmds.push_back(val); // Value
+        _cmds.push_back(dir); // Direction
     }
     
+    void _setTest(PinState t) {
+        _setPins(t, _rstState);
+    }
+    
+    void _setRst(PinState r) {
+        _setPins(_testState, r);
+    }
+    
+    void _read() {
+        _cmds.push_back(MPSSE::ReadDataBitsL);
+        _readLen++;
+    }
+    
+    void sbwPins(PinState test, PinState rst) override {
+        const PinState t0 = (test!=PinState::Pulse01 ? test : PinState::Out0);
+        const PinState r0 = (rst !=PinState::Pulse01 ? rst  : PinState::Out0);
+        const PinState t1 = (test!=PinState::Pulse01 ? test : PinState::Out1);
+        const PinState r1 = (rst !=PinState::Pulse01 ? rst  : PinState::Out1);
+        
+        _setPins(t0, r0);
+        _setPins(t1, r1);
+        
+//        if (pulse) {
+//            // TODO: flush existing commands if we're pulsing, to ensure that these commands are atomically received, otherwise the pulse signal could be stretched
+//        }
+//        
+//        
+//        const uint8_t dir =
+//            (test!=PinState::In ? _testPin : 0) |
+//            ( rst!=PinState::In ? _rstPin  : 0) ;
+//        
+//        const uint8_t val0 =
+//            (test==PinState::Out1 ? _testPin : 0) |
+//            ( rst==PinState::Out1 ? _rstPin  : 0) ;
+//        
+//        _cmds.push_back(MPSSE::SetDataBitsL);
+//        _cmds.push_back(val0); // Value
+//        _cmds.push_back(dir); // Direction
+//        
+//        if (pulse) {
+//            const uint8_t val1 =
+//                (test==PinState::Out1||test==PinState::Pulse01 ? _testPin : 0) |
+//                ( rst==PinState::Out1|| rst==PinState::Pulse01 ? _rstPin  : 0) ;
+//            
+//            _cmds.push_back(MPSSE::SetDataBitsL);
+//            _cmds.push_back(val1); // Value
+//            _cmds.push_back(dir); // Direction
+//        }
+    }
+    
+//    RST::Write(tms);
+//    TEST::Write(0);
+//    tdo = RST::Read();
+//    RST::Write(tclk);
+//    TEST::Write(1);
+    
+    
+    
     void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
+        if (_cmds.size() >= 64) {
+            _flush();
+        }
+        
+        // Write TMS
+        {
+            _setRst(tms ? PinState::Out1 : PinState::Out0);
+            _setTest(PinState::Out0);
+            _setRst(tclk ? PinState::Out1 : PinState::Out0);
+            _setTest(PinState::Out1);
+        }
+        
+        // Write TDI
+        {
+            _setRst(tdi ? PinState::Out1 : PinState::Out0);
+            _setTest(PinState::Out0);
+            _setTest(PinState::Out1);
+            _setRst(PinState::In);
+        }
+        
+        // Read TDO
+        {
+            _setTest(PinState::Out0);
+            if (tdoRead) _read();
+            _setTest(PinState::Out1);
+            _setRst(PinState::Out0);
+        }
+    }
+    
+    void _flush() {
+        if (_cmds.empty()) return; // Short-circuit if there aren't any commands to flush
+        // Write the commands
+        _dev.write(_cmds.data(), _cmds.size());
+        _cmds.clear();
+        
+        // Read expected amount of data into the end of `_readData`
+        const size_t off = _readData.size();
+        _readData.resize(_readData.size() + _readLen);
+        _dev.read(_readData.data()+off, _readLen);
+        _readLen = 0;
     }
     
     void sbwRead(void* buf, size_t len) override {
+        _flush();
+        
+        // Verify that the requested length isn't greater than
+        // the amount of available data
+        assert(len*8 <= _readData.size());
+        
+//        const size_t tmpBufLen = len*8;
+//        auto tmpBufUnique = std::make_unique<uint8_t[]>(tmpBufLen);
+//        uint8_t* tmpBuf = tmpBufUnique.get();
+//        _dev.read(tmpBuf, tmpBufLen);
+        
+        uint8_t* buf8 = (uint8_t*)buf;
+        for (size_t ireadData=0, ibit=0, ibuf=0; ireadData<len*8; ireadData++, ibit++) {
+            const bool bit = _readData[ireadData] & _rstPin;
+            buf8[ibuf] <<= 1;
+            buf8[ibuf] |= bit;
+            if (ibit == 8) {
+                ibuf++;
+                ibit = 0;
+            }
+        }
+        
+        _readData.erase(_readData.begin(), _readData.begin()+len*8);
+        
+//        uint8_t* buf8 = (uint8_t*)buf;
+//        for (size_t ibit=0, ibyte=0, byteLen=0; ibit<tmpBufLen; ibit++) {
+//            const bool bit = tmpBuf[ibit] & _rstPin;
+//            buf8[ibyte] <<= 1;
+//            buf8[ibyte] |= bit;
+//            byteLen++;
+//            if (byteLen == 8) {
+//                ibyte++;
+//                byteLen = 0;
+//            }
+//        }
+//        
+//        _readLen -= len;
     }
     
 private:
@@ -169,7 +334,21 @@ private:
         
         void setBitmode(uint8_t mode, uint8_t pinDirs) {
             int ir = ftdi_set_bitmode(&_ctx, pinDirs, mode);
-            _checkErr(ir, "setBitmode failed");
+            _checkErr(ir, "ftdi_set_bitmode failed");
+        }
+        
+        void read(void* data, size_t len) {
+            int ir = ftdi_read_data(&_ctx, (uint8_t*)data, len);
+            _checkErr(ir, "ftdi_write_data failed");
+            if ((size_t)ir != len)
+                throw RuntimeError("short read (attempted=%zu, read=%zu)", len, (size_t)ir);
+        }
+        
+        void write(const void* data, size_t len) {
+            int ir = ftdi_write_data(&_ctx, (const uint8_t*)data, len);
+            _checkErr(ir, "ftdi_write_data failed");
+            if ((size_t)ir != len)
+                throw RuntimeError("short write (attempted=%zu, wrote=%zu)", len, (size_t)ir);
         }
         
 //        operator bool() const { return _s.dev; }
@@ -231,5 +410,10 @@ private:
 //        if (ir < 0) throw RuntimeError("%s: %s", errMsg, ftdi_get_error_string(&ctx));
 //    }
     
+    const uint8_t _testPin = 0;
+    const uint8_t _rstPin = 0;
     _FTDIDevice _dev;
+    std::vector<uint8_t> _cmds;
+    std::vector<uint8_t> _readData;
+    size_t _readLen = 0;
 };

@@ -13,10 +13,12 @@ int main(int argc, const char* argv[]) {
 //        if (devices.size() > 1) throw RuntimeError("more than one matching USB device");
 //        MSPInterfaceMDC msp(std::move(devices[0]));
         
+        constexpr uint8_t TestPin = 0x01;
+        constexpr uint8_t RstPin = 0x02;
         auto devices = MSPInterfaceFTDI::GetDevices();
         if (devices.empty()) throw RuntimeError("no matching FTDI devices");
         if (devices.size() > 1) throw RuntimeError("more than one matching FTDI device");
-        MSPInterfaceFTDI msp(std::move(devices[0]));
+        MSPInterfaceFTDI msp(TestPin, RstPin, std::move(devices[0]));
         
         MSPProbeSim probeSim(msp);
         probeSim.run();

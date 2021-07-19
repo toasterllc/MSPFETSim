@@ -1,5 +1,6 @@
 #pragma once
 #include <climits>
+#include <chrono>
 #include "VirtualUSBDevice.h"
 #include "MSPInterface.h"
 
