@@ -186,6 +186,14 @@ public:
         _readLen++;
     }
     
+    void sbwTest(PinState test) override {
+        _setTest(test);
+    }
+    
+    void sbwRst(PinState rst) override {
+        _setRst(rst);
+    }
+    
     void sbwPins(PinState test, PinState rst) override {
         const PinState t0 = (test!=PinState::Pulse01 ? test : PinState::Out0);
         const PinState r0 = (rst !=PinState::Pulse01 ? rst  : PinState::Out0);

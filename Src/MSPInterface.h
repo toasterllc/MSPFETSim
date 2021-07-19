@@ -16,6 +16,10 @@ public:
 //    virtual void open() {}
 //    virtual void close() {}
     
+    virtual void sbwTest(PinState test) {}
+    
+    virtual void sbwRst(PinState rst) {}
+    
     // pins(): Sets the state of the SBW pins
     virtual void sbwPins(PinState test, PinState rst) {}
     

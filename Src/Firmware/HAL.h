@@ -45,6 +45,29 @@ enum EVENT_TYPE_FLAGS
     VARIABLE_WATCH_FLAG = 0x10
 };
 
+typedef enum {
+    HIL_CMD_RESET_JTAG_TAP,
+    HIL_CMD_OPEN,
+    HIL_CMD_CONNECT,
+    HIL_CMD_CLOSE,
+    HIL_CMD_JTAG_IR,
+    HIL_CMD_JTAG_DR,
+    HIL_TEST_REG,
+    HIL_TEST_REG_3V,
+    HIL_CMD_QUERY_JSTATE,
+    HIL_CMD_WRITE_JMB,
+    HIL_CMD_READ_JMB,
+    HIL_CMD_CONFIGURE,
+    HIL_CMD_BSL,
+    HIL_CMD_FUSE_CHECK,
+    HIL_CMD_JTAG_IR4,
+    HIL_CMD_DPACC,
+    HIL_CMD_APACC,
+    HIL_CMD_MEM_AP,
+    HIL_CMD_BSL_1XX_4XX,
+    HIL_CMD_TCLK,
+} HIL_COMMAND;
+
 ARMConfigSettings armConfigSettings = {};
 DevicePowerSettings devicePowerSettings = {};
 DeviceSettings deviceSettings = {};
@@ -642,7 +665,208 @@ HAL_FUNCTION(_hal_GetDeviceIdPtr)
 //    return HALERR_UNDEFINED_ERROR;
 //}
 
-HAL_FUNCTION_UNIMP(_hal_SyncJtag_AssertPor_SaveContext)
+HAL_FUNCTION(_hal_SyncJtag_AssertPor_SaveContext)
+{
+    uint16_t i = 0, lOut = 0, ctl_sync = 0;
+    uint16_t MyOut[4];    //! Output
+    uint16_t address;
+    uint16_t wdtVal;
+    uint16_t* syncWithRunVarAddress = 0;
+
+    // Check input parameters before we proceed
+    if(STREAM_get_word(&address) != 0)
+    {
+        return (HALERR_SYNC_JTAG_ASSERT_POR_NO_WDT_ADDRESS);
+    }
+    if(STREAM_get_word(&wdtVal) != 0)
+    {
+        return (HALERR_SYNC_JTAG_ASSERT_POR_NO_WDT_VALUE);
+    }
+
+    syncWithRunVarAddress = getTargetRunningVar();
+    if(syncWithRunVarAddress)
+    {
+        *syncWithRunVarAddress = 0x0000;
+    }
+
+    // Sync the JTAG
+    cntrl_sig_16bit();
+    IHIL_SetReg_16Bits(0x2401);
+
+    if(cntrl_sig_capture_r() != JTAGVERSION)
+    {
+        return (HALERR_JTAG_VERSION_MISMATCH);
+    }
+
+    cntrl_sig_capture();
+    lOut = IHIL_SetReg_16Bits_R(0x0000);    // read control register once
+
+    IHIL_Tclk(1);
+
+    if(!(lOut & CNTRL_SIG_TCE))
+    {
+        // If the JTAG and CPU are not already synchronized ...
+        // Initiate Jtag and CPU synchronization. Read/Write is under CPU control. Source TCLK via TDI.
+        // Do not effect bits used by DTC (CPU_HALT, MCLKON).
+        cntrl_sig_high_byte();
+        IHIL_SetReg_8Bits((CNTRL_SIG_TAGFUNCSAT | CNTRL_SIG_TCE1 | CNTRL_SIG_CPU) >> 8); // initiate CPU synchronization but release low byte of CNTRL sig register to CPU control
+
+        // Address Force Sync special handling
+        eem_data_exchange();               // read access to EEM General Clock Control Register (GCLKCTRL)
+        IHIL_SetReg_16Bits(MX_GCLKCTRL + MX_READ);
+        lOut = IHIL_SetReg_16Bits_R(0);                 // read the content of GCLKCNTRL into lOUt
+        // Set Force Jtag Synchronization bit in Emex General Clock Control register.
+        lOut |=  0x0040;                 // 0x0040 = FORCE_SYN in DLLv2
+        eem_data_exchange();                // Stability improvement: should be possible to remove this, required only once at the beginning
+        IHIL_SetReg_16Bits(MX_GCLKCTRL + MX_WRITE);   // write access to EEM General Clock Control Register (GCLKCTRL)
+        lOut = IHIL_SetReg_16Bits_R(lOut);              // write into GCLKCNTRL
+        // Reset Force Jtag Synchronization bit in Emex General Clock Control register.
+        lOut &= ~0x0040;
+        eem_data_exchange();                // Stability improvement: should be possible to remove this, required only once at the beginning
+        IHIL_SetReg_16Bits(MX_GCLKCTRL + MX_WRITE);   // write access to EEM General Clock Control Register (GCLKCTRL)
+        lOut = IHIL_SetReg_16Bits_R(lOut);             // write into GCLKCNTRL
+
+        ctl_sync =  SyncJtag();
+
+        if(!(ctl_sync & CNTRL_SIG_CPU_HALT))
+        { // Synchronization failed!
+            return (HALERR_SYNC_JTAG_ASSERT_POR_JTAG_TIMEOUT);
+        }
+    }// end of if(!(lOut & CNTRL_SIG_TCE))
+
+    if(ctl_sync & CNTRL_SIG_CPU_HALT)
+    {
+        IHIL_Tclk(0);
+        cntrl_sig_16bit();
+        IHIL_SetReg_16Bits(0x2401);
+        IHIL_Tclk(1);
+    }
+    else
+    {
+        cntrl_sig_16bit();
+        IHIL_SetReg_16Bits(0x2401);
+    }
+
+    if (deviceSettings.assertBslValidBit)
+    {
+        // here we add bit de assert bit 7 in JTAG test reg to enalbe clocks again
+        test_reg();
+        lOut = IHIL_SetReg_8Bits_R(0x00);
+        lOut |= 0x80; //DE_ASSERT_BSL_VALID;
+        test_reg();
+        IHIL_SetReg_8Bits(lOut); // Bit 7 is de asserted now
+    }
+
+    // execute a dummy instruction here
+    data_16bit();
+    IHIL_Tclk(1);                   // Stability improvement: should be possible to remove this TCLK is already 1
+    IHIL_SetReg_16Bits(0x4303);         // 0x4303 = NOP
+    IHIL_Tclk(0);
+    data_capture();
+    IHIL_Tclk(1);
+
+    // step until next instruction load boundary if not being already there
+    if(instrLoad() != 0)
+    {
+        return (HALERR_INSTRUCTION_BOUNDARY_ERROR);
+    }
+
+    if (deviceSettings.clockControlType == GCC_EXTENDED)
+    {
+        // Perform the POR
+        eem_data_exchange();
+        IHIL_SetReg_16Bits(MX_GENCNTRL + MX_WRITE);               // write access to EEM General Control Register (MX_GENCNTRL)
+        IHIL_SetReg_16Bits(EMU_FEAT_EN | EMU_CLK_EN | CLEAR_STOP | EEM_EN);   // write into MX_GENCNTRL
+
+        eem_data_exchange(); // Stability improvement: should be possible to remove this, required only once at the beginning
+        IHIL_SetReg_16Bits(MX_GENCNTRL + MX_WRITE);               // write access to EEM General Control Register (MX_GENCNTRL)
+        IHIL_SetReg_16Bits(EMU_FEAT_EN | EMU_CLK_EN);         // write into MX_GENCNTRL
+    }
+    if (deviceSettings.clockControlType == GCC_STANDARD_I)
+    {
+        eem_data_exchange();
+        IHIL_SetReg_16Bits(MX_GENCNTRL + MX_WRITE);  // write access to EEM General Control Register (MX_GENCNTRL)
+        IHIL_SetReg_16Bits(EMU_FEAT_EN);             // write into MX_GENCNTRL
+    }
+
+    IHIL_Tclk(0);
+    cntrl_sig_16bit();
+    IHIL_SetReg_16Bits(CNTRL_SIG_READ | CNTRL_SIG_TCE1 | CNTRL_SIG_PUC | CNTRL_SIG_TAGFUNCSAT); // Assert PUC
+    IHIL_Tclk(1);
+    cntrl_sig_16bit();
+    IHIL_SetReg_16Bits(CNTRL_SIG_READ | CNTRL_SIG_TCE1 | CNTRL_SIG_TAGFUNCSAT); // Negate PUC
+
+    IHIL_Tclk(0);
+    cntrl_sig_16bit();
+    IHIL_SetReg_16Bits(CNTRL_SIG_READ | CNTRL_SIG_TCE1 | CNTRL_SIG_PUC | CNTRL_SIG_TAGFUNCSAT); // Assert PUC
+    IHIL_Tclk(1);
+    cntrl_sig_16bit();
+    IHIL_SetReg_16Bits(CNTRL_SIG_READ | CNTRL_SIG_TCE1 | CNTRL_SIG_TAGFUNCSAT); // Negate PUC
+
+    // Explicitly set TMR
+    IHIL_SetReg_16Bits(CNTRL_SIG_READ | CNTRL_SIG_TCE1); // Enable access to Flash registers
+
+    flash_16bit_update();               // Disable flash test mode
+    IHIL_SetReg_16Bits(FLASH_SESEL1);     // Pulse TMR
+    IHIL_SetReg_16Bits(FLASH_SESEL1 | FLASH_TMR);
+    IHIL_SetReg_16Bits(FLASH_SESEL1);
+    IHIL_SetReg_16Bits(FLASH_SESEL1 | FLASH_TMR); // Set TMR to user mode
+
+    cntrl_sig_high_byte();
+    IHIL_SetReg_8Bits((CNTRL_SIG_TAGFUNCSAT | CNTRL_SIG_TCE1) >> 8); // Disable access to Flash register
+
+    // step until an appropriate instruction load boundary
+    for(i = 0; i < 10; i++)
+    {
+      addr_capture();
+        lOut = IHIL_SetReg_16Bits_R(0x0000);
+        if(lOut == 0xFFFE || lOut == 0x0F00)
+        {
+            break;
+        }
+        IHIL_TCLK();
+    }
+    if(i == 10)
+    {
+        return (HALERR_INSTRUCTION_BOUNDARY_ERROR);
+    }
+    IHIL_TCLK();
+    IHIL_TCLK();
+
+    IHIL_Tclk(0);
+    addr_capture();
+    IHIL_SetReg_16Bits(0x0000);
+    IHIL_Tclk(1);
+
+    // step until next instruction load boundary if not being already there
+
+    if(instrLoad() != 0)
+    {
+        return (HALERR_INSTRUCTION_BOUNDARY_ERROR);
+    }
+
+    // Hold Watchdog
+    MyOut[0] = ReadMemWord(address); // safe WDT value
+    wdtVal |= (MyOut[0] & 0xFF); // set original bits in addition to stop bit
+    WriteMemWord(address, wdtVal);
+
+    // read MAB = PC here
+    addr_capture();
+    MyOut[1] = IHIL_SetReg_16Bits_R(0);
+    MyOut[2] = 0; // high PC always 0 for MSP430 architecture
+
+    // set PC to a save address pointing to ROM to avoid RAM corruption on certain devices
+    SetPc(ROM_ADDR);
+
+    // read status register
+    MyOut[3] = ReadCpuReg(2);
+
+    // return output
+    STREAM_put_bytes((uint8_t*)MyOut,8);
+
+    return(0);
+}
+
 HAL_FUNCTION_UNIMP(_hal_SyncJtag_Conditional_SaveContext)
 HAL_FUNCTION_UNIMP(_hal_RestoreContext_ReleaseJtag)
 HAL_FUNCTION_UNIMP(_hal_ReadMemBytes)
@@ -1894,7 +2118,219 @@ HAL_FUNCTION(_hal_MagicPattern)
 }
 
 HAL_FUNCTION_UNIMP(_hal_UnlockC092)
-HAL_FUNCTION_UNIMP(_hal_HilCommand)
+
+HAL_FUNCTION(_hal_HilCommand)
+{
+    uint64_t shiftedOut = 0;
+    uint32_t command = 0;
+    uint32_t dataLow = 0;
+    uint32_t dataHigh = 0;
+    uint64_t data = 0;
+    uint32_t bits = 16;
+    int16_t streamResult = 0;
+    int16_t retVal = 0;
+
+    while (streamResult == 0)
+    {
+        uint64_t value = 0;
+
+        if( STREAM_get_long(&command) < 0 )
+        {
+            return HALERR_NO_COMMAND;
+        }
+        if ( STREAM_get_long(&dataLow) < 0 )
+        {
+            return HALERR_NO_DATA;
+        }
+        if ( STREAM_get_long(&dataHigh) < 0 )
+        {
+            return HALERR_NO_DATA;
+        }
+        streamResult = STREAM_get_long(&bits);
+        if (streamResult < 0)
+        {
+            return HALERR_NO_BIT_SIZE;
+        }
+
+        data = dataLow | ((uint64_t)dataHigh << 32);
+
+        if (command == HIL_CMD_JTAG_IR)
+        {
+            uint8_t bitCounter;
+
+            // Force 8-bits for IR shifts
+            // This is necessary because the instruction is shifted into the target MSB-first
+            // by the SPI interface
+            bits = 8;
+
+            for(bitCounter = 0; bitCounter < bits; ++bitCounter)
+            {
+                value <<= 1;
+                value |= (data >> bitCounter) & 1;
+            }
+        }
+        else
+        {
+            value = data;
+        }
+
+        switch (command)
+        {
+        case HIL_CMD_RESET_JTAG_TAP:
+            IHIL_TapReset();
+            break;
+
+        case HIL_CMD_FUSE_CHECK:
+            IHIL_CheckJtagFuse();
+            break;
+
+        case HIL_CMD_OPEN:
+        case HIL_CMD_CONNECT:
+            IHIL_Open((uint8_t)dataLow);
+            break;
+
+        case HIL_CMD_BSL:
+            IHIL_BSL_EntrySequence(1);
+            break;
+
+       case HIL_CMD_BSL_1XX_4XX:
+            IHIL_BSL_EntrySequence1xx_4xx();
+            break;
+
+        case HIL_CMD_CLOSE:
+            IHIL_Close();
+            if (dataLow != 0)
+            {
+                IHIL_SetVcc(0);
+            }
+            break;
+
+        case HIL_CMD_JTAG_IR:
+            shiftedOut = IHIL_Instr_R((uint8_t)value);
+            STREAM_put_long( (uint32_t)(shiftedOut &0xFFFFFFFF) );
+            STREAM_put_long( (uint32_t)(shiftedOut >> 32) );
+            break;
+
+        case HIL_CMD_JTAG_IR4:
+            shiftedOut = IHIL_Instr4((uint8_t)value);
+            STREAM_put_long( (uint32_t)(shiftedOut &0xFFFFFFFF) );
+            STREAM_put_long( (uint32_t)(shiftedOut >> 32) );
+            break;
+
+        case HIL_CMD_JTAG_DR:
+            switch (bits)
+            {
+            case  8:
+                shiftedOut = IHIL_SetReg_8Bits_R((uint8_t)value & 0xFF);
+                break;
+            case 16:
+                shiftedOut = IHIL_SetReg_16Bits_R((uint16_t)value & 0xFFFF);
+                break;
+            case 20:
+                shiftedOut = IHIL_SetReg_20Bits_R((uint32_t)value & 0xFFFFF);
+                break;
+            case 32:
+                shiftedOut = IHIL_SetReg_32Bits_R((uint32_t)value & 0xFFFFFFFF);
+                break;
+            case 64:
+                shiftedOut = IHIL_SetReg_64Bits_R(value);
+                break;
+            case 35:
+                shiftedOut = IHIL_SetReg_35Bits_R(&value);
+                break;
+            default:
+                return HALERR_INVALID_BIT_SIZE;
+            }
+            STREAM_put_long( (uint32_t)(shiftedOut &0xFFFFFFFF) );
+            STREAM_put_long( (uint32_t)(shiftedOut >> 32) );
+            break;
+
+        case HIL_TEST_REG:
+           test_reg();
+           IHIL_SetReg_32Bits((uint32_t)value);
+           break;
+
+        case HIL_TEST_REG_3V:
+           test_reg_3V();
+           IHIL_SetReg_16Bits((uint16_t)value);
+           break;
+
+        case HIL_CMD_QUERY_JSTATE:
+           jstate_read();
+           shiftedOut = IHIL_SetReg_64Bits_R(0x0000000000000000);
+           STREAM_put_long( (uint32_t)(shiftedOut &0xFFFFFFFF) );
+           STREAM_put_long( (uint32_t)(shiftedOut >> 32) );
+           break;
+
+        case HIL_CMD_TCLK:
+           IHIL_Tclk((uint8_t)dataLow);
+           break;
+           
+        case HIL_CMD_WRITE_JMB:
+          {
+            uint8_t jtagMailboxIn = 0;
+            if(bits == 16)
+            {
+                jtagMailboxIn = i_WriteJmbIn((uint16_t)dataLow);
+            }
+            else if(bits == 32)
+            {
+                jtagMailboxIn = i_WriteJmbIn32((uint16_t)dataLow, (uint16_t)(dataLow >> 16));
+            }
+            else
+            {
+                return (HALERR_JTAG_MAILBOX_IN_TIMOUT);
+            }
+
+            if(jtagMailboxIn == 1)
+            {
+                return (HALERR_JTAG_MAILBOX_IN_TIMOUT);
+            }
+            break;
+          }
+        case HIL_CMD_READ_JMB:
+            shiftedOut = i_ReadJmbOut();
+            STREAM_put_long( (uint32_t)(shiftedOut &0xFFFFFFFF) );
+            STREAM_put_long( (uint32_t)(shiftedOut >> 32) );
+            break;
+
+        case HIL_CMD_CONFIGURE:
+            IHIL_SetProtocol(dataLow);
+            break;
+
+        case HIL_CMD_DPACC:
+            retVal = (IHIL_Write_Read_Dp((uint8_t)dataLow, // address
+                                        &dataHigh,              // data
+                                        (uint16_t)bits)   // rnw
+                                         > 0) ? 0 : HALERR_DAP_NACK;
+            STREAM_put_long(dataHigh);
+            break;
+
+        case HIL_CMD_APACC:
+            retVal = (IHIL_Write_Read_Ap(dataLow,              // address | APSEL
+                                        &dataHigh,            // data
+                                        (uint16_t)bits) // rnw
+                                         > 0) ? 0 : HALERR_DAP_NACK;
+            STREAM_put_long(dataHigh);
+            break;
+
+        case HIL_CMD_MEM_AP:
+            retVal = (IHIL_Write_Read_Mem_Ap((uint16_t)(bits >> 16),// ap_sel
+                                            dataLow,                     // address
+                                            &dataHigh,                   // data
+                                            (uint16_t)bits)        // rnw
+                                            > 0) ? 0 : HALERR_DAP_NACK;
+              STREAM_put_long(dataHigh);
+
+            break;
+
+        default:
+          retVal = HALERR_UNKNOWN_COMMAND;
+        }
+    }
+    return retVal;
+}
+
 HAL_FUNCTION_UNIMP(_hal_PollJStateReg)
 HAL_FUNCTION_UNIMP(_hal_PollJStateRegFR57xx)
 

@@ -194,6 +194,97 @@ uint64_t sbw_Shift_R(uint64_t Data, int16_t Bits)
     return(TDOvalue);
 }
 
+void _hil_Delay_1us(uint16_t us) {
+    usleep(us);
+}
+
+void _hil_Delay_1ms(uint16_t ms) {
+    usleep(1000*ms);
+}
+
+void RSTset1()
+{
+    _msp.sbwRst(MSPInterface::PinState::Out1);
+    _hil_Delay_1ms(5);
+}
+
+void RSTset0()
+{
+    _msp.sbwRst(MSPInterface::PinState::Out0);
+    _hil_Delay_1ms(5);
+}
+
+void TSTset1()
+{
+    _msp.sbwTest(MSPInterface::PinState::Out1);
+    _hil_Delay_1ms(5);
+}
+
+void TSTset0()
+{
+    _msp.sbwTest(MSPInterface::PinState::Out0);
+    _hil_Delay_1ms(5);
+}
+
+void TSTset1NoDelay()
+{
+    _msp.sbwTest(MSPInterface::PinState::Out1);
+}
+
+void TSTset0NoDelay()
+{
+    _msp.sbwTest(MSPInterface::PinState::Out0);
+}
+
+void TCLKset1()
+{
+    IHIL_Tclk(1);
+}
+
+void TCLKset0()
+{
+    IHIL_Tclk(0);
+}
+
+void TCKset1()
+{
+    // In SBW mode, TCK is pin 0, which is the same assignment TST.
+    // See _SBW_Back definition.
+    TSTset1();
+}
+void TCKset0()
+{
+    // In SBW mode, TCK is pin 0, which is the same assignment TST.
+    // See _SBW_Back definition.
+    TSTset0();
+}
+
+void TCKset1NoDelay()
+{
+    // In SBW mode, TCK is pin 0, which is the same assignment TST.
+    // See _SBW_Back definition.
+    TSTset1NoDelay();
+}
+
+void TCKset0NoDelay()
+{
+    // In SBW mode, TCK is pin 0, which is the same assignment TST.
+    // See _SBW_Back definition.
+    TSTset0NoDelay();
+}
+
+void TCLK()
+{
+    TCLKset0();
+    TCLKset1();
+}
+
+void hil_fpga_enable_bypass() {
+}
+
+void hil_fpga_disable_bypass() {
+}
+
 void _flush() {
     _msp.sbwRead(nullptr, 0);
 }
@@ -365,7 +456,53 @@ void IHIL_Delay_1ms(uint16_t msecs) {
 int16_t IHIL_IccMonitor_Process(uint16_t flags)                 { HIL_UNIMP_RET0;   };
 void IHIL_EntrySequences(uint8_t states)                        { HIL_UNIMP;        };
 void IHIL_BSL_EntrySequence(uint16_t switchBypassOff)           { HIL_UNIMP;        };
-void IHIL_BSL_EntrySequence1xx_4xx()                            { HIL_UNIMP;        };
+
+void IHIL_BSL_EntrySequence1xx_4xx() {
+    // From msp_fet:_hil_BSL_EntrySequence1xx_4xx()
+    hil_fpga_enable_bypass();
+
+    if(gprotocol_id == SPYBIWIRE)
+    {
+        qDriveSbw();
+    }
+    else
+    {
+        qDriveJTAG();
+    }
+
+    RSTset0();    // set RST 0
+    // INIT phase
+    TSTset0();
+    _hil_Delay_1ms(100);
+
+    TSTset1();    // set test to 1
+    _hil_Delay_1ms(100);
+
+    //this is the first pulse keep it low for less than 15us for 5xx
+    TSTset0NoDelay();
+
+    TCKset0NoDelay();
+    _hil_Delay_1us(5);
+
+    TCKset1NoDelay();
+    _hil_Delay_1us(5);
+
+    TSTset1();     // set test 1;
+
+    _hil_Delay_1ms(50);
+    TCKset0();
+
+    RSTset1();     // set RST 1;
+    _hil_Delay_1ms(50);
+
+    TCKset1();
+
+    TSTset0();     // set test 0;
+    _hil_Delay_1ms(50);
+
+    hil_fpga_disable_bypass();
+}
+
 void IHIL_SetReset(uint8_t value)                               { HIL_UNIMP;        };
 void IHIL_SetTest(uint8_t value)                                { HIL_UNIMP;        };
 void IHIL_SetTMS(uint8_t value)                                 { HIL_UNIMP;        };
@@ -534,11 +671,51 @@ void IHIL_SetReg_XBits(uint64_t *Data, uint16_t count) {
     }
 }
 
-void IHIL_SetReg_8Bits(uint8_t data) {
+void IHIL_SetReg_8Bits(uint8_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
     } else {
-        HIL_UNIMP;
+        // From msp_fet:_hil_2w_SetReg_XBits08()
+        // JTAG FSM state = Run-Test/Idle
+        if (TCLK_saved) //PrepTCLK
+        {
+            TMSH_TDIH();
+        }
+        else
+        {
+            TMSH_TDIL();
+        }
+        // JTAG FSM state = Select DR-Scan
+        TMSL_TDIH();
+        // JTAG FSM state = Capture-DR
+        TMSL_TDIH();
+        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
+        sbw_Shift(Data, F_BYTE);
+        // JTAG FSM state = Run-Test/Idle
+    }
+}
+
+uint8_t IHIL_SetReg_8Bits_R(uint8_t Data) {
+    if (gprotocol_id == JTAG) {
+        HIL_UNIMP_RET0;
+    } else {
+        // From msp_fet:_hil_2w_SetReg_XBits08()
+        // JTAG FSM state = Run-Test/Idle
+        if (TCLK_saved) //PrepTCLK
+        {
+            TMSH_TDIH();
+        }
+        else
+        {
+            TMSH_TDIL();
+        }
+        // JTAG FSM state = Select DR-Scan
+        TMSL_TDIH();
+        // JTAG FSM state = Capture-DR
+        TMSL_TDIH();
+        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
+        return (sbw_Shift_R(Data, F_BYTE));
+        // JTAG FSM state = Run-Test/Idle
     }
 }
 
@@ -699,11 +876,59 @@ void IHIL_SetReg_35Bits(uint64_t *Data) {
     }
 }
 
-void IHIL_SetReg_64Bits(uint64_t data) {
+uint64_t IHIL_SetReg_35Bits_R(uint64_t *Data) {
+    if (gprotocol_id == JTAG) {
+        HIL_UNIMP_RET0;
+    } else {
+        HIL_UNIMP_RET0;
+    }
+}
+
+void IHIL_SetReg_64Bits(uint64_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
     } else {
-        HIL_UNIMP;
+        // From msp_fet:_hil_2w_SetReg_XBits64()
+        // JTAG FSM state = Run-Test/Idle
+        if (TCLK_saved) //PrepTCLK
+        {
+            TMSH_TDIH();
+        }
+        else
+        {
+            TMSH_TDIL();
+        }
+        // JTAG FSM state = Select DR-Scan
+        TMSL_TDIH();
+        // JTAG FSM state = Capture-DR
+        TMSL_TDIH();
+        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
+        sbw_Shift(Data, F_LONG_LONG);
+        // JTAG FSM state = Run-Test/Idle
+    }
+}
+
+uint64_t IHIL_SetReg_64Bits_R(uint64_t Data) {
+    if (gprotocol_id == JTAG) {
+        HIL_UNIMP_RET0;
+    } else {
+        // From msp_fet:_hil_2w_SetReg_XBits64()
+        // JTAG FSM state = Run-Test/Idle
+        if (TCLK_saved) //PrepTCLK
+        {
+            TMSH_TDIH();
+        }
+        else
+        {
+            TMSH_TDIL();
+        }
+        // JTAG FSM state = Select DR-Scan
+        TMSL_TDIH();
+        // JTAG FSM state = Capture-DR
+        TMSL_TDIH();
+        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
+        return (sbw_Shift_R(Data, F_LONG_LONG));
+        // JTAG FSM state = Run-Test/Idle
     }
 }
 
@@ -1509,6 +1734,10 @@ void _hil_Release() {
 void qDriveSbw(void) {
     // TEST=0, RST=1
     _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out1);
+}
+
+void qDriveJTAG(void) {
+    HIL_UNIMP;
 }
 
 void _hil_EntrySequences_RstHigh_SBW() {
