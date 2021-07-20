@@ -324,7 +324,41 @@ int16_t IHIL_SetVcc(uint16_t vcc) {
 void IHIL_SwitchVccFET(uint16_t switchVccFET) {
 }
 
-int16_t IHIL_GetVcc(double* Vcc, double* ExtVcc)                { HIL_UNIMP_RET0;   };
+int16_t IHIL_GetVcc(double* Vcc, double* ExtVcc) {
+    // From msp_fet:_hil_GetVcc()
+    float vccSupply = 3300, externalVcc = 0;
+
+//    externalVcc = hil_AdcControlGetExternalVcc();
+//    vccSupply = hil_AdcControlGetSupplyVcc();
+//
+//    if(externalVcc >= 1650 && externalVcc < 3800)
+//    {
+//        setValueVcc = (uint16_t)externalVcc;
+//        externalVccOn = EXTERNAL_VCC_ON;
+//        regulationOn = REGULATION_ON;
+//
+//        if(gprotocol_id != SWD_432)
+//        {
+//            hil_fpga_enable_bypass();
+//        }
+//
+//        P8DIR |= (BIT0);
+//        P8OUT |= (BIT0);
+//
+//        _hil_Delay_1ms(10);
+//        if(gprotocol_id != SWD_432)
+//        {
+//            hil_fpga_disable_bypass();
+//        }
+//    }
+//    else
+//    {
+//        externalVccOn = EXTERNAL_VCC_OFF;
+//    }
+    *Vcc = vccSupply;
+    *ExtVcc = externalVcc;
+    return 0;
+};
 
 int16_t IHIL_SetProtocol(uint16_t protocol_id) {
     // From msp_fet:_hil_SetProtocol()

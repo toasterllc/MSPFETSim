@@ -1309,7 +1309,43 @@ HAL_FUNCTION(_hal_RestoreContext_ReleaseJtag)
     return (0);
 }
 
-HAL_FUNCTION_UNIMP(_hal_ReadMemBytes)
+HAL_FUNCTION(_hal_ReadMemBytes)
+{
+    int16_t ret_value = 0;
+    uint32_t i;
+    uint32_t lAddr;
+    uint32_t lLen;
+
+    if(STREAM_get_long(&lAddr) != 0)
+    {
+        ret_value = HALERR_READ_MEM_BYTES_NO_ADDRESS;
+        goto exit;
+    }
+    if(STREAM_get_long(&lLen) < 0)
+    {
+        ret_value = HALERR_READ_MEM_BYTES_NO_SIZE;
+        goto exit;
+    }
+    halt_cpu();
+    IHIL_Tclk(0);
+    cntrl_sig_16bit();
+    IHIL_SetReg_16Bits(0x2419);
+
+    lLen *= 2; //DLL always sends size in word
+    for(i = 0; i < lLen; i++)
+    {
+        addr_16bit();
+        IHIL_SetReg_16Bits((uint16_t)lAddr);
+        data_to_addr();
+        IHIL_Tclk(1);
+        IHIL_Tclk(0);
+        STREAM_put_byte((uint8_t)(IHIL_SetReg_16Bits_R(0) & 0xFF));
+        lAddr += 1;
+    }
+    release_cpu();
+exit:
+    return(ret_value);
+}
 
 HAL_FUNCTION(_hal_ReadMemWords)
 {
@@ -1379,8 +1415,120 @@ HAL_FUNCTION(_hal_ReadMemQuick)
     return 0;
 }
 
-HAL_FUNCTION_UNIMP(_hal_WriteMemBytes)
-HAL_FUNCTION_UNIMP(_hal_WriteMemWords)
+struct {
+    uint32_t lLen = 0;
+    uint32_t lAddr = 0;
+} _hal_WriteMemBytes_staticVars;
+
+HAL_FUNCTION(_hal_WriteMemBytes)
+{
+    auto& lLen = _hal_WriteMemBytes_staticVars.lLen;
+    auto& lAddr = _hal_WriteMemBytes_staticVars.lAddr;
+    
+    int16_t ret_value = 0;
+    uint8_t value;
+
+    if(flags & MESSAGE_NEW_MSG)
+    {
+        if(STREAM_get_long(&lAddr) != 0)
+        {
+            return HALERR_WRITE_MEM_WORD_NO_RAM_ADDRESS;
+        }
+        if(STREAM_get_long(&lLen) == -1)
+        {
+            return HALERR_WRITE_MEM_WORD_NO_RAM_SIZE;
+        }
+        halt_cpu();
+        IHIL_Tclk(0);
+        cntrl_sig_16bit();
+        IHIL_SetReg_16Bits(0x2418);
+    }
+
+    lLen *= 2; //DLL always sends size in word
+    for(; lLen && (ret_value == 0); lLen--)
+    {
+        ret_value = STREAM_get_byte(&value);
+        addr_16bit();
+        IHIL_SetReg_16Bits((uint16_t)lAddr);
+        data_to_addr();
+        IHIL_SetReg_8Bits(value);
+        IHIL_Tclk(1);
+        IHIL_Tclk(0);
+        lAddr += 1;
+    }
+
+    if(flags & MESSAGE_LAST_MSG)
+    {
+        release_cpu();
+    }
+    else if(ret_value == 1)
+    {
+        STREAM_out_change_type(RESPTYP_ACKNOWLEDGE);
+        ret_value = 0;
+    }
+    else
+    {
+        ret_value = HALERR_WRITE_MEM_WORD_UNKNOWN;
+    }
+    return(ret_value);
+}
+
+struct {
+    uint32_t lLen = 0;
+    uint32_t lAddr = 0;
+} _hal_WriteMemWords_staticVars;
+
+HAL_FUNCTION(_hal_WriteMemWords)
+{
+    auto& lLen = _hal_WriteMemWords_staticVars.lLen;
+    auto& lAddr = _hal_WriteMemWords_staticVars.lAddr;
+
+    int16_t ret_value = 0;
+    uint16_t tmp_uint;
+
+    if(flags & MESSAGE_NEW_MSG)
+    {
+        if(STREAM_get_long(&lAddr) != 0)
+        {
+            return HALERR_WRITE_MEM_WORD_NO_RAM_ADDRESS;
+        }
+        if(STREAM_get_long(&lLen) == -1)
+        {
+            return HALERR_WRITE_MEM_WORD_NO_RAM_SIZE;
+        }
+        halt_cpu();
+        IHIL_Tclk(0);
+        cntrl_sig_16bit();
+        IHIL_SetReg_16Bits(0x2408);
+    }
+
+    for(; lLen && (ret_value == 0); lLen--)
+    {
+        ret_value = STREAM_get_word(&tmp_uint);
+        addr_16bit();
+        IHIL_SetReg_16Bits((uint16_t)lAddr);
+        data_to_addr();
+        IHIL_SetReg_16Bits(tmp_uint);
+        IHIL_Tclk(1);
+        IHIL_Tclk(0);
+        lAddr += 2;
+    }
+
+    if(flags & MESSAGE_LAST_MSG)
+    {
+        release_cpu();
+    }
+    else if(ret_value == 1)
+    {
+        STREAM_out_change_type(RESPTYP_ACKNOWLEDGE);
+        ret_value = 0;
+    }
+    else
+    {
+        ret_value = HALERR_WRITE_MEM_WORD_UNKNOWN;
+    }
+    return(ret_value);
+}
 
 HAL_FUNCTION(_hal_EemDataExchange)
 {
@@ -1611,7 +1759,296 @@ HAL_FUNCTION(_hal_WriteAllCpuRegs)
 }
 
 HAL_FUNCTION_UNIMP(_hal_Psa)
-HAL_FUNCTION_UNIMP(_hal_ExecuteFunclet)
+
+#define REG_ADDRESS 5
+#define REG_SIZE    6
+#define REG_LOCKA   8
+#define REG_TYPE    9
+
+#define REG_GP1     10  // General purpose registers used by the funclet
+#define REG_GP2     11
+#define REG_GP3     12
+
+#define WAIT_FOR_DEAD_START (0x20)  // Code position where the WaitForDead loop starts
+#define WAIT_FOR_DEAD_END   (0x26)  // Code position where the WaitForDead loop ends
+#define EXECUTE_FUNCLET     (0x28)  // Location of actual funclet body
+#define FINISHED_OFFSET     (0x5C)  // Location of the final jmp $ instruction of the funclet
+#define CONTROL_WORD_OFFSET (0x5E)  // Location of the control word
+#define DATA_OFFSET         (0x60)  // Location where data starts
+
+struct {
+    uint32_t lLen               = 0;
+    uint16_t ret_len            = 0;
+    uint32_t Addr               = 0;
+    uint16_t memSize            = 0;
+    uint16_t LockA              = 0;
+    uint16_t usType             = 0;
+    uint16_t startAddr          = 0;
+    uint16_t R12_BCSLTC1        = 0;
+    uint16_t R11_DCO            = 0;
+    uint16_t registerBackups[7] = {};
+    uint16_t FCTL1Value         = 0;
+    uint16_t FCTL2Value         = 0;
+    uint16_t FCTL3Value         = 0;
+} _hal_ExecuteFunclet_staticVars;
+
+void setFuncletRegisters(const uint16_t* registerData)
+{
+    WriteCpuReg(REG_ADDRESS, registerData[0]);
+    WriteCpuReg(REG_SIZE, registerData[1]);
+    WriteCpuReg(REG_TYPE, registerData[2]);
+    WriteCpuReg(REG_LOCKA, registerData[3]);
+	WriteCpuReg(REG_GP1, registerData[4]);
+	WriteCpuReg(REG_GP2, registerData[5]);
+	WriteCpuReg(REG_GP3, registerData[6]);
+}
+
+HAL_FUNCTION(_hal_ExecuteFunclet)
+{
+    auto& lLen               = _hal_ExecuteFunclet_staticVars.lLen;
+    auto& ret_len            = _hal_ExecuteFunclet_staticVars.ret_len;
+    auto& Addr               = _hal_ExecuteFunclet_staticVars.Addr;
+    auto& memSize            = _hal_ExecuteFunclet_staticVars.memSize;
+    auto& LockA              = _hal_ExecuteFunclet_staticVars.LockA;
+    auto& usType             = _hal_ExecuteFunclet_staticVars.usType;
+    auto& startAddr          = _hal_ExecuteFunclet_staticVars.startAddr;
+    auto& R12_BCSLTC1        = _hal_ExecuteFunclet_staticVars.R12_BCSLTC1;
+    auto& R11_DCO            = _hal_ExecuteFunclet_staticVars.R11_DCO;
+    auto& registerBackups    = _hal_ExecuteFunclet_staticVars.registerBackups;
+    auto& FCTL1Value         = _hal_ExecuteFunclet_staticVars.FCTL1Value;
+    auto& FCTL2Value         = _hal_ExecuteFunclet_staticVars.FCTL2Value;
+    auto& FCTL3Value         = _hal_ExecuteFunclet_staticVars.FCTL3Value;
+    
+    int16_t ret_value = 0;
+    uint16_t lOut;
+
+    uint16_t tmpFCTL3Value;
+
+    uint16_t tgtStart     =0x0;
+    uint16_t data         =0x0;
+    uint16_t timeOut      =3000;
+
+
+    StreamSafe stream_tmp;
+
+    if(flags & MESSAGE_NEW_MSG)
+    {
+        // get target RAM start
+        if(STREAM_get_word(&tgtStart) != 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_RAM_START);
+        }
+       /// get available RAM size (ram - funclet size)
+        if(STREAM_get_word(&memSize)!= 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_RAM_SIZE);
+        }
+        /// get RAM Start + Code offset
+        if(STREAM_get_word(&startAddr)!= 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_OFFSET);
+        }
+        // get start addres as long value
+        if(STREAM_get_long(&Addr) != 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_ADDRESS);
+        }
+        // get length ot be flashed
+        if(STREAM_get_long(&lLen) != 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_LENGTH);
+        }
+        if(STREAM_get_word(&usType) != 0)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_TYPE);
+        }
+        // lock A handling
+        if(STREAM_get_word(&LockA) == -1)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_LOCKA);
+        }
+
+        if(STREAM_get_word(&R11_DCO) == -1)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_LOCKA);
+        }
+
+        if(STREAM_get_word(&R12_BCSLTC1) == -1)
+        {
+            return(HALERR_EXECUTE_FUNCLET_NO_LOCKA);
+        }
+
+        registerBackups[0] = ReadCpuReg(REG_ADDRESS);
+        registerBackups[1] = ReadCpuReg(REG_SIZE);
+        registerBackups[2] = ReadCpuReg(REG_TYPE);
+        registerBackups[3] = ReadCpuReg(REG_LOCKA);
+        registerBackups[4] = ReadCpuReg(REG_GP1);
+        registerBackups[5] = ReadCpuReg(REG_GP2);
+        registerBackups[6] = ReadCpuReg(REG_GP3);
+
+        // Setup the Flash Controller
+        // Read FCTL registers for later restore
+        FCTL1Value = ReadMemWord(0x128);
+        FCTL2Value = ReadMemWord(0x12A);
+        FCTL3Value = ReadMemWord(0x12C);
+        // Restore password byte
+        FCTL1Value ^= 0x3300;
+        FCTL2Value ^= 0x3300;
+        FCTL3Value ^= 0x3300;
+
+        WriteMemWord(0x12A,0xA544);     // Source = MCLK, DIV = 5.
+        WriteMemWord(0x12C,LockA);      // Set LockA
+        tmpFCTL3Value = ReadMemWord(0x12C);    // Read out register again
+
+        if((LockA & 0xff) != (tmpFCTL3Value & 0xff))
+        {   // Value of lockA is not as expected, so toggle it
+            WriteMemWord(0x12C,LockA | 0x40);
+        }
+        {
+            uint16_t registerValues[7] = {(uint16_t)Addr, (uint16_t)lLen, usType, LockA, 0,R11_DCO,R12_BCSLTC1};
+            setFuncletRegisters(registerValues);
+            WriteCpuReg(2, 0);
+        }
+        if (deviceSettings.clockControlType != GCC_NONE)
+        {
+            if(deviceSettings.stopFLL)
+            {
+                uint16_t clkCntrl = 0x11;
+                clkCntrl &= ~0x10;
+                eem_data_exchange();
+                IHIL_SetReg_16Bits(MX_GCLKCTRL + MX_WRITE);
+                IHIL_SetReg_16Bits(clkCntrl);
+            }
+        }
+        // i_SetPcRel
+        SetPc(startAddr);
+        IHIL_Tclk(1);
+
+        // prepare release & release
+        cntrl_sig_16bit();
+        IHIL_SetReg_16Bits(0x0401);
+        addr_capture();
+        cntrl_sig_release();
+
+        // Poll until the funclet reaches the WaitForDead loop,
+        // ie. it is ready to process data
+        do
+        {
+            IHIL_Delay_1ms(1);
+            addr_capture();
+            lOut = IHIL_SetReg_16Bits_R(0);
+            timeOut--;
+        }
+        while(!((lOut >= (startAddr + WAIT_FOR_DEAD_START)) && (lOut <= (startAddr + WAIT_FOR_DEAD_END))) && timeOut);
+    }
+
+    while(lLen && (ret_value == 0) && timeOut)
+    {
+      uint16_t writePos = startAddr + DATA_OFFSET;
+      const uint16_t writeEndPos = writePos + (2*lLen < memSize ? 2*lLen : memSize);
+      uint16_t numWordsToWrite = 0;
+
+      SetPc(startAddr + FINISHED_OFFSET);
+      // The device has limited RAM available to write updates to,
+      // make sure we stay within this limit: Total memory size - 96 bytes for the funclet
+      halt_cpu();
+      IHIL_Tclk(0);
+      cntrl_sig_16bit();
+      IHIL_SetReg_16Bits(0x2408);
+
+      while( (writePos < writeEndPos) && (ret_value == 0) )
+      {
+          ret_value = STREAM_get_word(&data);
+
+          addr_16bit();
+          IHIL_SetReg_16Bits(writePos);
+          data_to_addr();
+          IHIL_SetReg_16Bits(data);
+          IHIL_Tclk(1);
+          IHIL_Tclk(0);
+
+          writePos += 2;
+      }
+      release_cpu();
+
+      numWordsToWrite = (writePos - (startAddr + DATA_OFFSET)) / 2;
+
+      WriteCpuReg(REG_SIZE, numWordsToWrite);
+      WriteCpuReg(REG_ADDRESS, Addr);
+
+      Addr += 2 * numWordsToWrite;
+      lLen -= numWordsToWrite;
+
+      SetPc(startAddr + EXECUTE_FUNCLET);
+      cntrl_sig_release();
+
+      // Poll until the funclet reaches the Stop loop,
+      // ie. it is finished
+      timeOut = 3000;
+      do
+      {
+          IHIL_Delay_1ms(1);
+          addr_capture();
+          lOut = IHIL_SetReg_16Bits_R(0);
+          timeOut--;
+      }
+      while(!(lOut == (startAddr + FINISHED_OFFSET)) && timeOut);
+    }
+
+    if(flags & MESSAGE_LAST_MSG )
+    { // ExitFlashWrite
+        {   //Setup values for watchdog control regsiters
+            uint8_t DummyIn[8] = {WDTCTL_ADDRESS & 0xFF,(WDTCTL_ADDRESS >> 8) & 0xFF,
+                                        WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
+            STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
+            _hal_SyncJtag_Conditional_SaveContext(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+            STREAM_external_stream(&stream_tmp);
+        }
+        setFuncletRegisters(registerBackups);
+        // Restore the Flash controller registers
+        WriteMemWord(0x128,FCTL1Value);
+        WriteMemWord(0x12A,FCTL2Value);
+        WriteMemWord(0x12C,FCTL3Value);
+        tmpFCTL3Value = ReadMemWord(0x12C);    // Read out register again
+
+        if((FCTL3Value & 0xff) != (tmpFCTL3Value & 0xff))
+        {   // Value of lockA is not as expected, so toggle it
+            WriteMemWord(0x12C,FCTL3Value | 0x40);
+        }
+
+        STREAM_put_word(ret_len);
+    }
+    else if(ret_value == 1)
+    {
+        STREAM_out_change_type(RESPTYP_ACKNOWLEDGE);
+        ret_value = 0;
+    }
+    else
+    {
+         //Setup values for watchdog control regsiters
+         uint8_t DummyIn[8] = {WDTCTL_ADDRESS & 0xFF,(WDTCTL_ADDRESS >> 8) & 0xFF,
+                                     WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
+         STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
+         _hal_SyncJtag_Conditional_SaveContext(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+         STREAM_external_stream(&stream_tmp);
+
+         setFuncletRegisters(registerBackups);
+         // Restore the Flash controller registers
+         WriteMemWord(0x128,FCTL1Value);
+         WriteMemWord(0x12A,FCTL2Value);
+         WriteMemWord(0x12C,FCTL3Value);
+         tmpFCTL3Value = ReadMemWord(0x12C);    // Read out register again
+
+         if((FCTL3Value & 0xff) != (tmpFCTL3Value & 0xff))
+         {   // Value of lockA is not as expected, so toggle it
+             WriteMemWord(0x12C,FCTL3Value | 0x40);
+         }
+
+         ret_value = HALERR_EXECUTE_FUNCLET_EXECUTION_ERROR;
+    }
+    return(ret_value);
+}
+
 HAL_FUNCTION_UNIMP(_hal_ExecuteFuncletJtag)
 HAL_FUNCTION_UNIMP(_hal_GetDcoFrequency)
 HAL_FUNCTION_UNIMP(_hal_GetDcoFrequencyJtag)
