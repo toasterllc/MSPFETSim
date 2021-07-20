@@ -2050,7 +2050,269 @@ HAL_FUNCTION(_hal_ExecuteFunclet)
 }
 
 HAL_FUNCTION_UNIMP(_hal_ExecuteFuncletJtag)
-HAL_FUNCTION_UNIMP(_hal_GetDcoFrequency)
+
+struct {
+    using ReadCounterRegsFuncType   = uint32_t (MSPProbeSim::*)();
+    using WriteRegFuncType          = void (MSPProbeSim::*)(int16_t, uint32_t);
+    using SetPCFuncType             = void (MSPProbeSim::*)(uint32_t);
+    using WriteRamFuncType          = void (MSPProbeSim::*)(uint16_t, const uint16_t*, uint16_t);
+    using ReadRamFuncType           = void (MSPProbeSim::*)(uint16_t, uint16_t*, uint16_t);
+    
+    ReadCounterRegsFuncType     ReadCounterRegsFunc     = nullptr;
+    WriteRegFuncType            WriteRegFunc            = nullptr;
+    SetPCFuncType               SetPCFunc               = nullptr;
+    WriteRamFuncType            WriteRamFunc            = nullptr;
+    ReadRamFuncType             ReadRamFunc             = nullptr;
+    HalFuncInOut SyncFunc                               = nullptr;
+} _hal_GetDcoFrequency_staticVars;
+
+uint16_t ReadCpuReg_uShort(uint16_t reg)
+{
+    int16_t op = 0;
+    uint16_t data = 0;
+
+    cntrl_sig_16bit();
+    IHIL_SetReg_16Bits(0x3401);
+    data_16bit();
+    op = ((reg << 8) & 0x0F00) | 0x4082;
+    IHIL_SetReg_16Bits(op);
+    IHIL_Tclk(0);
+    data_capture();
+    IHIL_Tclk(1);
+    data_16bit();
+    IHIL_SetReg_16Bits(0x00fe);
+    IHIL_Tclk(0);
+    data_capture();
+    IHIL_Tclk(1);
+    IHIL_Tclk(0);
+    IHIL_Tclk(1);
+    IHIL_SetReg_16Bits(0);
+    data = IHIL_SetReg_16Bits_R(0);
+    IHIL_Tclk(0);
+    cntrl_sig_16bit();
+    IHIL_SetReg_16Bits(0x2401);
+    IHIL_Tclk(1);
+    return data;
+}
+
+void readFromRam(uint16_t address, uint16_t* buffer, uint16_t numWords)
+{
+    while (numWords-- > 0)
+    {
+        *buffer = ReadMemWord(address);
+        address += 2;
+        ++buffer;
+    }
+}
+
+void writeToRam(uint16_t address, const uint16_t* data, uint16_t numWords)
+{
+    while (numWords-- > 0)
+    {
+        WriteMemWord(address, *data);
+        address += 2;
+        ++data;
+    }
+}
+
+void readFromRamX(uint16_t address, uint16_t* buffer, uint16_t numWords)
+{
+    while (numWords-- > 0)
+    {
+        *buffer = ReadMemWordX(address);
+        address += 2;
+        ++buffer;
+    }
+}
+
+void writeToRamX(uint16_t address, const uint16_t* data, uint16_t numWords)
+{
+    while (numWords-- > 0)
+    {
+        WriteMemWordX(address, *data);
+        address += 2;
+        ++data;
+    }
+}
+
+uint32_t readCounterRegisters()
+{
+    uint16_t r9 = 0 , r10 = 0;
+    uint32_t counter = 0;
+
+    r9 = ReadCpuReg_uShort(9);
+    r10 = ReadCpuReg_uShort(10);
+    counter = r10;
+    return (counter << 16) | r9;
+}
+
+uint32_t readCounterRegistersX()
+{
+    uint32_t r9 = 0, r10 = 0;
+
+    r9 = ReadCpuRegX(9);
+    r10 = ReadCpuRegX(10);
+    return (r10 << 16) | r9;
+}
+
+void writeRegister(int16_t r, uint32_t value)
+{
+    WriteCpuReg(r, value);
+}
+
+void writeRegisterX(int16_t r, uint32_t value)
+{
+    WriteCpuRegX(r, value);
+}
+
+void setPC(uint32_t address)
+{
+    SetPc(address);
+}
+
+void setPCX(uint32_t address)
+{
+    SetPcX(address);
+}
+
+void setPCJtag(uint32_t address)
+{
+    SetPcJtagBug(address);
+    IHIL_Tclk(1);
+}
+
+uint32_t measureFrequency(uint16_t RamStart, uint16_t DCO, uint16_t BCS1)
+{
+    return 0;
+}
+
+#define FlashUpperBoarder 2140000ul // 2,14 MHz
+#define FlashLowerBoarder 1410000ul // 1,41 MHz
+
+static inline const uint16_t loopDco[] =
+{
+    0x40b2, 0x5a80, 0x0120, 0xc232, 0xc0f2, 0x003f, 0x0057, 0xd0f2,
+    0x0007, 0x0057, 0x45c2, 0x0056, 0x46c2, 0x0057, 0x43c2, 0x0058,
+    0xea0a, 0xe909, 0x5319, 0x23fe, 0x531a, 0x23fc, 0x4303, 0x3fff
+};
+static inline const uint16_t sizeLoopDco = (uint16_t)std::size(loopDco);
+
+static inline const uint16_t loopFll[] =
+{
+    0x40b2, 0x5a80, 0x0120, 0xc232, 0xd072, 0x0040, 0x4032, 0x0040,
+    0x40f2, 0x0080, 0x0052, 0x43c2, 0x0050, 0x45c2, 0x0051, 0xd0f2,
+    0x0080, 0x0053, 0xc0f2, 0x005f, 0x0054, 0xea0a, 0xe909, 0x5319,
+    0x23fe, 0x531a, 0x23fc, 0x4303, 0x3fff
+};
+static inline const uint16_t sizeLoopFll = (uint16_t)std::size(loopFll);
+
+int16_t findDcoSettings(uint16_t jtagBug)
+{
+    uint16_t MAXRSEL   = 0x7;
+    uint16_t DCO  = 0x0;
+    uint16_t BCS1 = 0x6;
+    uint16_t BackupRam[30];
+    uint16_t RamStart = 0;
+    uint32_t  DcoFreq = 0;
+
+    // get target RAM start
+    if(STREAM_get_word(&RamStart) < 0)
+    {
+        return(HALERR_EXECUTE_FUNCLET_NO_RAM_START);
+    }
+
+    if(STREAM_get_word(&MAXRSEL) < 0)
+    {
+        return(HALERR_EXECUTE_FUNCLET_NO_MAXRSEL);
+    }
+
+    if (MAXRSEL == 0xF)
+    {
+        BCS1 = 0x9;
+    }
+
+    (this->*_hal_GetDcoFrequency_staticVars.SetPCFunc)(ROM_ADDR); //Prevent Ram corruption on F123/F413
+
+    //----------------Backup original Ram content--------------
+    (this->*_hal_GetDcoFrequency_staticVars.ReadRamFunc)(RamStart, BackupRam, sizeLoopDco);
+
+    // ----------------Download DCO measure funclet------------
+    (this->*_hal_GetDcoFrequency_staticVars.WriteRamFunc)(RamStart, loopDco, sizeLoopDco);
+
+    // do measurement
+    int16_t allowedSteps = 40;
+
+    do
+    {
+        DcoFreq = measureFrequency(RamStart, (DCO<<5), (0x80|BCS1));
+        //Ram content will probably be corrupted after each measurement on devices with jtag bug
+        //Reupload on every iteration
+        if (jtagBug)
+        {
+            (this->*_hal_GetDcoFrequency_staticVars.WriteRamFunc)(RamStart, loopDco, sizeLoopDco);
+        }
+
+        if (DcoFreq == 0)
+        {
+            return (-1);
+        }
+
+        if (DcoFreq > FlashUpperBoarder) // Check for upper limit - 10%.
+        {
+            if(DCO-- == 0)
+            {
+                DCO = 7;
+                if (BCS1-- == 0)
+                {
+                    return (-1); // Couldn't get DCO working with correct frequency.
+                }
+            }
+        }
+        else if (DcoFreq < FlashLowerBoarder) // Check for lower limit + 10%.
+        {
+            if(++DCO > 7)
+            {
+                DCO = 0;
+                if (++BCS1 > MAXRSEL)
+                {
+                    return (-1); // Couldn't get DCO working with correct frequency.
+                }
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+    while (--allowedSteps > 0);
+
+    // restore Ram content
+    (this->*_hal_GetDcoFrequency_staticVars.WriteRamFunc)(RamStart, BackupRam, sizeLoopDco);
+
+    if (allowedSteps <= 0)
+    {
+        return (-1); // Couldn't get DCO working with correct frequency.
+    }
+    // measurement end
+
+    // return measured values
+    STREAM_put_word( (DCO<<5) );
+    STREAM_put_word( (0x80|BCS1) );
+    STREAM_put_word( 0 );
+    return 0;
+}
+
+HAL_FUNCTION(_hal_GetDcoFrequency)
+{
+    _hal_GetDcoFrequency_staticVars.ReadCounterRegsFunc     = &MSPProbeSim::readCounterRegisters;
+    _hal_GetDcoFrequency_staticVars.WriteRegFunc            = &MSPProbeSim::writeRegister;
+    _hal_GetDcoFrequency_staticVars.SetPCFunc               = &MSPProbeSim::setPC;
+    _hal_GetDcoFrequency_staticVars.WriteRamFunc            = &MSPProbeSim::writeToRam;
+    _hal_GetDcoFrequency_staticVars.ReadRamFunc             = &MSPProbeSim::readFromRam;
+    _hal_GetDcoFrequency_staticVars.SyncFunc                = &MSPProbeSim::_hal_SyncJtag_Conditional_SaveContext;
+    return findDcoSettings(0);
+}
+
 HAL_FUNCTION_UNIMP(_hal_GetDcoFrequencyJtag)
 HAL_FUNCTION_UNIMP(_hal_GetFllFrequency)
 HAL_FUNCTION_UNIMP(_hal_GetFllFrequencyJtag)
