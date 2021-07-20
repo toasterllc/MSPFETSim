@@ -449,7 +449,13 @@ HAL_FUNCTION(_hal_Configure)
     return(0);
 }
 
-HAL_FUNCTION_UNIMP(_hal_GetFuses)
+HAL_FUNCTION(_hal_GetFuses)
+{
+    config_fuses();
+    STREAM_put_byte((uint8_t)IHIL_SetReg_8Bits_R(0));
+    return 0;
+}
+
 HAL_FUNCTION_UNIMP(_hal_BlowFuse)
 
 HAL_FUNCTION(_hal_WaitForEem)
@@ -867,18 +873,743 @@ HAL_FUNCTION(_hal_SyncJtag_AssertPor_SaveContext)
     return(0);
 }
 
-HAL_FUNCTION_UNIMP(_hal_SyncJtag_Conditional_SaveContext)
-HAL_FUNCTION_UNIMP(_hal_RestoreContext_ReleaseJtag)
+int32_t clkTclkAndCheckDTC(void)
+{
+#define MAX_DTC_CYCLE 10
+  uint16_t cntrlSig;
+  int16_t dtc_cycle_cnt = 0;
+  int32_t timeOut =0;
+  do
+    {
+      IHIL_Tclk(0);
+
+      cntrl_sig_capture();
+      cntrlSig = IHIL_SetReg_16Bits_R(0);
+
+      if ((dtc_cycle_cnt > 0) &&
+          ((cntrlSig & CNTRL_SIG_CPU_HALT) == 0))
+      {
+        // DTC cycle completed, take over control again...
+        cntrl_sig_16bit();
+        IHIL_SetReg_16Bits(CNTRL_SIG_TCE1 | CNTRL_SIG_CPU | CNTRL_SIG_TAGFUNCSAT);
+      }
+      if ((dtc_cycle_cnt == 0) &&
+          ((cntrlSig & CNTRL_SIG_CPU_HALT) == CNTRL_SIG_CPU_HALT))
+      {
+        // DTC cycle requested, grant it...
+        cntrl_sig_16bit();
+        IHIL_SetReg_16Bits(CNTRL_SIG_CPU_HALT | CNTRL_SIG_TCE1 |
+                      CNTRL_SIG_CPU | CNTRL_SIG_TAGFUNCSAT);
+        dtc_cycle_cnt++;
+      }
+      IHIL_Tclk(1);
+      timeOut++;
+    }
+    while ((dtc_cycle_cnt < MAX_DTC_CYCLE) &&
+           ((cntrlSig & CNTRL_SIG_CPU_HALT) == CNTRL_SIG_CPU_HALT)&& timeOut < 5000);
+
+  if (dtc_cycle_cnt < MAX_DTC_CYCLE)
+  {
+    return (0);
+  }
+  else
+  {
+    return (-1);
+  }
+}
+
+HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContext)
+{
+  uint16_t i = 0, lOut = 0, ctl_sync = 0;
+  int16_t MyOut[5] = {0};
+  uint16_t address;
+  uint16_t wdtVal;
+  uint16_t statusReg = 0;
+  uint16_t* syncWithRunVarAddress = 0;
+
+  if(STREAM_get_word(&address) != 0)
+  {
+      return (HALERR_SYNC_JTAG_CONDITIONAL_NO_WDT_ADDRESS);
+  }
+
+  if(STREAM_get_word(&wdtVal) == -1)
+  {
+      return (HALERR_SYNC_JTAG_CONDITIONAL_NO_WDT_VALUE);
+  }
+
+  syncWithRunVarAddress = getTargetRunningVar();
+  if(syncWithRunVarAddress)
+  {
+    *syncWithRunVarAddress = 0x0000;
+  }
+
+  IHIL_Tclk(1);  // Stability improvent: should be possible to remove this here, default state of TCLK should be one
+
+  cntrl_sig_capture();
+
+  if(!(IHIL_SetReg_16Bits_R(0x0000) & CNTRL_SIG_TCE))
+  {
+   // If the JTAG and CPU are not already synchronized ...
+    // Initiate Jtag and CPU synchronization. Read/Write is under CPU control. Source TCLK via TDI.
+    // Do not effect bits used by DTC (CPU_HALT, MCLKON).
+    cntrl_sig_high_byte();
+    IHIL_SetReg_8Bits((CNTRL_SIG_TAGFUNCSAT | CNTRL_SIG_TCE1 | CNTRL_SIG_CPU) >> 8);
+
+    // A bug in first F43x and F44x silicon requires that Jtag synchronization be forced /* when the CPU is Off */.
+    // Since the JTAG and CPU are not yet synchronized, the CPUOFF bit in the lower byte of the cntrlSig
+    // register is not valid.
+    // TCE eventually set indicates synchronization (and clocking via TCLK).
+    ctl_sync =  SyncJtag();
+
+    if(!ctl_sync)
+    { // Synchronization failed!
+        return (HALERR_SYNC_JTAG_CONDITIONAL_JTAG_TIMEOUT);
+    }
+  }// end of if(!(lOut & CNTRL_SIG_TCE))
+
+  if(ctl_sync & CNTRL_SIG_CPU_HALT)
+  {
+      IHIL_Tclk(0);
+      cntrl_sig_16bit();
+      // Clear HALT. Read/Write is under CPU control. As a precaution, disable interrupts.
+      IHIL_SetReg_16Bits(CNTRL_SIG_TCE1 | CNTRL_SIG_CPU | CNTRL_SIG_TAGFUNCSAT);
+      IHIL_Tclk(1);
+  }
+  else
+  {
+      cntrl_sig_16bit();
+      // Clear HALT. Read/Write is under CPU control. As a precaution, disable interrupts.
+      IHIL_SetReg_16Bits(CNTRL_SIG_TCE1 | CNTRL_SIG_CPU | CNTRL_SIG_TAGFUNCSAT);
+  }
+
+  if (deviceSettings.assertBslValidBit)
+  {
+      // here we add bit de assert bit 7 in JTAG test reg to enalbe clocks again
+      test_reg();
+      lOut = IHIL_SetReg_8Bits_R(0x00);
+      lOut |= 0x80; //DE_ASSERT_BSL_VALID;
+      test_reg();
+      IHIL_SetReg_8Bits(lOut); // Bit 7 is de asserted now
+  }
+
+   // step until next instruction load boundary if not being already there
+  if(instrLoad() != 0)
+  {
+      return (HALERR_INSTRUCTION_BOUNDARY_ERROR);
+  }
+
+  // read MAB = PC here
+  addr_capture();
+  MyOut[1] = IHIL_SetReg_16Bits_R(0x0000);
+  MyOut[2] = 0; // High part for MSP430 devices is always 0
+
+ // disable EEM and clear stop reaction
+  eem_write_control();
+  IHIL_SetReg_16Bits(0x0003);
+  IHIL_SetReg_16Bits(0x0000);
+
+    if (deviceSettings.clockControlType == GCC_EXTENDED)
+    {
+        eem_data_exchange();
+        IHIL_SetReg_16Bits(MX_GENCNTRL + MX_WRITE);               // write access to EEM General Control Register (MX_GENCNTRL)
+        IHIL_SetReg_16Bits(EMU_FEAT_EN | EMU_CLK_EN | CLEAR_STOP | EEM_EN);   // write into MX_GENCNTRL
+
+        eem_data_exchange(); // Stability improvent: should be possible to remove this, required only once at the beginning
+        IHIL_SetReg_16Bits(MX_GENCNTRL + MX_WRITE);               // write access to EEM General Control Register (MX_GENCNTRL)
+        IHIL_SetReg_16Bits(EMU_FEAT_EN | EMU_CLK_EN);             // write into MX_GENCNTRL
+    }
+    if (deviceSettings.clockControlType == GCC_STANDARD_I)
+    {
+        eem_data_exchange();
+        IHIL_SetReg_16Bits(MX_GENCNTRL + MX_WRITE);  // write access to EEM General Control Register (MX_GENCNTRL)
+        IHIL_SetReg_16Bits(EMU_FEAT_EN);             // write into MX_GENCNTRL
+    }
+
+    if (deviceSettings.clockControlType != GCC_NONE)
+    {
+        if(deviceSettings.stopFLL)
+        {
+            uint16_t clkCntrl = 0;
+            // read access to EEM General Clock Control Register (GCLKCTRL)
+            eem_data_exchange();
+            IHIL_SetReg_16Bits(MX_GCLKCTRL + MX_READ);
+            clkCntrl = IHIL_SetReg_16Bits_R(0);
+            // added UPSF: FE427 does regulate the FLL to the upper boarder
+            // added the switch off and release of FLL (JTFLLO)
+            clkCntrl |= 0x10;
+            eem_data_exchange();
+            IHIL_SetReg_16Bits(MX_GCLKCTRL + MX_WRITE);
+            IHIL_SetReg_16Bits(clkCntrl);
+        }
+    }
+  //-----------------------------------------------------------------------
+  // Execute a dummy instruction (BIS #0,R4) to work around a problem in the F12x that can sometimes cause
+  // the first TCLK after synchronization to be lost. If the TCLK is lost, try the cycle again.
+  // Note: It is critical that the dummy instruction require exactly two cycles to execute. The version of BIS #
+  // used does not use the constant generator, and so it requires two cycles.
+  // The dummy instruction also provides a needed extra clock when the device is stopped by the Emex module and it is OFF.
+  // The dummy instruction also possibly initiates processing of a pending interrupt.
+ #define BIS_IMM_0_R4 0xd034
+  data_16bit();
+  IHIL_Tclk(1);  // Added for 2xx support
+  IHIL_SetReg_16Bits(BIS_IMM_0_R4);
+  if(clkTclkAndCheckDTC() != 0)
+  {
+      return (HALERR_SYNC_JTAG_CONDITIONAL_JTAG_TIMEOUT);
+  }
+
+  cntrl_sig_capture();
+  if(IHIL_SetReg_16Bits_R(0x0000) & CNTRL_SIG_INSTRLOAD)  // Still on an instruction load boundary?
+  {
+      data_16bit();
+      IHIL_Tclk(1);  // Added for 2xx support
+      IHIL_SetReg_16Bits(BIS_IMM_0_R4);
+      if(clkTclkAndCheckDTC() != 0)
+      {
+        return (HALERR_SYNC_JTAG_CONDITIONAL_JTAG_TIMEOUT);
+      }
+  }
+  data_16bit();
+  IHIL_Tclk(1);  // Added for 2xx support
+  IHIL_SetReg_16Bits(0x0000);
+  if(clkTclkAndCheckDTC() != 0)
+  {
+    return (HALERR_SYNC_JTAG_CONDITIONAL_JTAG_TIMEOUT);
+  }
+  // Advance to an instruction load boundary if an interrupt is detected.
+  // The CPUOff bit will be cleared.
+  // Basically, if there is an interrupt pending, the above dummy instruction
+  // will have initialted its processing, and the CPU will not be on an
+  // instruction load boundary following the dummy instruction.
+#define MAX_TCE1 10
+  i = 0;
+  cntrl_sig_capture();
+  while(!(IHIL_SetReg_16Bits_R(0) & CNTRL_SIG_INSTRLOAD) && (i < MAX_TCE1))
+  {
+      if(clkTclkAndCheckDTC() != 0)
+      {
+          return (HALERR_SYNC_JTAG_CONDITIONAL_JTAG_TIMEOUT);
+      }
+      i++;
+  }
+
+  if(i == MAX_TCE1)
+  {
+      return (HALERR_SYNC_JTAG_CONDITIONAL_JTAG_TIMEOUT);
+  }
+
+  // Read PC now!!! Only the NOP or BIS #0,R4 instruction above was clocked into the device
+  // The PC value should now be (OriginalValue + 2)
+  // read MAB = PC here
+  addr_capture();
+  MyOut[1] = IHIL_SetReg_16Bits_R(0x0000) - 4;
+  MyOut[2] = 0; // High part for MSP430 devices is always 0
+
+  if(i == 0)
+  { // An Interrupt was not detected
+    //       lOut does not contain the content of the CNTRL_SIG register anymore at this point
+    //       need to capture it again...different to DLLv3 sequence but don't expect any negative effect due to recapturing
+      cntrl_sig_capture();
+      if(IHIL_SetReg_16Bits_R(0x0000) & CNTRL_SIG_CPU_OFF)
+      {
+          MyOut[1] += 2;
+
+          data_16bit();
+          IHIL_Tclk(1);               // Added for 2xx support
+          IHIL_SetReg_16Bits(0xC032);
+          if(clkTclkAndCheckDTC() != 0)
+          {
+            return (HALERR_SYNC_JTAG_CONDITIONAL_JTAG_TIMEOUT);
+          }
+
+          data_16bit();
+          IHIL_Tclk(1);               // Added for 2xx support \Günther: Why set TCLK 1 again?
+          IHIL_SetReg_16Bits(0x0010);
+          if(clkTclkAndCheckDTC() != 0)
+          {
+            return (HALERR_SYNC_JTAG_CONDITIONAL_JTAG_TIMEOUT);
+          }
+          // DLLv2 preserve the CPUOff bit
+          statusReg |= STATUS_REG_CPUOFF;
+      }
+  }
+  else
+  {
+    addr_capture();
+    MyOut[1] = IHIL_SetReg_16Bits_R(0);
+    MyOut[2] = 0; // High part for MSP430 devices is always 0
+    MyOut[4] = 1; // Inform DLL about interrupt
+  }
+
+  // DLL v2: deviceHasDTCBug
+  //     Configure the DTC so that it transfers after the present CPU instruction is complete (ADC10FETCH).
+  //     Save and clear ADC10CTL0 and ADC10CTL1 to switch off DTC (Note: Order matters!).
+
+  // Regain control of the CPU. Read/Write will be set, and source TCLK via TDI.
+  cntrl_sig_16bit();
+  IHIL_SetReg_16Bits(CNTRL_SIG_TCE1 | CNTRL_SIG_READ | CNTRL_SIG_TAGFUNCSAT);
+
+  // Test if we are on an instruction load boundary
+  if(isInstrLoad() != 0)
+  {
+      return (HALERR_INSTRUCTION_BOUNDARY_ERROR);
+  }
+
+  // Hold Watchdog
+  MyOut[0] = ReadMemWord (address); // safe WDT value
+  wdtVal |= (MyOut[0] & 0xFF); // set original bits in addition to stop bit
+  WriteMemWord(address, wdtVal);
+
+  // set PC to a save address pointing to ROM to avoid RAM corruption on certain devices
+  SetPc(ROM_ADDR);
+
+  // read status register
+  MyOut[3] = ReadCpuReg(2);
+  MyOut[3] |= statusReg;   // compine with preserved CPUOFF bit setting
+
+  // return output
+  STREAM_put_bytes((uint8_t*)MyOut, sizeof(MyOut));
+
+  return (0);
+}
+
+HAL_FUNCTION(_hal_RestoreContext_ReleaseJtag)
+{
+    uint16_t wdt_addr;
+    uint16_t wdt_value;
+    uint16_t pc[2];
+    uint16_t sr;
+    uint16_t control_mask;
+    uint16_t mdb;
+    uint16_t releaseJtag;
+    uint16_t* syncWithRunVarAddress = 0;
+
+    // Check all the input parameters
+    if(STREAM_get_word(&wdt_addr) != 0)
+    {
+      return (HALERR_RESTORECONTEXT_RELEASE_JTAG_NO_WDT_ADDRESS);
+    }
+    if(STREAM_get_word(&wdt_value) != 0)
+    {
+      return (HALERR_RESTORECONTEXT_RELEASE_JTAG_NO_WDT_VALUE);
+    }
+    if(STREAM_get_long((uint32_t*)&pc) != 0)
+    {
+      return (HALERR_RESTORECONTEXT_RELEASE_JTAG_NO_PC);
+    }
+    if(STREAM_get_word(&sr) != 0)
+    {
+      return (HALERR_RESTORECONTEXT_RELEASE_JTAG_NO_SR);
+    }
+    if(STREAM_get_word(&control_mask) != 0)
+    {
+      return (HALERR_RESTORECONTEXT_RELEASE_JTAG_NO_CONTROL_MASK);
+    }
+    if(STREAM_get_word(&mdb) != 0)
+    {
+        return (HALERR_RESTORECONTEXT_RELEASE_JTAG_NO_MDB);
+    }
+    if (STREAM_get_word(&releaseJtag) == -1)
+    {
+        releaseJtag = 0;
+    }
+    STREAM_discard_bytes(2);
+
+
+    // Write back Status Register
+    WriteCpuReg(2, sr);
+
+    // Restore Watchdog Control Register
+    WriteMemWord(wdt_addr, wdt_value);
+
+    // restore Program Counter
+    SetPc(pc[0]); // High part is not relevant for MSP430 original architecture
+
+/* Workaround for MSP430F149 derivatives */
+    {
+      uint16_t backup[3] = {0};
+      eem_data_exchange();
+      IHIL_SetReg_16Bits(0x03);  backup[0] = IHIL_SetReg_16Bits_R(0);
+      IHIL_SetReg_16Bits(0x0B);  backup[1] = IHIL_SetReg_16Bits_R(0);
+      IHIL_SetReg_16Bits(0x13);  backup[2] = IHIL_SetReg_16Bits_R(0);
+
+      IHIL_SetReg_16Bits(0x02);  IHIL_SetReg_16Bits(0);
+      IHIL_SetReg_16Bits(0x0A);  IHIL_SetReg_16Bits(0);
+      IHIL_SetReg_16Bits(0x12);  IHIL_SetReg_16Bits(0);
+
+      IHIL_SetReg_16Bits(0x02);  IHIL_SetReg_16Bits(backup[0]);
+      IHIL_SetReg_16Bits(0x0A);  IHIL_SetReg_16Bits(backup[1]);
+      IHIL_SetReg_16Bits(0x12);  IHIL_SetReg_16Bits(backup[2]);
+    }
+/**/
+
+    if (deviceSettings.clockControlType != GCC_NONE)
+    {
+        if(deviceSettings.stopFLL)
+        {
+            uint16_t clkCntrl = 0;
+            // read access to EEM General Clock Control Register (GCLKCTRL)
+            eem_data_exchange();
+            IHIL_SetReg_16Bits(MX_GCLKCTRL + MX_READ);
+            clkCntrl = IHIL_SetReg_16Bits_R(0);
+
+            // added UPSF: FE427 does regulate the FLL to the upper boarder
+            // added the switch off and release of FLL (JTFLLO)
+            clkCntrl &= ~0x10;
+            eem_data_exchange();
+            IHIL_SetReg_16Bits(MX_GCLKCTRL + MX_WRITE);
+            IHIL_SetReg_16Bits(clkCntrl);
+        }
+    }
+
+    if (deviceSettings.clockControlType == GCC_EXTENDED)
+    {
+        eem_data_exchange();
+        IHIL_SetReg_16Bits(MX_GENCNTRL + MX_WRITE);                              // write access to EEM General Control Register (MX_GENCNTRL)
+        IHIL_SetReg_16Bits(EMU_FEAT_EN | EMU_CLK_EN | CLEAR_STOP | EEM_EN);      // write into MX_GENCNTRL
+    }
+    if (deviceSettings.clockControlType == GCC_STANDARD_I)
+    {
+        eem_data_exchange();
+        IHIL_SetReg_16Bits(MX_GENCNTRL + MX_WRITE);  // write access to EEM General Control Register (MX_GENCNTRL)
+        IHIL_SetReg_16Bits(EMU_FEAT_EN);             // write into MX_GENCNTRL
+    }
+
+    // activate EEM
+    eem_write_control();
+    IHIL_SetReg_16Bits(control_mask);
+
+    // Pre-initialize MDB before release if
+    if(mdb)
+    {
+        data_16bit();
+        IHIL_SetReg_16Bits(mdb);
+        IHIL_Tclk(0);
+        addr_capture();
+        IHIL_Tclk(1);
+    }
+    else
+    {
+        addr_capture();
+    }
+
+    syncWithRunVarAddress = getTargetRunningVar();
+    if(syncWithRunVarAddress)
+    {
+          *syncWithRunVarAddress = 0x0001;
+    }
+
+    // release target device from JTAG control
+    cntrl_sig_release();
+
+    if(releaseJtag)
+    {
+        IHIL_Close(); // release JTAG on go
+    }
+    return (0);
+}
+
 HAL_FUNCTION_UNIMP(_hal_ReadMemBytes)
-HAL_FUNCTION_UNIMP(_hal_ReadMemWords)
-HAL_FUNCTION_UNIMP(_hal_ReadMemQuick)
+
+HAL_FUNCTION(_hal_ReadMemWords)
+{
+    uint32_t i;
+    uint32_t lAddr;
+    uint32_t lLen;
+
+    if(STREAM_get_long(&lAddr) != 0)
+    {
+        return HALERR_READ_MEM_WORD_NO_ADDRESS;
+    }
+    if(STREAM_get_long(&lLen) < 0)
+    {
+        return HALERR_READ_MEM_WORD_NO_SIZE;
+    }
+
+    halt_cpu();
+    IHIL_Tclk(0);
+    for(i = 0; i < lLen; i++)
+    {
+        addr_16bit();
+        IHIL_SetReg_16Bits((uint16_t)lAddr);
+        data_to_addr();
+        IHIL_Tclk(1);
+        IHIL_Tclk(0);
+        STREAM_put_word(IHIL_SetReg_16Bits_R(0));
+        lAddr += 2;
+    }
+    IHIL_Tclk(1);
+    release_cpu();
+
+    instrLoad();
+
+    return 0;
+}
+
+HAL_FUNCTION(_hal_ReadMemQuick)
+{
+    uint32_t i;
+    uint32_t lAddr;
+    uint32_t lLen;
+    uint16_t Pc;
+
+    STREAM_get_long(&lAddr);
+    STREAM_get_long(&lLen);
+
+    Pc  = (uint16_t)(((lAddr-2) & 0xFFFF));
+
+    instrLoad();
+
+    SetPc(Pc);
+
+    halt_cpu();
+
+    data_quick();
+
+    for (i = 0; i < lLen; i++)
+    {
+        IHIL_Tclk(1);
+        IHIL_Tclk(0);
+        STREAM_put_word(IHIL_SetReg_16Bits_R(0));
+    }
+    IHIL_Tclk(1);
+
+    release_cpu();
+
+    return 0;
+}
+
 HAL_FUNCTION_UNIMP(_hal_WriteMemBytes)
 HAL_FUNCTION_UNIMP(_hal_WriteMemWords)
-HAL_FUNCTION_UNIMP(_hal_EemDataExchange)
+
+HAL_FUNCTION(_hal_EemDataExchange)
+{
+  uint8_t NumberOfExchanges;
+  uint8_t tmp_char;
+  uint16_t tmp_uint;
+
+  STREAM_get_byte(&NumberOfExchanges);
+  eem_data_exchange();
+
+  while(NumberOfExchanges)
+  {
+    STREAM_get_byte(&tmp_char);
+    if(tmp_char & 0x01)
+    { // read access
+      IHIL_SetReg_16Bits(tmp_char);   // load address
+      // shift in dummy 0
+      STREAM_put_word(IHIL_SetReg_16Bits_R(0)); // put output into stream
+    }
+    else
+    { // write access
+      STREAM_get_word(&tmp_uint);
+      IHIL_SetReg_16Bits(tmp_char);           // load address
+      IHIL_SetReg_16Bits(tmp_uint);  // shift in value
+
+      //Reset when state storage is reset
+      if ((tmp_char == 0x9E) && (tmp_uint & 0x40))
+      {
+          lastTraceWritePos = 0;
+      }
+    }
+    NumberOfExchanges--;
+  }
+
+  return 0;
+}
+
 HAL_FUNCTION_UNIMP(_hal_EemDataExchangeAFE2xx)
-HAL_FUNCTION_UNIMP(_hal_SingleStep)
-HAL_FUNCTION_UNIMP(_hal_ReadAllCpuRegs)
-HAL_FUNCTION_UNIMP(_hal_WriteAllCpuRegs)
+
+HAL_FUNCTION(_hal_SingleStep)
+{
+    int16_t RetState = HALERR_UNDEFINED_ERROR;
+    uint16_t i = 0;
+    uint16_t bpCntrlType = BPCNTRL_IF;
+    uint16_t extraStep = 0;
+
+    // local variables to enable preserve of EEM trigger block 0
+    uint16_t trig0_Bckup_cntrl;
+    uint16_t trig0_Bckup_mask;
+    uint16_t trig0_Bckup_comb;
+    uint16_t trig0_Bckup_cpuStop;
+    uint16_t trig0_Bckup_value;
+
+    StreamSafe stream_tmp;
+    uint8_t stream_in_release[18];
+    uint8_t stream_in_sync[4];
+    for(i=0;i<sizeof(stream_in_release);i++)
+    {
+        STREAM_get_byte(&stream_in_release[i]);
+    }
+    STREAM_discard_bytes(2);
+
+    for(i=0;i<sizeof(stream_in_sync);i++)
+    {
+        STREAM_get_byte(&stream_in_sync[i]);
+    }
+
+
+    if (stream_in_release[8] & STATUS_REG_CPUOFF)
+    {
+      // If the CPU is OFF, only step after the CPU has been awakened by an interrupt.
+      // This permits single step to work when the CPU is in LPM0 and 1 (as well as 2-4).
+      bpCntrlType = BPCNTRL_NIF;
+      // Emulation logic requires an additional step when the CPU is OFF (but only if there is not a pending interrupt).
+      cntrl_sig_capture();
+      if (!(IHIL_SetReg_16Bits_R(0x0000)  & CNTRL_SIG_INTR_REQ))
+      {
+        extraStep = 1;
+      }
+    }
+
+    { // Preserve breakpoint block 0
+      eem_data_exchange();
+      // read control register
+      IHIL_SetReg_16Bits(MX_CNTRL + MX_READ);     // shift in control register address with read request
+      trig0_Bckup_cntrl = IHIL_SetReg_16Bits_R(0x0000);                 // dummy shift to read out content remember content locally
+      // read mask register
+      IHIL_SetReg_16Bits(MX_MASK + MX_READ);
+      trig0_Bckup_mask = IHIL_SetReg_16Bits_R(0x0000);
+      // read combination register
+      IHIL_SetReg_16Bits(MX_COMB + MX_READ);
+      trig0_Bckup_comb = IHIL_SetReg_16Bits_R(0x0000);
+      // read CPU stop reaction register
+      IHIL_SetReg_16Bits(MX_CPUSTOP + MX_READ);
+      trig0_Bckup_cpuStop = IHIL_SetReg_16Bits_R(0x0000);
+      // read out trigger block value register
+      IHIL_SetReg_16Bits(MX_BP + MX_READ);
+      trig0_Bckup_value = IHIL_SetReg_16Bits_R(0x0000);
+    }
+
+    { // Configure "Single Step Trigger" using Trigger Block 0
+      eem_data_exchange();
+      // write control register
+      IHIL_SetReg_16Bits(MX_CNTRL + MX_WRITE);
+      IHIL_SetReg_16Bits(BPCNTRL_EQ | BPCNTRL_RW_DISABLE | bpCntrlType | BPCNTRL_MAB);
+      // write mask register
+      IHIL_SetReg_16Bits(MX_MASK  + MX_WRITE);
+      IHIL_SetReg_16Bits((uint16_t)BPMASK_DONTCARE);
+      // write combination register
+      IHIL_SetReg_16Bits(MX_COMB + MX_WRITE);
+      IHIL_SetReg_16Bits(0x0001);
+      // write CPU stop reaction register
+      IHIL_SetReg_16Bits(MX_CPUSTOP + MX_WRITE);
+      IHIL_SetReg_16Bits(0x0001);
+    }
+
+    // TODO: Take care about the CPU cycles counts of the instructions to be single stepped
+    //       Not implemented yet in DLLv3, refer to DLLv2 source code for implementation
+
+    // now restore context and release CPU from JTAG control
+    STREAM_internal_stream(stream_in_release, sizeof(stream_in_release), MESSAGE_NO_OUT, 0, &stream_tmp);
+    RetState = _hal_RestoreContext_ReleaseJtag(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
+    STREAM_external_stream(&stream_tmp);
+
+    if(RetState != 0)
+    { // return error if not successful
+      return RetState;
+    }
+
+    while(1) // this is not an endless loop, it will break if no "extra step" is required
+    {
+      // Wait for EEM stop reaction
+      eem_read_control();
+      do
+      {
+        i++;
+      }
+      while(!(IHIL_SetReg_16Bits_R(0x0000) & 0x0080) && i < 50); // Wait for breakpoint hit
+
+      // Timout?
+      if(i >= 50)
+      {
+        return (HALERR_SINGLESTEP_WAITFOREEM_TIMEOUT);
+      }
+
+      // check if an extra step was required
+      if(extraStep)
+      {
+        extraStep = 0;  // reset the "extra step" flag
+
+        // release the CPU once again for an "extra step" from JTAG control
+        addr_capture();
+        cntrl_sig_release();
+      }
+      else
+      {
+        break;
+      }
+    }
+
+    { // Restore Trigger Block 0
+      eem_data_exchange();
+      // write control register
+      IHIL_SetReg_16Bits(MX_CNTRL + MX_WRITE);
+      IHIL_SetReg_16Bits(trig0_Bckup_cntrl);
+      // write mask register
+      IHIL_SetReg_16Bits(MX_MASK  + MX_WRITE);
+      IHIL_SetReg_16Bits(trig0_Bckup_mask);
+      // write combination register
+      IHIL_SetReg_16Bits(MX_COMB + MX_WRITE);
+      IHIL_SetReg_16Bits(trig0_Bckup_comb);
+      // write CPU stop reaction register
+      IHIL_SetReg_16Bits(MX_CPUSTOP + MX_WRITE);
+      IHIL_SetReg_16Bits(trig0_Bckup_cpuStop);
+      // write trigger block value register
+      IHIL_SetReg_16Bits(MX_BP + MX_WRITE);
+      IHIL_SetReg_16Bits(trig0_Bckup_value);
+    }
+
+    // now sync the CPU again to JTAG control and save the current context
+    STREAM_internal_stream(stream_in_sync, sizeof(stream_in_sync), MESSAGE_OUT_TO_DLL, 0, &stream_tmp);
+    RetState = _hal_SyncJtag_Conditional_SaveContext(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
+    STREAM_external_stream(&stream_tmp);
+
+    if(RetState != 0)
+    { // return error if not successful
+      return RetState;
+    }
+
+    return RetState;
+}
+
+HAL_FUNCTION(_hal_ReadAllCpuRegs)
+{
+    uint8_t Registers;
+    for (Registers = 1; Registers < 16; Registers++)
+    {
+        if(Registers == 2)
+        {
+          Registers += 2;
+        }
+        STREAM_put_word(ReadCpuReg(Registers));
+    }
+    return 0;
+
+}
+
+HAL_FUNCTION(_hal_WriteAllCpuRegs)
+{
+    uint16_t Registers;
+    uint16_t  Rx;
+    int16_t tmp;
+    
+    for (Registers = 1; Registers < 16; Registers++)
+    {
+        if(Registers == 2)
+        {
+            Registers += 2;
+        }
+        tmp = STREAM_get_word(&Rx);
+        if(((Registers != 15) && (tmp != 0)) || ((Registers == 15) && (tmp < 0)))
+        {
+            return HALERR_WRITE_ALL_CPU_REGISTERS_STREAM;
+        }
+        WriteCpuReg(Registers, Rx);
+    }    
+    return 0;
+}
+
 HAL_FUNCTION_UNIMP(_hal_Psa)
 HAL_FUNCTION_UNIMP(_hal_ExecuteFunclet)
 HAL_FUNCTION_UNIMP(_hal_ExecuteFuncletJtag)
