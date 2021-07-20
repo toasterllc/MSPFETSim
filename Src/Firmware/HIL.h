@@ -195,11 +195,11 @@ uint64_t sbw_Shift_R(uint64_t Data, int16_t Bits)
 }
 
 void _hil_Delay_1us(uint16_t us) {
-    usleep(us);
+    IHIL_Delay_1us(us);
 }
 
 void _hil_Delay_1ms(uint16_t ms) {
-    usleep(1000*ms);
+    IHIL_Delay_1ms(ms);
 }
 
 void RSTset1()
@@ -446,7 +446,10 @@ int16_t IHIL_Close() {
     return 0;
 }
 
-void IHIL_Delay_1us(uint16_t usecs)                             { HIL_UNIMP;        };
+void IHIL_Delay_1us(uint16_t usecs) {
+    _flush();
+    usleep(usecs);
+};
 
 void IHIL_Delay_1ms(uint16_t msecs) {
     _flush();
@@ -543,15 +546,15 @@ int16_t IHIL_CheckJtagFuse() {
         // From _hil_2w_CheckJtagFuse()
         TMSL_TDIH();
         TMSH_TDIH();
-        IHIL_Delay_1ms(1);
-
+        _hil_Delay_1ms(1);
+        
         TMSL_TDIH();
         TMSH_TDIH();
-        IHIL_Delay_1ms(1);
-
+        _hil_Delay_1ms(1);
+        
         TMSL_TDIH();
         TMSH_TDIH();
-        IHIL_Delay_1ms(1);
+        _hil_Delay_1ms(1);
         // In every TDI slot a TCK for the JTAG machine is generated.
         // Thus we need to get TAP in Run/Test Idle state back again.
         TMSH_TDIH();

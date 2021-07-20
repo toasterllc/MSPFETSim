@@ -97,11 +97,11 @@ public:
         // TODO: these commands aren't all supported by all hardware
         {
             constexpr uint8_t initCmd[] = {
-                MPSSE::DisableClkDivideBy5,        // Use 60MHz master clock
-                MPSSE::DisableAdaptiveClocking,    // Disable adaptive clocking
-                MPSSE::Disable3PhaseDataClocking,  // Disable three-phase clocking
-                MPSSE::DisconnectTDITDOLoopback,   // Disable loopback
-                MPSSE::SetClkDivisor, 0x1D, 0x00,  // Set TCK frequency to 1MHz
+//                MPSSE::DisableClkDivideBy5,        // Use 60MHz master clock
+//                MPSSE::DisableAdaptiveClocking,    // Disable adaptive clocking
+//                MPSSE::Disable3PhaseDataClocking,  // Disable three-phase clocking
+//                MPSSE::DisconnectTDITDOLoopback,   // Disable loopback
+                MPSSE::SetClkDivisor, 0, 0,         // Set TCK frequency to 6MHz
             };
             
             _dev.write(initCmd, sizeof(initCmd));
@@ -140,12 +140,11 @@ public:
         static constexpr uint8_t ReadDataBitsL              = 0x81;
         static constexpr uint8_t SetDataBitsH               = 0x82;
         static constexpr uint8_t ReadDataBitsH              = 0x83;
-        
-        static constexpr uint8_t DisableClkDivideBy5        = 0x8A;
-        static constexpr uint8_t DisableAdaptiveClocking    = 0x97;
-        static constexpr uint8_t Disable3PhaseDataClocking  = 0x8D;
         static constexpr uint8_t DisconnectTDITDOLoopback   = 0x85;
         static constexpr uint8_t SetClkDivisor              = 0x86;
+        static constexpr uint8_t DisableClkDivideBy5        = 0x8A;
+        static constexpr uint8_t Disable3PhaseDataClocking  = 0x8D;
+        static constexpr uint8_t DisableAdaptiveClocking    = 0x97;
         static constexpr uint8_t BadCommandResp             = 0xFA;
         static constexpr uint8_t BadCommand                 = 0xAB;
     };
@@ -268,7 +267,7 @@ public:
     }
     
     void _flushIfNeeded() {
-        if (_cmds.size() >= 64) {
+        if (_cmds.size() >= 512) {
             _flush();
         }
     }
@@ -303,7 +302,7 @@ public:
             const bool bit = _readData[ireadData] & _rstPin;
             buf8[ibuf] <<= 1;
             buf8[ibuf] |= bit;
-            if (ibit == 8) {
+            if (ibit == 7) {
                 ibuf++;
                 ibit = 0;
             }
