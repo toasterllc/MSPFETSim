@@ -28,13 +28,14 @@ public:
         BIOS_InitCom();
         
         for (;;) {
-            _dequeueUSBRequest(10ms);
-            
-            // Call V3OP_Scheduler some number of times, or until there's no work to do
-            for (int i=0; i<10; i++) {
-                bool br = V3OP_Scheduler();
-                if (!br) break;
+            // While V3OP_Scheduler has work to do (return=true), let it run for many iterations
+            // before checking for USB data (without blocking).
+            // When V3OP_Scheduler out of work (return=false), wait indefinitely for USB data.
+            bool serviced = true;
+            for (int i=0; i<100 && serviced; i++) {
+                serviced = V3OP_Scheduler();
             }
+            _dequeueUSBRequest(serviced ? 1ms : 0ms);
         }
     }
     

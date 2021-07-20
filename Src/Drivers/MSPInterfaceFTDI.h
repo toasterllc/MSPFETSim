@@ -93,6 +93,7 @@ public:
         
         _dev.setBitmode(BITMODE_RESET, 0);
         _dev.setBitmode(BITMODE_MPSSE, 0);
+//        _dev.setBaudRate(1<<21);
         
         // TODO: these commands aren't all supported by all hardware
         {
@@ -400,6 +401,11 @@ private:
         
         void setBitmode(uint8_t mode, uint8_t pinDirs) {
             int ir = ftdi_set_bitmode(&_ctx, pinDirs, mode);
+            _checkErr(ir, "ftdi_set_bitmode failed");
+        }
+        
+        void setBaudRate(uint32_t baud) {
+            int ir = ftdi_set_baudrate(&_ctx, (int)baud);
             _checkErr(ir, "ftdi_set_bitmode failed");
         }
         
