@@ -267,7 +267,7 @@ public:
     }
     
     void _flushIfNeeded() {
-        if (_cmds.size() >= 512) {
+        if (_cmds.size() >= 768) {
             _flush();
         }
     }
