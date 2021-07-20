@@ -298,11 +298,12 @@ public:
 //        _dev.read(tmpBuf, tmpBufLen);
         
         uint8_t* buf8 = (uint8_t*)buf;
-        for (size_t ireadData=0, ibit=0, ibuf=0; ireadData<len*8; ireadData++, ibit++) {
+        for (size_t ireadData=0, ibit=0, ibuf=0; ireadData<len*8; ireadData++) {
             const bool bit = _readData[ireadData] & _rstPin;
             buf8[ibuf] <<= 1;
             buf8[ibuf] |= bit;
-            if (ibit == 7) {
+            ibit++;
+            if (ibit == 8) {
                 ibuf++;
                 ibit = 0;
             }
