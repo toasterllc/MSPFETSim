@@ -3,6 +3,9 @@
 #include "Stream.h"
 #include "HIL.h"
 
+#define STATIC_VARS_START(n) auto& sv = n##_staticVars
+#define DECL_STATIC_VAR(n) auto& n = sv.n
+
 #define T_ARCH_MSP430 0
 #define T_ARCH_MSP432 1
 
@@ -1308,25 +1311,41 @@ void setFuncletRegisters_hal_ExecuteFunclet(const uint16_t* registerData)
 	WriteCpuReg(REG_GP3, registerData[6]);
 }
 
+struct {
+    uint32_t lLen = 0;
+    uint16_t ret_len = 0;
+    uint32_t Addr = 0;
+    uint16_t memSize = 0;
+    uint16_t LockA = 0;
+    uint16_t usType = 0;
+    uint16_t startAddr = 0;
+    uint16_t R12_BCSLTC1 = 0;
+    uint16_t R11_DCO = 0;
+    uint16_t registerBackups[7] = {};
+    uint16_t FCTL1Value = 0;
+    uint16_t FCTL2Value = 0;
+    uint16_t FCTL3Value = 0;
+} _hal_ExecuteFunclet_staticVars;
+
 HAL_FUNCTION(_hal_ExecuteFunclet)
 {
+    STATIC_VARS_START(_hal_ExecuteFunclet);
+    DECL_STATIC_VAR(lLen);
+    DECL_STATIC_VAR(ret_len);
+    DECL_STATIC_VAR(Addr);
+    DECL_STATIC_VAR(memSize);
+    DECL_STATIC_VAR(LockA);
+    DECL_STATIC_VAR(usType);
+    DECL_STATIC_VAR(startAddr);
+    DECL_STATIC_VAR(R12_BCSLTC1);
+    DECL_STATIC_VAR(R11_DCO);
+    DECL_STATIC_VAR(registerBackups);
+    DECL_STATIC_VAR(FCTL1Value);
+    DECL_STATIC_VAR(FCTL2Value);
+    DECL_STATIC_VAR(FCTL3Value);
+    
     int16_t ret_value = 0;
     uint16_t lOut;
-    static uint32_t  lLen;
-    static uint16_t ret_len = 0;
-    static uint32_t Addr = 0x0;
-    static uint16_t memSize =0x0;
-    static uint16_t LockA =0x0;
-    static uint16_t usType =0x0;
-    static uint16_t startAddr;
-    static uint16_t R12_BCSLTC1;
-    static uint16_t R11_DCO;
-
-    static uint16_t registerBackups[7] = {0};
-
-    static uint16_t FCTL1Value;
-    static uint16_t FCTL2Value;
-    static uint16_t FCTL3Value;
 
     uint16_t tmpFCTL3Value;
 
@@ -1661,24 +1680,38 @@ void stopAndRestoreRam(uint16_t startAddr)
     release_cpu();
 }
 
+struct {
+    uint32_t lLen = 0;
+    uint32_t Addr = 0;
+    uint16_t memSize = 0;
+    uint16_t LockA = 0;
+    uint16_t usType = 0;
+    uint16_t startAddr = 0;
+    uint16_t R12_BCSLTC1 = 0;
+    uint16_t R11_DCO = 0;
+    uint16_t registerBackups[7] = {};
+    uint16_t FCTL1Value = 0;
+    uint16_t FCTL2Value = 0;
+    uint16_t FCTL3Value = 0;
+} _hal_ExecuteFuncletJtag_staticVars;
+
 HAL_FUNCTION(_hal_ExecuteFuncletJtag)
 {
+    STATIC_VARS_START(_hal_ExecuteFuncletJtag);
+    DECL_STATIC_VAR(lLen);
+    DECL_STATIC_VAR(Addr);
+    DECL_STATIC_VAR(memSize);
+    DECL_STATIC_VAR(LockA);
+    DECL_STATIC_VAR(usType);
+    DECL_STATIC_VAR(startAddr);
+    DECL_STATIC_VAR(R12_BCSLTC1);
+    DECL_STATIC_VAR(R11_DCO);
+    DECL_STATIC_VAR(registerBackups);
+    DECL_STATIC_VAR(FCTL1Value);
+    DECL_STATIC_VAR(FCTL2Value);
+    DECL_STATIC_VAR(FCTL3Value);
+    
     int16_t ret_value = 0;
-    static uint32_t  lLen;
-    static uint32_t Addr = 0x0;
-    static uint16_t memSize =0x0;
-    static uint16_t LockA =0x0;
-    static uint16_t usType =0x0;
-    static uint16_t startAddr;
-    static uint16_t R12_BCSLTC1;
-    static uint16_t R11_DCO;
-
-
-    static uint16_t registerBackups[7] = {0};
-
-    static uint16_t FCTL1Value;
-    static uint16_t FCTL2Value;
-    static uint16_t FCTL3Value;
 
     uint16_t tmpFCTL3Value, lOut = 0;
 
@@ -1989,27 +2022,41 @@ void setFuncletRegisters_hal_ExecuteFuncletX(const uint32_t* registerData)
 	WriteCpuRegX(REG_GP3, registerData[6]);
 }
 
+struct {
+    uint32_t lLen = 0;
+    uint16_t ret_len = 0;
+    uint32_t Addr = 0;
+    uint16_t memSize = 0;
+    uint16_t LockA = 0;
+    uint16_t usType = 0;
+    uint16_t startAddr = 0;
+    uint16_t R12_BCSLTC1 = 0;
+    uint16_t R11_DCO = 0;
+    uint32_t registerBackups[7] = {};
+    uint16_t FCTL1Value = 0;
+    uint16_t FCTL2Value = 0;
+    uint16_t FCTL3Value = 0;
+} _hal_ExecuteFuncletX_staticVars;
+
 HAL_FUNCTION(_hal_ExecuteFuncletX)
 {
+    STATIC_VARS_START(_hal_ExecuteFuncletX);
+    DECL_STATIC_VAR(lLen);
+    DECL_STATIC_VAR(ret_len);
+    DECL_STATIC_VAR(Addr);
+    DECL_STATIC_VAR(memSize);
+    DECL_STATIC_VAR(LockA);
+    DECL_STATIC_VAR(usType);
+    DECL_STATIC_VAR(startAddr);
+    DECL_STATIC_VAR(R12_BCSLTC1);
+    DECL_STATIC_VAR(R11_DCO);
+    DECL_STATIC_VAR(registerBackups);
+    DECL_STATIC_VAR(FCTL1Value);
+    DECL_STATIC_VAR(FCTL2Value);
+    DECL_STATIC_VAR(FCTL3Value);
+    
     int16_t ret_value = 0;
     uint32_t lOut_long = 0;
-    static uint32_t  lLen;
-    static uint16_t ret_len = 0;
-    static uint32_t Addr = 0x0;
-    static uint16_t memSize =0x0;
-    static uint16_t LockA =0x0;
-    static uint16_t usType =0x0;
-    static uint16_t startAddr;
-    static uint16_t R12_BCSLTC1;
-    static uint16_t R11_DCO;
-
-
-    static uint32_t registerBackups[7] = {0};
-
-    static uint16_t FCTL1Value;
-    static uint16_t FCTL2Value;
-    static uint16_t FCTL3Value;
-
     uint16_t tmpFCTL3Value;
 
     uint16_t tgtStart     =0x0;
@@ -2306,13 +2353,26 @@ void setFuncletRegisters_hal_ExecuteFuncletXv2(const uint32_t* registerData)
   (must be <= length)
 */
 
+struct {
+    uint32_t lLen = 0;
+    uint16_t ret_len = 0;
+    uint32_t registerBackups[4] = {};
+    uint16_t allignNeed = 0;
+    uint16_t dataL = 0;
+    uint16_t dataH = 0;
+} _hal_ExecuteFuncletXv2_staticVars;
+
 HAL_FUNCTION(_hal_ExecuteFuncletXv2)
 {
-    static uint32_t  lLen;
-    static uint16_t ret_len = 0;
+    STATIC_VARS_START(_hal_ExecuteFuncletXv2);
+    DECL_STATIC_VAR(lLen);
+    DECL_STATIC_VAR(ret_len);
+    DECL_STATIC_VAR(registerBackups);
+    DECL_STATIC_VAR(allignNeed);
+    DECL_STATIC_VAR(dataL);
+    DECL_STATIC_VAR(dataH);
+    
     uint8_t jtagMailboxIn = 0;
-
-    static uint32_t registerBackups[4] = {0};
 
     uint16_t tgtStart     =0x0 ;
     uint32_t Addr          =0x0 ;
@@ -2321,9 +2381,6 @@ HAL_FUNCTION(_hal_ExecuteFuncletXv2)
 
     uint16_t startAddr;
     uint16_t Mova;
-    static uint16_t allignNeed = 0x0;
-    static uint16_t dataL;
-    static uint16_t dataH;
     int16_t ret_value = 0;
     StreamSafe stream_tmp;
 
@@ -2587,7 +2644,7 @@ const uint16_t sizeLoopFll = (uint16_t)(sizeof(loopFll)/sizeof(*loopFll));
 
 /*--------------------------------------------------------------------------------*/
 #ifdef MSP430_UIF
-    static uint16_t Time = 0;
+    uint16_t Time = 0;
 
     #pragma vector=TIMERA1_VECTOR
     __interrupt void TIMER_A_ISR_(void)
@@ -4145,15 +4202,25 @@ int16_t JtagHandleError()
     } while(0)
 
 
+struct {
+    uint64_t apsel = 0;
+    uint16_t rnw = 0;
+    uint16_t dataWidth = 0;
+    uint32_t address = 0;
+    uint32_t count = 0;
+} _hal_MemApTransactionArm_staticVars;
+
 HAL_FUNCTION(_hal_MemApTransactionArm)
 {
+    STATIC_VARS_START(_hal_MemApTransactionArm);
+    DECL_STATIC_VAR(apsel);
+    DECL_STATIC_VAR(rnw);
+    DECL_STATIC_VAR(dataWidth);
+    DECL_STATIC_VAR(address);
+    DECL_STATIC_VAR(count);
+    
     int16_t retVal = 0;
 #if defined(MSP430_UIF) || defined(MSP_FET)
-    static uint64_t apsel;
-    static uint16_t rnw;
-    static uint16_t dataWidth;
-    static uint32_t address;
-    static uint32_t count;
 
     uint8_t *pBuf;
     uint16_t sizeOfBuf;
@@ -4289,16 +4356,25 @@ HAL_FUNCTION(_hal_MemApTransactionArm)
 }
 
 
+struct {
+    uint64_t apsel = 0;
+    uint16_t rnw = 0;
+    uint16_t dataWidth = 0;
+    uint32_t address = 0;
+    uint32_t count = 0;
+} _hal_MemApTransactionArmSwd_staticVars;
 
 HAL_FUNCTION(_hal_MemApTransactionArmSwd)
 {
+    STATIC_VARS_START(_hal_MemApTransactionArmSwd);
+    DECL_STATIC_VAR(apsel);
+    DECL_STATIC_VAR(rnw);
+    DECL_STATIC_VAR(dataWidth);
+    DECL_STATIC_VAR(address);
+    DECL_STATIC_VAR(count);
+    
     int16_t retVal = 0;
 #ifdef MSP_FET
-    static uint64_t apsel;
-    static uint16_t rnw;
-    static uint16_t dataWidth;
-    static uint32_t address;
-    static uint32_t count;
 
     uint8_t *pBuf;
     uint16_t sizeOfBuf;
@@ -4600,10 +4676,17 @@ uint32_t getIMeasure()
 }
 //-----------------------------------------------------------------Event type 8 only analog ------------------------------------------------------------------
 
+struct {
+    EnergyTraceRecordEt8_t buffer[NUM_RECORDS_TO_CAPTURE] = {0};
+    uint16_t currentIndex = 0;
+} _hal_PollJStateRegEt8_staticVars;
+
 HAL_FUNCTION(_hal_PollJStateRegEt8)
 {
-    static EnergyTraceRecordEt8_t buffer[NUM_RECORDS_TO_CAPTURE] = {0};
-    static uint16_t currentIndex = 0;
+    STATIC_VARS_START(_hal_PollJStateRegEt8);
+    DECL_STATIC_VAR(buffer);
+    DECL_STATIC_VAR(currentIndex);
+    
     double vcc = 0;
     double extVcc= 0 ;
     uint16_t mEtGatedMode = 0;
@@ -4794,8 +4877,17 @@ HAL_FUNCTION(_hal_PollDStatePCRegEt)
     return PollJStateReg(DSTATE_PC);
 }
 
+struct {
+    EnergyTraceRecordEt7_t buffer[NUM_RECORDS_TO_CAPTURE] = {0};
+    uint16_t currentIndex = 0;
+} PollJStateReg_staticVars;
+
 int16_t PollJStateReg(uint16_t JStateVersion)
 {
+    STATIC_VARS_START(PollJStateReg);
+    DECL_STATIC_VAR(buffer);
+    DECL_STATIC_VAR(currentIndex);
+    
     uint64_t lOut_long_long = 0;
 #if defined(MSP_FET)
     uint32_t lOut_long = 0;
@@ -4834,8 +4926,6 @@ int16_t PollJStateReg(uint16_t JStateVersion)
     // check if Energy Trace should be enabled
     if(*syncWithRunVarAddress && mEtActive)
     {
-        static EnergyTraceRecordEt7_t buffer[NUM_RECORDS_TO_CAPTURE] = {0};
-        static uint16_t currentIndex = 0;
         double vcc = 0;
         double extVcc = 0;
 
@@ -6879,10 +6969,20 @@ HAL_FUNCTION(_hal_ScanApArm)
   length: number of bytes to write
   data: data to write to the given location
 */
+
+struct {
+    uint16_t  MailBoxMode = 0;
+    uint16_t  DATA1 = 0x0;
+    uint16_t  DATA2 = 0x0;
+} _hal_SendJtagMailboxXv2_staticVars;
+
 HAL_FUNCTION(_hal_SendJtagMailboxXv2)
 {
-    static uint16_t  MailBoxMode;
-    static uint16_t  DATA1 = 0x0, DATA2 = 0x0;
+    STATIC_VARS_START(_hal_SendJtagMailboxXv2);
+    DECL_STATIC_VAR(MailBoxMode);
+    DECL_STATIC_VAR(DATA1);
+    DECL_STATIC_VAR(DATA2);
+    
     uint8_t jtagMailboxIn = 0;
 
     if(STREAM_get_word(&MailBoxMode) != 0)
@@ -9698,8 +9798,15 @@ uint16_t lastTraceWritePos = 0;
   This is best used with the ExecLoop command type.
 */
 
+struct {
+    uint16_t noChangeSince = 0;
+} _hal_WaitForStorage_staticVars;
+
 HAL_FUNCTION(_hal_WaitForStorage)
 {
+    STATIC_VARS_START(_hal_WaitForStorage);
+    DECL_STATIC_VAR(noChangeSince);
+    
     int16_t RetState = 2;
     uint16_t sStStorCtrl = 0;
 
@@ -9775,8 +9882,6 @@ HAL_FUNCTION(_hal_WaitForStorage)
             //Store continuously (only history mode: stop on trigger)
             else
             {
-                static uint16_t noChangeSince = 0;
-
                 if (writePos != lastTraceWritePos)
                 {
                     noChangeSince = 0;
@@ -9846,8 +9951,15 @@ HAL_FUNCTION(_hal_WaitForStorage)
   This is best used with the ExecLoop command type.
 */
 
+struct {
+    uint16_t noChangeSince = 0;
+} _hal_WaitForStorageX_staticVars;
+
 HAL_FUNCTION(_hal_WaitForStorageX)
 {
+    STATIC_VARS_START(_hal_WaitForStorageX);
+    DECL_STATIC_VAR(noChangeSince);
+    
     int16_t RetState = 2;
     uint16_t sStStorCtrl = 0;
 
@@ -9924,8 +10036,6 @@ HAL_FUNCTION(_hal_WaitForStorageX)
             //Store continuously (only history mode: stop on trigger)
             else
             {
-                static uint16_t noChangeSince = 0;
-
                 if (writePos != lastTraceWritePos)
                 {
                     noChangeSince = 0;
@@ -10183,14 +10293,23 @@ HAL_FUNCTION(_hal_WriteAllCpuRegsXv2)
   data: data to write to the given location
 */
 
+struct {
+    uint32_t lLen = 0;
+    uint32_t Addr = 0;
+    uint16_t Mova = 0;
+    uint16_t ret_len = 0;
+    uint16_t id = 0;
+} _hal_WriteFramQuickXv2_staticVars;
+
 HAL_FUNCTION(_hal_WriteFramQuickXv2)
 {
-
-    static uint32_t  lLen;
-    static uint32_t Addr = 0x0 ;
-    static uint16_t Mova;
-    static uint16_t ret_len = 0;
-    static uint16_t id;
+    STATIC_VARS_START(_hal_WriteFramQuickXv2);
+    DECL_STATIC_VAR(lLen);
+    DECL_STATIC_VAR(Addr);
+    DECL_STATIC_VAR(Mova);
+    DECL_STATIC_VAR(ret_len);
+    DECL_STATIC_VAR(id);
+    
     int16_t ret_value = 0;
     uint16_t *pBuf;
     uint16_t sizeOfBuf;
@@ -10298,11 +10417,17 @@ HAL_FUNCTION(_hal_WriteFramQuickXv2)
   data: data to write to the given location
 */
 
+struct {
+    uint32_t lLen = 0;
+    uint32_t lAddr = 0;
+} _hal_WriteMemBytes_staticVars;
+
 HAL_FUNCTION(_hal_WriteMemBytes)
 {
-    static uint32_t lLen;
-    static uint32_t lAddr;
-
+    STATIC_VARS_START(_hal_WriteMemBytes);
+    DECL_STATIC_VAR(lLen);
+    DECL_STATIC_VAR(Addr);
+    
     int16_t ret_value = 0;
     uint8_t value;
 
@@ -10358,10 +10483,17 @@ HAL_FUNCTION(_hal_WriteMemBytes)
 * \brief Write bytes to a memory mapped location
 */
 
+struct {
+    uint32_t lLen = 0;
+    uint32_t lAddr = 0;
+} _hal_WriteMemBytesX_staticVars;
+
 HAL_FUNCTION(_hal_WriteMemBytesX)
 {
-    static uint32_t lLen;
-    static uint32_t lAddr;
+    STATIC_VARS_START(_hal_WriteMemBytesX);
+    DECL_STATIC_VAR(lLen);
+    DECL_STATIC_VAR(Addr);
+    
     int16_t ret_value = 0;
     uint8_t tmp_uchar;
 
@@ -10452,11 +10584,18 @@ HAL_FUNCTION(_hal_WriteMemBytesXv2)
   length: number of words to write
   data: data to write to the given location
 */
+
+struct {
+    uint32_t lLen = 0;
+    uint32_t lAddr = 0;
+} _hal_WriteMemWords_staticVars;
+
 HAL_FUNCTION(_hal_WriteMemWords)
 {
-    static uint32_t lLen;
-    static uint32_t lAddr;
-
+    STATIC_VARS_START(_hal_WriteMemWords);
+    DECL_STATIC_VAR(lLen);
+    DECL_STATIC_VAR(Addr);
+    
     int16_t ret_value = 0;
     uint16_t tmp_uint;
 
@@ -10511,11 +10650,17 @@ HAL_FUNCTION(_hal_WriteMemWords)
 * \brief Write words (16bit values) to a memory mapped location
 */
 
+struct {
+    uint32_t lLen = 0;
+    uint32_t lAddr = 0;
+} _hal_WriteMemWordsX_staticVars;
 
 HAL_FUNCTION(_hal_WriteMemWordsX)
 {
-    static uint32_t lLen;
-    static uint32_t lAddr;
+    STATIC_VARS_START(_hal_WriteMemWordsX);
+    DECL_STATIC_VAR(lLen);
+    DECL_STATIC_VAR(Addr);
+    
     int16_t ret_value = 0;
     uint16_t tmp_uint;
 
@@ -10581,10 +10726,18 @@ HAL_FUNCTION(_hal_WriteMemWordsX)
   length: number of words to write
   data: data to write to the given location
 */
+
+struct {
+    uint32_t lLen = 0;
+    uint32_t lAddr = 0;
+} _hal_WriteMemWordsXv2_staticVars;
+
 HAL_FUNCTION(_hal_WriteMemWordsXv2)
 {
-    static uint32_t lAddr;
-    static uint32_t lLen;
+    STATIC_VARS_START(_hal_WriteMemWordsXv2);
+    DECL_STATIC_VAR(lLen);
+    DECL_STATIC_VAR(Addr);
+    
     uint16_t *pBuf;
     uint16_t sizeOfBuf;
     int16_t ret_value = 0;

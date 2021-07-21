@@ -61,43 +61,50 @@ uint64_t _read(uint8_t w) {
     }
 }
 
-template <class...> static constexpr std::false_type _AlwaysFalse;
+#pragma push_macro("static")
+#undef static
+template <class...> static constexpr std::false_type _AlwaysFalse = {};
+#pragma pop_macro("static")
 
 template <typename T, size_t W=sizeof(T)*8>
 class SBWShiftProxy {
 public:
-    SBWShiftProxy(uint64_t data) : _data(data) {}
+    // Default constructor returns a nop object that just returns 0
+    SBWShiftProxy() {}
+    SBWShiftProxy(MSPProbeSim* self, uint64_t data) : _self(self), _data(data) {}
     // Copy constructor: not allowed
     SBWShiftProxy(const SBWShiftProxy& x) = delete;
     // Move constructor: not allowed
     SBWShiftProxy(SBWShiftProxy&& x) = delete;
     
     ~SBWShiftProxy() {
+        if (!_self) return; // Short-circuit if we're a nop object
         if (!_read) {
             // Perform non-read shift
-                 if constexpr (W ==  8) sbw_Shift(_data, F_BYTE);
-            else if constexpr (W == 16) sbw_Shift(_data, F_WORD);
-            else if constexpr (W == 20) sbw_Shift(_data, F_ADDR);
-            else if constexpr (W == 32) sbw_Shift(_data, F_LONG);
-            else if constexpr (W == 64) sbw_Shift(_data, F_LONG_LONG);
+                 if constexpr (W ==  8) _self->sbw_Shift(_data, F_BYTE);
+            else if constexpr (W == 16) _self->sbw_Shift(_data, F_WORD);
+            else if constexpr (W == 20) _self->sbw_Shift(_data, F_ADDR);
+            else if constexpr (W == 32) _self->sbw_Shift(_data, F_LONG);
+            else if constexpr (W == 64) _self->sbw_Shift(_data, F_LONG_LONG);
             else                        static_assert(_AlwaysFalse<T>);
         }
     }
     
     operator T() {
-        // Perform read shift and return result
-        printf("Perform read %zu-bit shift\n", W);
-        _read = true;
+        if (!_self) return 0; // Short-circuit if we're a nop object
         
-             if constexpr (W ==  8) return sbw_Shift_R(_data, F_BYTE);
-        else if constexpr (W == 16) return sbw_Shift_R(_data, F_WORD);
-        else if constexpr (W == 20) return sbw_Shift_R(_data, F_ADDR);
-        else if constexpr (W == 32) return sbw_Shift_R(_data, F_LONG);
-        else if constexpr (W == 64) return sbw_Shift_R(_data, F_LONG_LONG);
+        // Perform read shift and return result
+        _read = true;
+             if constexpr (W ==  8) return _self->sbw_Shift_R(_data, F_BYTE);
+        else if constexpr (W == 16) return _self->sbw_Shift_R(_data, F_WORD);
+        else if constexpr (W == 20) return _self->sbw_Shift_R(_data, F_ADDR);
+        else if constexpr (W == 32) return _self->sbw_Shift_R(_data, F_LONG);
+        else if constexpr (W == 64) return _self->sbw_Shift_R(_data, F_LONG_LONG);
         else                        static_assert(_AlwaysFalse<T>);
     }
     
 private:
+    MSPProbeSim* _self = nullptr;
     uint64_t _data = 0;
     bool _read = false;
 };
@@ -751,7 +758,8 @@ void SetReg_XBits(uint64_t *Data, uint16_t count) {
 
 SBWShiftProxy<uint8_t> SetReg_8Bits(uint8_t Data) {
     if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
+        HIL_UNIMP;
+        return {};
     } else {
         // From msp_fet:_hil_2w_SetReg_XBits08()
         // JTAG FSM state = Run-Test/Idle
@@ -768,14 +776,15 @@ SBWShiftProxy<uint8_t> SetReg_8Bits(uint8_t Data) {
         // JTAG FSM state = Capture-DR
         TMSL_TDIH();
         // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return SBWShiftProxy<uint8_t>(Data);
+        return SBWShiftProxy<uint8_t>(this, Data);
         // JTAG FSM state = Run-Test/Idle
     }
 }
 
 SBWShiftProxy<uint16_t> SetReg_16Bits(uint16_t Data) {
     if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
+        HIL_UNIMP;
+        return {};
     
     } else {
         // From msp_fet:_hil_2w_SetReg_XBits16()
@@ -793,14 +802,15 @@ SBWShiftProxy<uint16_t> SetReg_16Bits(uint16_t Data) {
         // JTAG FSM state = Capture-DR
         TMSL_TDIH();
         // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return SBWShiftProxy<uint16_t>(Data);
+        return SBWShiftProxy<uint16_t>(this, Data);
         // JTAG FSM state = Run-Test/Idle
     }
 }
 
 SBWShiftProxy<uint32_t,20> SetReg_20Bits(uint32_t Data) {
     if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
+        HIL_UNIMP;
+        return {};
     
     } else {
         // From msp_fet:_hil_2w_SetReg_XBits20()
@@ -818,14 +828,15 @@ SBWShiftProxy<uint32_t,20> SetReg_20Bits(uint32_t Data) {
         // JTAG FSM state = Capture-DR
         TMSL_TDIH();
         // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return SBWShiftProxy<uint32_t,20>(Data);
+        return SBWShiftProxy<uint32_t,20>(this, Data);
         // JTAG FSM state = Run-Test/Idle
     }
 }
 
 SBWShiftProxy<uint32_t> SetReg_32Bits(uint32_t Data) {
     if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
+        HIL_UNIMP;
+        return {};
     
     } else {
         // From msp_fet:_hil_2w_SetReg_XBits32()
@@ -843,22 +854,25 @@ SBWShiftProxy<uint32_t> SetReg_32Bits(uint32_t Data) {
         // JTAG FSM state = Capture-DR
         TMSL_TDIH();
         // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return SBWShiftProxy<uint32_t>(Data);
+        return SBWShiftProxy<uint32_t>(this, Data);
         // JTAG FSM state = Run-Test/Idle
     }
 }
 
-uint64_t SetReg_35Bits_R(uint64_t *Data) {
+SBWShiftProxy<uint64_t,35> SetReg_35Bits_R(uint64_t *Data) {
     if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
+        HIL_UNIMP;
+        return {};
     } else {
-        HIL_UNIMP_RET0;
+        HIL_UNIMP;
+        return {};
     }
 }
 
 SBWShiftProxy<uint64_t> SetReg_64Bits(uint64_t Data) {
     if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
+        HIL_UNIMP;
+        return {};
     } else {
         // From msp_fet:_hil_2w_SetReg_XBits64()
         // JTAG FSM state = Run-Test/Idle
@@ -875,7 +889,7 @@ SBWShiftProxy<uint64_t> SetReg_64Bits(uint64_t Data) {
         // JTAG FSM state = Capture-DR
         TMSL_TDIH();
         // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return SBWShiftProxy<uint64_t>(Data);
+        return SBWShiftProxy<uint64_t>(this, Data);
         // JTAG FSM state = Run-Test/Idle
     }
 }
