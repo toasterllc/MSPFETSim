@@ -327,11 +327,11 @@ enum hal_id
 
 //extern void globalVarsInit(void);
 
-REQUIRED(_edt_Common_Methods)
-edt_common_methods_t  _edt_Common_Methods;
+REQUIRED(_edt_Common_Methods_HAL)
+edt_common_methods_t  _edt_Common_Methods_HAL;
 
-REQUIRED(_edt_Distinct_Methods)
-edt_distinct_methods_t _edt_Distinct_Methods;
+REQUIRED(_edt_Distinct_Methods_HAL)
+edt_distinct_methods_t _edt_Distinct_Methods_HAL;
 
 //extern int16_t _hil_Init( void );
 //extern uint32_t _hal_mclkCntrl0;
@@ -611,25 +611,25 @@ void *ResetFirmware(void *stream_adr, uint32_t device_flags, uint8_t v3opHilCrcO
             HilInitGetEdtCommenFunc hilEdtCom = NULL;
             // set pointer to edt commen functions
             hilEdtCom = (HilInitGetEdtCommenFunc)0x18A0;
-            hilEdtCom(&_edt_Common_Methods);
+            hilEdtCom(&_edt_Common_Methods_HAL);
             hal_infos_in_ram_.hil_version = hil_version_;
             hal_infos_in_ram_.hil_versionCmp = hil_versionCmp_;
 #ifdef eZ_FET
             if(v3opDcdcCcOk)
             {
-                _edt_Common_Methods.SwitchVccFET(LDO_ON);
+                _edt_Common_Methods_HAL.SwitchVccFET(LDO_ON);
             }
 #endif
 
 
 #ifdef MSP_FET
             // Force to not update for Beta1
-            hal_infos_in_ram_.fpga_version          = CALL_MEMBER_FN_PTR(_edt_Common_Methods.getFpgaVersion)();
+            hal_infos_in_ram_.fpga_version          = CALL_MEMBER_FN_PTR(_edt_Common_Methods_HAL.getFpgaVersion)();
             // power up VCC as FET power supply
             if(v3opDcdcCcOk)
             {
-                CALL_MEMBER_FN_PTR(_edt_Common_Methods.SetVcc)(3300);
-                CALL_MEMBER_FN_PTR(_edt_Common_Methods.SwitchVccFET)(1);
+                CALL_MEMBER_FN_PTR(_edt_Common_Methods_HAL.SetVcc)(3300);
+                CALL_MEMBER_FN_PTR(_edt_Common_Methods_HAL.SwitchVccFET)(1);
             }
 #else
             hal_infos_in_ram_.fpga_version = 0;
@@ -641,52 +641,52 @@ void *ResetFirmware(void *stream_adr, uint32_t device_flags, uint8_t v3opHilCrcO
             hal_infos_in_ram_.hil_version = 0;
             hal_infos_in_ram_.fpga_version = 0;
 
-            _edt_Common_Methods.Init                 = MEMBER_FN_PTR(_dummy_Init);
-            _edt_Common_Methods.SetVcc               = MEMBER_FN_PTR(_dummy_SetVcc);
-            _edt_Common_Methods.GetVcc               = MEMBER_FN_PTR(_dummy_GetVcc);
-            _edt_Common_Methods.SetProtocol          = MEMBER_FN_PTR(_dummy_SetProtocol);
-            _edt_Common_Methods.SetPsaTCLK           = MEMBER_FN_PTR(_dummy_SetPsaTCLK);
-            _edt_Common_Methods.Open                 = MEMBER_FN_PTR(_dummy_Open);
-            _edt_Common_Methods.Close                = MEMBER_FN_PTR(_dummy_Close);
-            _edt_Common_Methods.Delay_1us            = MEMBER_FN_PTR(_dummy);
-            _edt_Common_Methods.Delay_1ms            = MEMBER_FN_PTR(_dummy);
-            _edt_Common_Methods.Loop                 = MEMBER_FN_PTR(_dummy_IccMonitor_Process);
-            _edt_Common_Methods.EntrySequences       = MEMBER_FN_PTR(_dummy_EntrySequences);
-            _edt_Common_Methods.SetReset             = MEMBER_FN_PTR(_dummy_SetReset);
-            _edt_Common_Methods.SetTest              = MEMBER_FN_PTR(_dummy_SetTest);
-            _edt_Common_Methods.SetTMS               = MEMBER_FN_PTR(_dummy_SetTMS);
-            _edt_Common_Methods.SetTDI               = MEMBER_FN_PTR(_dummy_SetTDI);
-            _edt_Common_Methods.SetTCK               = MEMBER_FN_PTR(_dummy_SetTCK);
-            _edt_Common_Methods.SetJtagSpeed         = MEMBER_FN_PTR(_dummy_SetJtagSpeed);
-            _edt_Common_Methods.ConfigureSetPc       = MEMBER_FN_PTR(_dummy_ConfigureSetPc);
-            _edt_Common_Methods.initDelayTimer       = MEMBER_FN_PTR(_dummy_initDelayTimer);
-            _edt_Common_Methods.regulateVcc          = MEMBER_FN_PTR(_dummy_regulateVcc);
-            _edt_Common_Methods.getFpgaVersion       = MEMBER_FN_PTR(_dummy_getFpgaVersion);
-            _edt_Common_Methods.BSL_EntrySequence    = MEMBER_FN_PTR(_dummy_BSL_EntrySequence);
-            _edt_Common_Methods.SwitchVccFET         = MEMBER_FN_PTR(_dummy_SwitchVccFET);
-            _edt_Common_Methods.setFpgaTimeOut       = MEMBER_FN_PTR(_dummy_setFpgaTimeOut);
-            _edt_Common_Methods.regulateVcc          = MEMBER_FN_PTR(_dummy_regulateVcc);
-            _edt_Common_Methods.ReadADC12            = MEMBER_FN_PTR(_dummy_ReadADC12);
-            _edt_Common_Methods.ConfigFpgaIoMode     = MEMBER_FN_PTR(_dummy_ConfigFpgaIoMode);
+            _edt_Common_Methods_HAL.Init                 = MEMBER_FN_PTR(_dummy_Init);
+            _edt_Common_Methods_HAL.SetVcc               = MEMBER_FN_PTR(_dummy_SetVcc);
+            _edt_Common_Methods_HAL.GetVcc               = MEMBER_FN_PTR(_dummy_GetVcc);
+            _edt_Common_Methods_HAL.SetProtocol          = MEMBER_FN_PTR(_dummy_SetProtocol);
+            _edt_Common_Methods_HAL.SetPsaTCLK           = MEMBER_FN_PTR(_dummy_SetPsaTCLK);
+            _edt_Common_Methods_HAL.Open                 = MEMBER_FN_PTR(_dummy_Open);
+            _edt_Common_Methods_HAL.Close                = MEMBER_FN_PTR(_dummy_Close);
+            _edt_Common_Methods_HAL.Delay_1us            = MEMBER_FN_PTR(_dummy);
+            _edt_Common_Methods_HAL.Delay_1ms            = MEMBER_FN_PTR(_dummy);
+            _edt_Common_Methods_HAL.Loop                 = MEMBER_FN_PTR(_dummy_IccMonitor_Process);
+            _edt_Common_Methods_HAL.EntrySequences       = MEMBER_FN_PTR(_dummy_EntrySequences);
+            _edt_Common_Methods_HAL.SetReset             = MEMBER_FN_PTR(_dummy_SetReset);
+            _edt_Common_Methods_HAL.SetTest              = MEMBER_FN_PTR(_dummy_SetTest);
+            _edt_Common_Methods_HAL.SetTMS               = MEMBER_FN_PTR(_dummy_SetTMS);
+            _edt_Common_Methods_HAL.SetTDI               = MEMBER_FN_PTR(_dummy_SetTDI);
+            _edt_Common_Methods_HAL.SetTCK               = MEMBER_FN_PTR(_dummy_SetTCK);
+            _edt_Common_Methods_HAL.SetJtagSpeed         = MEMBER_FN_PTR(_dummy_SetJtagSpeed);
+            _edt_Common_Methods_HAL.ConfigureSetPc       = MEMBER_FN_PTR(_dummy_ConfigureSetPc);
+            _edt_Common_Methods_HAL.initDelayTimer       = MEMBER_FN_PTR(_dummy_initDelayTimer);
+            _edt_Common_Methods_HAL.regulateVcc          = MEMBER_FN_PTR(_dummy_regulateVcc);
+            _edt_Common_Methods_HAL.getFpgaVersion       = MEMBER_FN_PTR(_dummy_getFpgaVersion);
+            _edt_Common_Methods_HAL.BSL_EntrySequence    = MEMBER_FN_PTR(_dummy_BSL_EntrySequence);
+            _edt_Common_Methods_HAL.SwitchVccFET         = MEMBER_FN_PTR(_dummy_SwitchVccFET);
+            _edt_Common_Methods_HAL.setFpgaTimeOut       = MEMBER_FN_PTR(_dummy_setFpgaTimeOut);
+            _edt_Common_Methods_HAL.regulateVcc          = MEMBER_FN_PTR(_dummy_regulateVcc);
+            _edt_Common_Methods_HAL.ReadADC12            = MEMBER_FN_PTR(_dummy_ReadADC12);
+            _edt_Common_Methods_HAL.ConfigFpgaIoMode     = MEMBER_FN_PTR(_dummy_ConfigFpgaIoMode);
 
-            _edt_Distinct_Methods.TapReset           = MEMBER_FN_PTR(_dummy_TapReset_Dma);
-            _edt_Distinct_Methods.CheckJtagFuse      = MEMBER_FN_PTR(_dummy_CheckJtagFuse_Dma);
-            _edt_Distinct_Methods.Instr              = MEMBER_FN_PTR(_dummy_Instr_Dma);
-            _edt_Distinct_Methods.SetReg_XBits08     = MEMBER_FN_PTR(_dummy_SetReg_XBits08_Dma);
-            _edt_Distinct_Methods.SetReg_XBits16     = MEMBER_FN_PTR(_dummy_SetReg_XBits16_Dma);
-            _edt_Distinct_Methods.SetReg_XBits20     = MEMBER_FN_PTR(_dummy_SetReg_XBits20_Dma);
-            _edt_Distinct_Methods.SetReg_XBits32     = MEMBER_FN_PTR(_dummy_SetReg_XBits32_Dma);
-            _edt_Distinct_Methods.SetReg_XBits64     = MEMBER_FN_PTR(_dummy_SetReg_XBits64_Dma);
-            _edt_Distinct_Methods.SetReg_XBits8_64   = MEMBER_FN_PTR(_dummy_SetReg_XBits8_64_Dma);
-            _edt_Distinct_Methods.Tclk               = MEMBER_FN_PTR(_dummy_Tclk_Dma);
-            _edt_Distinct_Methods.StepPsa            = MEMBER_FN_PTR(_dummy_StepPsaTclkHigh_Dma);
-            _edt_Distinct_Methods.BlowFuse           = MEMBER_FN_PTR(_dummy_BlowFuse_Dma);
-            _edt_Distinct_Methods.GetPrevInstruction = MEMBER_FN_PTR(_dummy_GetPrevInstruction);
-            _edt_Distinct_Methods.SetReg_XBits       = MEMBER_FN_PTR(_dummy_SetReg_XBits);
-            _edt_Distinct_Methods.Instr04            = MEMBER_FN_PTR(_dummy_Instr_4);
-            _edt_Distinct_Methods.write_read_Dp      = MEMBER_FN_PTR(_dummy_write_read_Dp);
-            _edt_Distinct_Methods.write_read_Ap      = MEMBER_FN_PTR(_dummy_write_read_Ap);
-            _edt_Distinct_Methods.write_read_mem_Ap  = MEMBER_FN_PTR(_dummy_write_read_mem_Ap);
+            _edt_Distinct_Methods_HAL.TapReset           = MEMBER_FN_PTR(_dummy_TapReset_Dma);
+            _edt_Distinct_Methods_HAL.CheckJtagFuse      = MEMBER_FN_PTR(_dummy_CheckJtagFuse_Dma);
+            _edt_Distinct_Methods_HAL.Instr              = MEMBER_FN_PTR(_dummy_Instr_Dma);
+            _edt_Distinct_Methods_HAL.SetReg_XBits08     = MEMBER_FN_PTR(_dummy_SetReg_XBits08_Dma);
+            _edt_Distinct_Methods_HAL.SetReg_XBits16     = MEMBER_FN_PTR(_dummy_SetReg_XBits16_Dma);
+            _edt_Distinct_Methods_HAL.SetReg_XBits20     = MEMBER_FN_PTR(_dummy_SetReg_XBits20_Dma);
+            _edt_Distinct_Methods_HAL.SetReg_XBits32     = MEMBER_FN_PTR(_dummy_SetReg_XBits32_Dma);
+            _edt_Distinct_Methods_HAL.SetReg_XBits64     = MEMBER_FN_PTR(_dummy_SetReg_XBits64_Dma);
+            _edt_Distinct_Methods_HAL.SetReg_XBits8_64   = MEMBER_FN_PTR(_dummy_SetReg_XBits8_64_Dma);
+            _edt_Distinct_Methods_HAL.Tclk               = MEMBER_FN_PTR(_dummy_Tclk_Dma);
+            _edt_Distinct_Methods_HAL.StepPsa            = MEMBER_FN_PTR(_dummy_StepPsaTclkHigh_Dma);
+            _edt_Distinct_Methods_HAL.BlowFuse           = MEMBER_FN_PTR(_dummy_BlowFuse_Dma);
+            _edt_Distinct_Methods_HAL.GetPrevInstruction = MEMBER_FN_PTR(_dummy_GetPrevInstruction);
+            _edt_Distinct_Methods_HAL.SetReg_XBits       = MEMBER_FN_PTR(_dummy_SetReg_XBits);
+            _edt_Distinct_Methods_HAL.Instr04            = MEMBER_FN_PTR(_dummy_Instr_4);
+            _edt_Distinct_Methods_HAL.write_read_Dp      = MEMBER_FN_PTR(_dummy_write_read_Dp);
+            _edt_Distinct_Methods_HAL.write_read_Ap      = MEMBER_FN_PTR(_dummy_write_read_Ap);
+            _edt_Distinct_Methods_HAL.write_read_mem_Ap  = MEMBER_FN_PTR(_dummy_write_read_mem_Ap);
         }
     }
 
@@ -3584,7 +3584,7 @@ HAL_FUNCTION(_hal_GetInterfaceMode)
         IHIL_SetProtocol(protocol);
 //        #ifdef MSP_FET
 //            hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//            hilEdtDis(&_edt_Distinct_Methods);
+//            hilEdtDis(&_edt_Distinct_Methods_HAL);
 //        #endif
 
         // Run  4wire/SBW entry Sequence & Reset high
@@ -3664,7 +3664,7 @@ HAL_FUNCTION(_hal_GetInterfaceModeArm)
         IHIL_SetProtocol(protocol);
 //        #ifdef MSP_FET
 //            hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//            hilEdtDis(&_edt_Distinct_Methods);
+//            hilEdtDis(&_edt_Distinct_Methods_HAL);
 //        #endif
 
 
@@ -3672,7 +3672,7 @@ HAL_FUNCTION(_hal_GetInterfaceModeArm)
         // Reset TAP state machine -> Run-Test/Idle
         IHIL_TapReset();
         // Run Fuse Check
-        idCode = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods.GetJtagIdCode)();
+        idCode = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.GetJtagIdCode)();
 
         if (idCode != 0xFFFFFFFE)
         {
@@ -3734,7 +3734,7 @@ HAL_FUNCTION(_hal_GetJtagId)
 HAL_FUNCTION(_hal_GetJtagIdCodeArm)
 {
 #if defined(MSP430_UIF) || defined(MSP_FET)
-    uint32_t JtagId = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods.GetJtagIdCode)();
+    uint32_t JtagId = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.GetJtagIdCode)();
     if (JtagId)
     {
         STREAM_put_long(JtagId);
@@ -3954,7 +3954,7 @@ HAL_FUNCTION(_hal_HilCommand)
             break;
 
         case HIL_CMD_JTAG_IR:
-            shiftedOut = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods.Instr)((uint8_t)value);
+            shiftedOut = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)((uint8_t)value);
             STREAM_put_long( (uint32_t)(shiftedOut &0xFFFFFFFF) );
             STREAM_put_long( (uint32_t)(shiftedOut >> 32) );
             break;
@@ -4047,7 +4047,7 @@ HAL_FUNCTION(_hal_HilCommand)
 
 //            {
 //                HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//                hilEdtDis(&_edt_Distinct_Methods);
+//                hilEdtDis(&_edt_Distinct_Methods_HAL);
 //            }
             break;
 
@@ -4276,14 +4276,14 @@ HAL_FUNCTION(_hal_MagicPattern)
 //#if defined(eZ_FET) || defined(MSP_FET)
 //    {
 //        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//        hilEdtDis(&_edt_Distinct_Methods);
+//        hilEdtDis(&_edt_Distinct_Methods_HAL);
 //    }
 //#endif
     // run entry sequnce but pull rst low during the sequence to wake-up the device
 
     IHIL_Close();
 
-    CALL_MEMBER_FN_PTR(_edt_Common_Methods.regulateVcc)();
+    CALL_MEMBER_FN_PTR(_edt_Common_Methods_HAL.regulateVcc)();
     
     IHIL_Open(RSTLOW);
     IHIL_TapReset();
@@ -4332,7 +4332,7 @@ HAL_FUNCTION(_hal_MagicPattern)
         if (protocol == SPYBIWIRE_MSP_FET)
         {
 //            HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//            hilEdtDis(&_edt_Distinct_Methods);
+//            hilEdtDis(&_edt_Distinct_Methods_HAL);
             protocol = SPYBIWIREJTAG;
             IHIL_SetProtocol(protocol);
             IHIL_Open(RSTHIGH);
@@ -5617,7 +5617,7 @@ HAL_FUNCTION(_hal_Psa)
 
 //#if defined(eZ_FET) || defined(MSP_FET)
 //    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//    hilEdtDis(&_edt_Distinct_Methods);
+//    hilEdtDis(&_edt_Distinct_Methods_HAL);
 //#endif
 
     if(STREAM_get_long(&addr) != 0)
@@ -5695,7 +5695,7 @@ HAL_FUNCTION(_hal_PsaX)
 
 //#if defined(eZ_FET) || defined(MSP_FET)
 //    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//    hilEdtDis(&_edt_Distinct_Methods);
+//    hilEdtDis(&_edt_Distinct_Methods_HAL);
 //#endif
 
     if(STREAM_get_long(&addr) != 0)
@@ -5771,7 +5771,7 @@ HAL_FUNCTION(_hal_PsaXv2)
 
 //#if defined(eZ_FET) || defined(MSP_FET)
 //    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//    hilEdtDis(&_edt_Distinct_Methods);
+//    hilEdtDis(&_edt_Distinct_Methods_HAL);
 //#endif
 
     STREAM_get_long(&addr);
@@ -8148,7 +8148,7 @@ HAL_FUNCTION(_hal_StartJtag)
     }
 
 //    hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//    hilEdtDis(&_edt_Distinct_Methods);
+//    hilEdtDis(&_edt_Distinct_Methods_HAL);
 
     IHIL_Open(RSTHIGH);
     IHIL_TapReset();
@@ -8246,7 +8246,7 @@ HAL_FUNCTION(_hal_StartJtagActivationCode)
 //#if defined(eZ_FET) || defined(MSP_FET)
 //    {
 //        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//        hilEdtDis(&_edt_Distinct_Methods);
+//        hilEdtDis(&_edt_Distinct_Methods_HAL);
 //    }
 //#endif
 
@@ -9854,7 +9854,7 @@ HAL_FUNCTION(_hal_UnlockC092)
 //#if defined(eZ_FET) || defined(MSP_FET)
 //    {
 //        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//        hilEdtDis(&_edt_Distinct_Methods);
+//        hilEdtDis(&_edt_Distinct_Methods_HAL);
 //    }
 //#endif
 
@@ -9934,7 +9934,7 @@ HAL_FUNCTION(_hal_UnlockDeviceXv2)
 //#if defined(eZ_FET) || defined(MSP_FET)
 //    {
 //        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-//        hilEdtDis(&_edt_Distinct_Methods);
+//        hilEdtDis(&_edt_Distinct_Methods_HAL);
 //    }
 //#endif
      IHIL_Open(RSTHIGH);
