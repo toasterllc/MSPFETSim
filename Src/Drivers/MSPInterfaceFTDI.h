@@ -1,5 +1,6 @@
 #pragma once
 #include <libftdi1/ftdi.h>
+#include "USBDevice.h"
 
 class MSPInterfaceFTDI : public MSPInterface {
 public:
@@ -150,35 +151,39 @@ public:
         static constexpr uint8_t BadCommand                 = 0xAB;
     };
     
-    PinState _testState = PinState::In;
-    PinState _rstState = PinState::In;
-    void _setPins(PinState t, PinState r) {
-        assert(t != PinState::Pulse01);
-        assert(r != PinState::Pulse01);
+    enum _PinState {
+        Out0,
+        Out1,
+        In,
+    };
+    
+    _PinState _testState = _PinState::In;
+    _PinState _rstState = _PinState::In;
+    void _pinsSet(_PinState t, _PinState r) {
         // Short-circuit if the state hasn't changed
         if (t==_testState && r==_rstState) return;
         _testState = t;
         _rstState = r;
         
         const uint8_t dir =
-            (t!=PinState::In ? _testPin : 0) |
-            (r!=PinState::In ? _rstPin  : 0) ;
+            (t!=_PinState::In ? _testPin : 0) |
+            (r!=_PinState::In ? _rstPin  : 0) ;
         
         const uint8_t val =
-            (t==PinState::Out1 ? _testPin : 0) |
-            (r==PinState::Out1 ? _rstPin  : 0) ;
+            (t==_PinState::Out1 ? _testPin : 0) |
+            (r==_PinState::Out1 ? _rstPin  : 0) ;
         
         _cmds.push_back(MPSSE::SetDataBitsL);
         _cmds.push_back(val); // Value
         _cmds.push_back(dir); // Direction
     }
     
-    void _setTest(PinState t) {
-        _setPins(t, _rstState);
+    void _testSet(_PinState t) {
+        _pinsSet(t, _rstState);
     }
     
-    void _setRst(PinState r) {
-        _setPins(_testState, r);
+    void _rstSet(_PinState r) {
+        _pinsSet(_testState, r);
     }
     
     void _read() {
@@ -186,50 +191,56 @@ public:
         _readLen++;
     }
     
-    void sbwTest(PinState test) override {
-        _setTest(test);
+    void sbwTestSet(bool test) override {
+        _testSet(test ? _PinState::Out1 : _PinState::Out0);
     }
     
-    void sbwRst(PinState rst) override {
-        _setRst(rst);
+    void sbwTestPulse() override {
+        _flushIfNeeded();
+        sbwTestSet(0);
+        sbwTestSet(1);
     }
     
-    void sbwPins(PinState test, PinState rst) override {
-        const PinState t0 = (test!=PinState::Pulse01 ? test : PinState::Out0);
-        const PinState r0 = (rst !=PinState::Pulse01 ? rst  : PinState::Out0);
-        const PinState t1 = (test!=PinState::Pulse01 ? test : PinState::Out1);
-        const PinState r1 = (rst !=PinState::Pulse01 ? rst  : PinState::Out1);
-        
-        _setPins(t0, r0);
-        _setPins(t1, r1);
-        
-//        if (pulse) {
-//            // TODO: flush existing commands if we're pulsing, to ensure that these commands are atomically received, otherwise the pulse signal could be stretched
-//        }
-//        
-//        
-//        const uint8_t dir =
-//            (test!=PinState::In ? _testPin : 0) |
-//            ( rst!=PinState::In ? _rstPin  : 0) ;
-//        
-//        const uint8_t val0 =
-//            (test==PinState::Out1 ? _testPin : 0) |
-//            ( rst==PinState::Out1 ? _rstPin  : 0) ;
-//        
-//        _cmds.push_back(MPSSE::SetDataBitsL);
-//        _cmds.push_back(val0); // Value
-//        _cmds.push_back(dir); // Direction
-//        
-//        if (pulse) {
-//            const uint8_t val1 =
-//                (test==PinState::Out1||test==PinState::Pulse01 ? _testPin : 0) |
-//                ( rst==PinState::Out1|| rst==PinState::Pulse01 ? _rstPin  : 0) ;
-//            
-//            _cmds.push_back(MPSSE::SetDataBitsL);
-//            _cmds.push_back(val1); // Value
-//            _cmds.push_back(dir); // Direction
-//        }
+    void sbwRstSet(bool rst) override {
+        _rstSet(rst ? _PinState::Out1 : _PinState::Out0);
     }
+    
+//    void sbwPins(PinState test, PinState rst) override {
+//        const PinState t0 = (test!=PinState::Pulse01 ? test : PinState::Out0);
+//        const PinState r0 = (rst !=PinState::Pulse01 ? rst  : PinState::Out0);
+//        const PinState t1 = (test!=PinState::Pulse01 ? test : PinState::Out1);
+//        const PinState r1 = (rst !=PinState::Pulse01 ? rst  : PinState::Out1);
+//        
+//        _pinsSet(t0, r0);
+//        _pinsSet(t1, r1);
+//        
+////        if (pulse) {
+////            // TODO: flush existing commands if we're pulsing, to ensure that these commands are atomically received, otherwise the pulse signal could be stretched
+////        }
+////        
+////        
+////        const uint8_t dir =
+////            (test!=PinState::In ? _testPin : 0) |
+////            ( rst!=PinState::In ? _rstPin  : 0) ;
+////        
+////        const uint8_t val0 =
+////            (test==PinState::Out1 ? _testPin : 0) |
+////            ( rst==PinState::Out1 ? _rstPin  : 0) ;
+////        
+////        _cmds.push_back(MPSSE::SetDataBitsL);
+////        _cmds.push_back(val0); // Value
+////        _cmds.push_back(dir); // Direction
+////        
+////        if (pulse) {
+////            const uint8_t val1 =
+////                (test==PinState::Out1||test==PinState::Pulse01 ? _testPin : 0) |
+////                ( rst==PinState::Out1|| rst==PinState::Pulse01 ? _rstPin  : 0) ;
+////            
+////            _cmds.push_back(MPSSE::SetDataBitsL);
+////            _cmds.push_back(val1); // Value
+////            _cmds.push_back(dir); // Direction
+////        }
+//    }
     
 //    RST::Write(tms);
 //    TEST::Write(0);
@@ -244,26 +255,26 @@ public:
         
         // Write TMS
         {
-            _setRst(tms ? PinState::Out1 : PinState::Out0);
-            _setTest(PinState::Out0);
-            _setRst(tclk ? PinState::Out1 : PinState::Out0);
-            _setTest(PinState::Out1);
+            _rstSet(tms ? _PinState::Out1 : _PinState::Out0);
+            _testSet(_PinState::Out0);
+            _rstSet(tclk ? _PinState::Out1 : _PinState::Out0);
+            _testSet(_PinState::Out1);
         }
         
         // Write TDI
         {
-            _setRst(tdi ? PinState::Out1 : PinState::Out0);
-            _setTest(PinState::Out0);
-            _setTest(PinState::Out1);
-            _setRst(PinState::In);
+            _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
+            _testSet(_PinState::Out0);
+            _testSet(_PinState::Out1);
+            _rstSet(_PinState::In);
         }
         
         // Read TDO
         {
-            _setTest(PinState::Out0);
+            _testSet(_PinState::Out0);
             if (tdoRead) _read();
-            _setTest(PinState::Out1);
-            _setRst(tdi ? PinState::Out1 : PinState::Out0);
+            _testSet(_PinState::Out1);
+            _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
         }
     }
     

@@ -204,36 +204,36 @@ void _hil_Delay_1ms(uint16_t ms) {
 
 void RSTset1()
 {
-    _msp.sbwRst(MSPInterface::PinState::Out1);
+    _msp.sbwRstSet(1);
     _hil_Delay_1ms(5);
 }
 
 void RSTset0()
 {
-    _msp.sbwRst(MSPInterface::PinState::Out0);
+    _msp.sbwRstSet(0);
     _hil_Delay_1ms(5);
 }
 
 void TSTset1()
 {
-    _msp.sbwTest(MSPInterface::PinState::Out1);
+    _msp.sbwTestSet(1);
     _hil_Delay_1ms(5);
 }
 
 void TSTset0()
 {
-    _msp.sbwTest(MSPInterface::PinState::Out0);
+    _msp.sbwTestSet(0);
     _hil_Delay_1ms(5);
 }
 
 void TSTset1NoDelay()
 {
-    _msp.sbwTest(MSPInterface::PinState::Out1);
+    _msp.sbwTestSet(1);
 }
 
 void TSTset0NoDelay()
 {
-    _msp.sbwTest(MSPInterface::PinState::Out0);
+    _msp.sbwTestSet(0);
 }
 
 void TCLKset1()
@@ -1770,7 +1770,8 @@ void _hil_Release() {
 
 void qDriveSbw(void) {
     // TEST=0, RST=1
-    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out1);
+    _msp.sbwTestSet(0);
+    _msp.sbwRstSet(1);
 }
 
 void qDriveJTAG(void) {
@@ -1779,37 +1780,41 @@ void qDriveJTAG(void) {
 
 void _hil_EntrySequences_RstHigh_SBW() {
     // TEST=0, RST=0
-    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out0);
+    _msp.sbwTestSet(0);
+    _msp.sbwRstSet(0);
     IHIL_Delay_1ms(5);
     
     // RST=1
-    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out1);
+    _msp.sbwRstSet(1);
     IHIL_Delay_1ms(5);
     
     // TEST=1
-    _msp.sbwPins(MSPInterface::PinState::Out1, MSPInterface::PinState::Out1);
+    _msp.sbwTestSet(1);
     IHIL_Delay_1ms(100);
     
     // TEST pulse 1->0->1
-    _msp.sbwPins(MSPInterface::PinState::Pulse01, MSPInterface::PinState::Out1);
+    // (Use a SBW IO cycle to pulse TEST)
+    _msp.sbwTestPulse();
     IHIL_Delay_1ms(5);
 }
 
 void _hil_EntrySequences_RstLow_SBW() {
     // TEST=0, RST=0
-    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out0);
+    _msp.sbwTestSet(0);
+    _msp.sbwRstSet(0);
     IHIL_Delay_1ms(5);
     
     // TEST=1
-    _msp.sbwPins(MSPInterface::PinState::Out1, MSPInterface::PinState::Out0);
+    _msp.sbwTestSet(1);
     IHIL_Delay_1ms(100);
     
     // RST=1
-    _msp.sbwPins(MSPInterface::PinState::Out1, MSPInterface::PinState::Out1);
+    _msp.sbwRstSet(1);
     IHIL_Delay_1ms(5);
     
     // TEST pulse 1->0->1
-    _msp.sbwPins(MSPInterface::PinState::Pulse01, MSPInterface::PinState::Out1);
+    // (Use a SBW IO cycle to pulse TEST)
+    _msp.sbwTestPulse();
     IHIL_Delay_1ms(5);
 }
 

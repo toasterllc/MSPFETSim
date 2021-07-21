@@ -2,33 +2,25 @@
 
 class MSPInterface {
 public:
-    enum class PinState : uint8_t {
-        Out0,
-        Out1,
-        In,
-        Pulse01,
-    };
-    
     virtual ~MSPInterface() {}
     
-    virtual size_t readLenMax() const { return 0; }
+    // sbwTestSet() / sbwRstSet(): Set output value of pin
+    virtual void sbwTestSet(bool val) {}
+    virtual void sbwRstSet(bool val) {}
     
-//    virtual void open() {}
-//    virtual void close() {}
+    // sbwTestPulse(): pulse Test pin 0,1
+    //   Semantically this is identical to: sbwTestSet(0), sbwTestSet(1), but the timing
+    //   of this operation is critical, so the driver must ensure that the duration of
+    //   the low (0) state is short enough (<7us) to prevent the MSP430 from exiting SBW
+    //   mode.
+    virtual void sbwTestPulse() {}
     
-    virtual void sbwTest(PinState test) {}
-    
-    virtual void sbwRst(PinState rst) {}
-    
-    // pins(): Sets the state of the SBW pins
-    virtual void sbwPins(PinState test, PinState rst) {}
-    
-    // io(): Performs a single SBW IO cycle
+    // sbwIO(): Performs a Spy-bi-wire IO cycle
     //   If tdoRead=true, the TDO output bit should be shifted into persistent storage
     //   for later retrieval via `read()`.
     virtual void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) {}
     
-    // read(): Retrieves data previously stored via io()
+    // read(): Retrieves data previously stored via sbwIO()
     //   For optimal performance, IO operations should be queued until read() is called, at
     //   which point the queued operations should be flushed to the device.
     //   
