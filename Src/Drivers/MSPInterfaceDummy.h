@@ -2,15 +2,16 @@
 #include "MSPInterface.h"
 
 class MSPInterfaceDummy : public MSPInterface {
-    void sbwPins(PinState test, PinState rst) override {
-        printf("SBW pins()\n");
+    
+    void sbwPin(Pin pin, Op op) override {
+        printf("sbwPin(%d, %d)\n", (int)pin, (int)op);
     }
     
-    void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
-        printf("SBW io()\n");
+    void sbwFlush() override {
+        printf("sbwFlush()\n");
     }
     
     void sbwRead(void* buf, size_t len) override {
-        printf("SBW read()\n");
+        printf("sbwRead(%p, %zu)\n", buf, len);
     }
 };
