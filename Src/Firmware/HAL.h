@@ -3199,9 +3199,9 @@ HAL_FUNCTION(_hal_GetDeviceIdPtr)
 HAL_FUNCTION(_hal_GetInterfaceMode)
 {
     uint16_t id=0, loopCount=7,i=0, protocol =0;
-    #ifdef MSP_FET
-        HilInitGetEdtDistinctFunc hilEdtDis = ((void*)0);
-    #endif
+//    #ifdef MSP_FET
+//        HilInitGetEdtDistinctFunc hilEdtDis = ((void*)0);
+//    #endif
 
     // create known state
     #ifndef MSP_FET
@@ -3228,10 +3228,10 @@ HAL_FUNCTION(_hal_GetInterfaceMode)
 			}
         }
         IHIL_SetProtocol(protocol);
-        #ifdef MSP_FET
-            hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-            hilEdtDis(&_edt_Distinct_Methods);
-        #endif
+//        #ifdef MSP_FET
+//            hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//            hilEdtDis(&_edt_Distinct_Methods);
+//        #endif
 
         // Run  4wire/SBW entry Sequence & Reset high
         IHIL_Open(RSTHIGH);
@@ -3284,9 +3284,9 @@ HAL_FUNCTION(_hal_GetInterfaceModeArm)
     uint32_t idCode = 0;
     uint16_t loopCount = 4, i = 0, protocol = 0;
 
-    #ifdef MSP_FET
-        HilInitGetEdtDistinctFunc hilEdtDis = ((void*)0);
-    #endif
+//    #ifdef MSP_FET
+//        HilInitGetEdtDistinctFunc hilEdtDis = ((void*)0);
+//    #endif
 
     // create known state
     #ifndef MSP_FET
@@ -3308,10 +3308,10 @@ HAL_FUNCTION(_hal_GetInterfaceModeArm)
         }
 
         IHIL_SetProtocol(protocol);
-        #ifdef MSP_FET
-            hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-            hilEdtDis(&_edt_Distinct_Methods);
-        #endif
+//        #ifdef MSP_FET
+//            hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//            hilEdtDis(&_edt_Distinct_Methods);
+//        #endif
 
 
         IHIL_Open(RSTHIGH);
@@ -3691,10 +3691,10 @@ HAL_FUNCTION(_hal_HilCommand)
         case HIL_CMD_CONFIGURE:
             IHIL_SetProtocol(dataLow);
 
-            {
-                HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-                hilEdtDis(&_edt_Distinct_Methods);
-            }
+//            {
+//                HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//                hilEdtDis(&_edt_Distinct_Methods);
+//            }
             break;
 
         case HIL_CMD_DPACC:
@@ -3919,12 +3919,12 @@ HAL_FUNCTION(_hal_MagicPattern)
 #endif
 
     IHIL_SetProtocol(protocol);
-#if defined(eZ_FET) || defined(MSP_FET)
-    {
-        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-        hilEdtDis(&_edt_Distinct_Methods);
-    }
-#endif
+//#if defined(eZ_FET) || defined(MSP_FET)
+//    {
+//        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//        hilEdtDis(&_edt_Distinct_Methods);
+//    }
+//#endif
     // run entry sequnce but pull rst low during the sequence to wake-up the device
 
     IHIL_Close();
@@ -3977,10 +3977,10 @@ HAL_FUNCTION(_hal_MagicPattern)
 #ifdef MSP_FET
         if (protocol == SPYBIWIRE_MSP_FET)
         {
-            HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//            HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//            hilEdtDis(&_edt_Distinct_Methods);
             protocol = SPYBIWIREJTAG;
             IHIL_SetProtocol(protocol);
-            hilEdtDis(&_edt_Distinct_Methods);
             IHIL_Open(RSTHIGH);
             IHIL_TapReset();
             IHIL_CheckJtagFuse();
@@ -5261,10 +5261,10 @@ HAL_FUNCTION(_hal_Psa)
     StreamSafe stream_tmp;
     int16_t ret_value = 0;
 
-#if defined(eZ_FET) || defined(MSP_FET)
-    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-    hilEdtDis(&_edt_Distinct_Methods);
-#endif
+//#if defined(eZ_FET) || defined(MSP_FET)
+//    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//    hilEdtDis(&_edt_Distinct_Methods);
+//#endif
 
     if(STREAM_get_long(&addr) != 0)
     {
@@ -5339,10 +5339,10 @@ HAL_FUNCTION(_hal_PsaX)
     StreamSafe stream_tmp;
     int16_t ret_value = 0;
 
-#if defined(eZ_FET) || defined(MSP_FET)
-    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-    hilEdtDis(&_edt_Distinct_Methods);
-#endif
+//#if defined(eZ_FET) || defined(MSP_FET)
+//    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//    hilEdtDis(&_edt_Distinct_Methods);
+//#endif
 
     if(STREAM_get_long(&addr) != 0)
     {
@@ -5415,10 +5415,10 @@ HAL_FUNCTION(_hal_PsaXv2)
     int16_t i;
     StreamSafe stream_tmp;
 
-#if defined(eZ_FET) || defined(MSP_FET)
-    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-    hilEdtDis(&_edt_Distinct_Methods);
-#endif
+//#if defined(eZ_FET) || defined(MSP_FET)
+//    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//    hilEdtDis(&_edt_Distinct_Methods);
+//#endif
 
     STREAM_get_long(&addr);
     STREAM_get_long(&length);
@@ -7779,7 +7779,7 @@ HAL_FUNCTION(_hal_StartJtag)
     uint8_t chainLen;
     uint8_t protocol;
     int16_t ret_value = -1;
-    HilInitGetEdtDistinctFunc hilEdtDis = ((void*)0);
+//    HilInitGetEdtDistinctFunc hilEdtDis = ((void*)0);
 
     if(STREAM_get_byte(&protocol) < 0)
     {
@@ -7793,8 +7793,8 @@ HAL_FUNCTION(_hal_StartJtag)
         return(ret_value);
     }
 
-    hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-    hilEdtDis(&_edt_Distinct_Methods);
+//    hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//    hilEdtDis(&_edt_Distinct_Methods);
 
     IHIL_Open(RSTHIGH);
     IHIL_TapReset();
@@ -7889,12 +7889,12 @@ HAL_FUNCTION(_hal_StartJtagActivationCode)
         return(ret_value);
     }
 
-#if defined(eZ_FET) || defined(MSP_FET)
-    {
-        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-        hilEdtDis(&_edt_Distinct_Methods);
-    }
-#endif
+//#if defined(eZ_FET) || defined(MSP_FET)
+//    {
+//        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//        hilEdtDis(&_edt_Distinct_Methods);
+//    }
+//#endif
 
     // check if activation code is valid
     if(ActivationCode == L092_MODE || ActivationCode == C092_MODE)
@@ -9493,12 +9493,12 @@ HAL_FUNCTION(_hal_UnlockC092)
     //--------------------------------------------------------------------------
 
      IHIL_SetProtocol(0); // C092 can just operrate in SBW4 Mode
-#if defined(eZ_FET) || defined(MSP_FET)
-    {
-        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-        hilEdtDis(&_edt_Distinct_Methods);
-    }
-#endif
+//#if defined(eZ_FET) || defined(MSP_FET)
+//    {
+//        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//        hilEdtDis(&_edt_Distinct_Methods);
+//    }
+//#endif
 
     //--------------------------------------------------------------------------
     //phase 1 of device entry using a user password
@@ -9573,12 +9573,12 @@ HAL_FUNCTION(_hal_UnlockDeviceXv2)
     //--------------------------------------------------------------------------
 
      IHIL_SetProtocol(protocol); // this is jsut for debug must be changed
-#if defined(eZ_FET) || defined(MSP_FET)
-    {
-        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
-        hilEdtDis(&_edt_Distinct_Methods);
-    }
-#endif
+//#if defined(eZ_FET) || defined(MSP_FET)
+//    {
+//        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
+//        hilEdtDis(&_edt_Distinct_Methods);
+//    }
+//#endif
      IHIL_Open(RSTHIGH);
      IHIL_TapReset();
 
