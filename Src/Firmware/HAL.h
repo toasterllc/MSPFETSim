@@ -214,92 +214,92 @@ enum hal_id
  * HAL Function Pointer - these are the HAL Exports
  */
 // common macros
-#define HAL_Zero                              (this->*(hal_functions_[ID_Zero].function))
-#define HAL_Init                              (this->*(hal_functions_[ID_Init].function))
-//#define HAL_SetVcc                            (this->*(hal_functions_[ID_SetVcc].function))
-//#define HAL_GetVcc                            (this->*(hal_functions_[ID_GetVcc].function))
-#define HAL_StartJtag                         (this->*(hal_functions_[ID_StartJtag].function))
-#define HAL_StartJtagActivationCode           (this->*(hal_functions_[ID_StartJtagActivationCode].function))
-#define HAL_StopJtag                          (this->*(hal_functions_[ID_StopJtag].function))
-#define HAL_Configure                         (this->*(hal_functions_[ID_Configure].function))
-#define HAL_GetFuses                          (this->*(hal_functions_[ID_GetFuses].function))
-#define HAL_BlowFuse                          (this->*(hal_functions_[ID_BlowFuse].function))
-#define HAL_WaitForEem                        (this->*(hal_functions_[ID_WaitForEem].function))
-#define HAL_BitSequence                       (this->*(hal_functions_[ID_BitSequence].function))
-#define HAL_GetJtagId                         (this->*(hal_functions_[ID_GetJtagId].function))
-#define HAL_SetDeviceChainInfo                (this->*(hal_functions_[ID_SetDeviceChainInfo].function))
-#define HAL_SetChainConfiguration             (this->*(hal_functions_[ID_SetChainConfiguration].function))
-#define HAL_GetNumOfDevices                   (this->*(hal_functions_[ID_GetNumOfDevices].function))
-#define HAL_GetInterfaceMode                  (this->*(hal_functions_[ID_GetInterfaceMode].function))
-#define HAL_MagicPattern                      (this->*(hal_functions_[MagicPattern].function))
+#define HAL_Zero                              (hal_functions_[ID_Zero].function)
+#define HAL_Init                              (hal_functions_[ID_Init].function)
+//#define HAL_SetVcc                            (hal_functions_[ID_SetVcc].function)
+//#define HAL_GetVcc                            (hal_functions_[ID_GetVcc].function)
+#define HAL_StartJtag                         (hal_functions_[ID_StartJtag].function)
+#define HAL_StartJtagActivationCode           (hal_functions_[ID_StartJtagActivationCode].function)
+#define HAL_StopJtag                          (hal_functions_[ID_StopJtag].function)
+#define HAL_Configure                         (hal_functions_[ID_Configure].function)
+#define HAL_GetFuses                          (hal_functions_[ID_GetFuses].function)
+#define HAL_BlowFuse                          (hal_functions_[ID_BlowFuse].function)
+#define HAL_WaitForEem                        (hal_functions_[ID_WaitForEem].function)
+#define HAL_BitSequence                       (hal_functions_[ID_BitSequence].function)
+#define HAL_GetJtagId                         (hal_functions_[ID_GetJtagId].function)
+#define HAL_SetDeviceChainInfo                (hal_functions_[ID_SetDeviceChainInfo].function)
+#define HAL_SetChainConfiguration             (hal_functions_[ID_SetChainConfiguration].function)
+#define HAL_GetNumOfDevices                   (hal_functions_[ID_GetNumOfDevices].function)
+#define HAL_GetInterfaceMode                  (hal_functions_[ID_GetInterfaceMode].function)
+#define HAL_MagicPattern                      (hal_functions_[MagicPattern].function)
 // MSP430 architecture
-#define HAL_SyncJtag_AssertPor_SaveContext    (this->*(hal_functions_[ID_SyncJtag_AssertPor_SaveContext].function))
-#define HAL_SyncJtag_Conditional_SaveContext  (this->*(hal_functions_[ID_SyncJtag_Conditional_SaveContext].function))
-#define HAL_RestoreContext_ReleaseJtag        (this->*(hal_functions_[ID_RestoreContext_ReleaseJtag].function))
-#define HAL_ReadMemBytes                      (this->*(hal_functions_[ID_ReadMemBytes].function))
-#define HAL_ReadMemWords                      (this->*(hal_functions_[ID_ReadMemWords].function))
-#define HAL_ReadMemQuick                      (this->*(hal_functions_[ID_ReadMemQuick].function))
-#define HAL_WriteMemBytes                     (this->*(hal_functions_[ID_WriteMemBytes].function))
-#define HAL_WriteMemWords                     (this->*(hal_functions_[ID_WriteMemWords].function))
-#define HAL_EemDataExchange                   (this->*(hal_functions_[ID_EemDataExchange].function))
-#define HAL_SingleStep                        (this->*(hal_functions_[ID_SingleStep].function))
-#define HAL_ReadAllCpuRegs                    (this->*(hal_functions_[ID_ReadAllCpuRegs].function))
-#define HAL_WriteAllCpuRegs                   (this->*(hal_functions_[ID_WriteAllCpuRegs].function))
-#define HAL_Psa                               (this->*(hal_functions_[ID_Psa].function))
-#define HAL_ExecuteFunclet                    (this->*(hal_functions_[ExecuteFunclet].function))
+#define HAL_SyncJtag_AssertPor_SaveContext    (hal_functions_[ID_SyncJtag_AssertPor_SaveContext].function)
+#define HAL_SyncJtag_Conditional_SaveContext  (hal_functions_[ID_SyncJtag_Conditional_SaveContext].function)
+#define HAL_RestoreContext_ReleaseJtag        (hal_functions_[ID_RestoreContext_ReleaseJtag].function)
+#define HAL_ReadMemBytes                      (hal_functions_[ID_ReadMemBytes].function)
+#define HAL_ReadMemWords                      (hal_functions_[ID_ReadMemWords].function)
+#define HAL_ReadMemQuick                      (hal_functions_[ID_ReadMemQuick].function)
+#define HAL_WriteMemBytes                     (hal_functions_[ID_WriteMemBytes].function)
+#define HAL_WriteMemWords                     (hal_functions_[ID_WriteMemWords].function)
+#define HAL_EemDataExchange                   (hal_functions_[ID_EemDataExchange].function)
+#define HAL_SingleStep                        (hal_functions_[ID_SingleStep].function)
+#define HAL_ReadAllCpuRegs                    (hal_functions_[ID_ReadAllCpuRegs].function)
+#define HAL_WriteAllCpuRegs                   (hal_functions_[ID_WriteAllCpuRegs].function)
+#define HAL_Psa                               (hal_functions_[ID_Psa].function)
+#define HAL_ExecuteFunclet                    (hal_functions_[ExecuteFunclet].function)
 // MSP430X architecture
-#define HAL_SyncJtag_AssertPor_SaveContextX   (this->*(hal_functions_[ID_SyncJtag_AssertPor_SaveContextX].function))
-#define HAL_SyncJtag_Conditional_SaveContextX (this->*(hal_functions_[ID_SyncJtag_Conditional_SaveContextX].function))
-#define HAL_RestoreContext_ReleaseJtagX       (this->*(hal_functions_[ID_RestoreContext_ReleaseJtagX].function))
-#define HAL_ReadMemBytesX                     (this->*(hal_functions_[ID_ReadMemBytesX].function))
-#define HAL_ReadMemWordsX                     (this->*(hal_functions_[ID_ReadMemWordsX].function))
-#define HAL_ReadMemQuickX                     (this->*(hal_functions_[ID_ReadMemQuickX].function))
-#define HAL_WriteMemBytesX                    (this->*(hal_functions_[ID_WriteMemBytesX].function))
-#define HAL_WriteMemWordsX                    (this->*(hal_functions_[ID_WriteMemWordsX].function))
-#define HAL_EemDataExchangeX                  (this->*(hal_functions_[ID_EemDataExchangeX].function))
-#define HAL_SingleStepX                       (this->*(hal_functions_[ID_SingleStepX].function))
-#define HAL_ReadAllCpuRegsX                   (this->*(hal_functions_[ID_ReadAllCpuRegsX].function))
-#define HAL_WriteAllCpuRegsX                  (this->*(hal_functions_[ID_WriteAllCpuRegsX].function))
-#define HAL_PsaX                              (this->*(hal_functions_[ID_PsaX].function))
-#define HAL_ExecuteFuncletX                   (this->*(hal_functions_[ExecuteFuncletX].function))
+#define HAL_SyncJtag_AssertPor_SaveContextX   (hal_functions_[ID_SyncJtag_AssertPor_SaveContextX].function)
+#define HAL_SyncJtag_Conditional_SaveContextX (hal_functions_[ID_SyncJtag_Conditional_SaveContextX].function)
+#define HAL_RestoreContext_ReleaseJtagX       (hal_functions_[ID_RestoreContext_ReleaseJtagX].function)
+#define HAL_ReadMemBytesX                     (hal_functions_[ID_ReadMemBytesX].function)
+#define HAL_ReadMemWordsX                     (hal_functions_[ID_ReadMemWordsX].function)
+#define HAL_ReadMemQuickX                     (hal_functions_[ID_ReadMemQuickX].function)
+#define HAL_WriteMemBytesX                    (hal_functions_[ID_WriteMemBytesX].function)
+#define HAL_WriteMemWordsX                    (hal_functions_[ID_WriteMemWordsX].function)
+#define HAL_EemDataExchangeX                  (hal_functions_[ID_EemDataExchangeX].function)
+#define HAL_SingleStepX                       (hal_functions_[ID_SingleStepX].function)
+#define HAL_ReadAllCpuRegsX                   (hal_functions_[ID_ReadAllCpuRegsX].function)
+#define HAL_WriteAllCpuRegsX                  (hal_functions_[ID_WriteAllCpuRegsX].function)
+#define HAL_PsaX                              (hal_functions_[ID_PsaX].function)
+#define HAL_ExecuteFuncletX                   (hal_functions_[ExecuteFuncletX].function)
 // CoreIp430Xv2 architecture
-#define HAL_SyncJtag_AssertPor_SaveContextXv2   (this->*(hal_functions_[ID_SyncJtag_AssertPor_SaveContextXv2].function))
-#define HAL_SyncJtag_Conditional_SaveContextXv2 (this->*(hal_functions_[ID_SyncJtag_Conditional_SaveContextXv2].function))
-#define HAL_RestoreContext_ReleaseJtagXv2       (this->*(hal_functions_[ID_RestoreContext_ReleaseJtagXv2].function))
-#define HAL_ReadMemBytesXv2                     (this->*(hal_functions_[ID_ReadMemBytesXv2].function))
-#define HAL_ReadMemWordsXv2                     (this->*(hal_functions_[ID_ReadMemWordsXv2].function))
-#define HAL_ReadMemQuickXv2                     (this->*(hal_functions_[ID_ReadMemQuickXv2].function))
-#define HAL_WriteMemBytesXv2                    (this->*(hal_functions_[ID_WriteMemBytesXv2].function))
-#define HAL_WriteMemWordsXv2                    (this->*(hal_functions_[ID_WriteMemWordsXv2].function))
-#define HAL_EemDataExchangeXv2                  (this->*(hal_functions_[ID_EemDataExchangeXv2].function))
-#define HAL_SingleStepXv2                       (this->*(hal_functions_[ID_SingleStepXv2].function))
-#define HAL_ReadAllCpuRegsXv2                   (this->*(hal_functions_[ID_ReadAllCpuRegsXv2].function))
-#define HAL_WriteAllCpuRegsXv2                  (this->*(hal_functions_[ID_WriteAllCpuRegsXv2].function))
-#define HAL_PsaXv2                              (this->*(hal_functions_[ID_PsaXv2].function))
-#define HAL_ExecuteFuncletXv2                   (this->*(hal_functions_[ID_ExecuteFuncletXv2].function))
-#define HAL_UnlockDeviceXv2                     (this->*(hal_functions_[ID_UnlockDeviceXv2].function))
-#define HAL_UnlockC092                          (this->*(hal_functions_[ID_UnlockC092].function))
-#define HAL_HilCommand                          (this->*(hal_functions_[ID_HilCommand].function))
-#define HAL_PollJStateRegFR57xx                 (this->*(hal_functions_[ID_PollJStateRegFR57xx].function))
-#define Hal_PollDStatePCRegEt                   (this->*(hal_functions_[ID_PollDStatePCRegEt].function))
-#define Hal_PollJStateRegEt8                    (this->*(hal_functions_[ID_PollJStateRegEt8].function))
-#define Hal_PollJStateReg                       (this->*(hal_functions_[ID_PollJStateReg].function))
+#define HAL_SyncJtag_AssertPor_SaveContextXv2   (hal_functions_[ID_SyncJtag_AssertPor_SaveContextXv2].function)
+#define HAL_SyncJtag_Conditional_SaveContextXv2 (hal_functions_[ID_SyncJtag_Conditional_SaveContextXv2].function)
+#define HAL_RestoreContext_ReleaseJtagXv2       (hal_functions_[ID_RestoreContext_ReleaseJtagXv2].function)
+#define HAL_ReadMemBytesXv2                     (hal_functions_[ID_ReadMemBytesXv2].function)
+#define HAL_ReadMemWordsXv2                     (hal_functions_[ID_ReadMemWordsXv2].function)
+#define HAL_ReadMemQuickXv2                     (hal_functions_[ID_ReadMemQuickXv2].function)
+#define HAL_WriteMemBytesXv2                    (hal_functions_[ID_WriteMemBytesXv2].function)
+#define HAL_WriteMemWordsXv2                    (hal_functions_[ID_WriteMemWordsXv2].function)
+#define HAL_EemDataExchangeXv2                  (hal_functions_[ID_EemDataExchangeXv2].function)
+#define HAL_SingleStepXv2                       (hal_functions_[ID_SingleStepXv2].function)
+#define HAL_ReadAllCpuRegsXv2                   (hal_functions_[ID_ReadAllCpuRegsXv2].function)
+#define HAL_WriteAllCpuRegsXv2                  (hal_functions_[ID_WriteAllCpuRegsXv2].function)
+#define HAL_PsaXv2                              (hal_functions_[ID_PsaXv2].function)
+#define HAL_ExecuteFuncletXv2                   (hal_functions_[ID_ExecuteFuncletXv2].function)
+#define HAL_UnlockDeviceXv2                     (hal_functions_[ID_UnlockDeviceXv2].function)
+#define HAL_UnlockC092                          (hal_functions_[ID_UnlockC092].function)
+#define HAL_HilCommand                          (hal_functions_[ID_HilCommand].function)
+#define HAL_PollJStateRegFR57xx                 (hal_functions_[ID_PollJStateRegFR57xx].function)
+#define Hal_PollDStatePCRegEt                   (hal_functions_[ID_PollDStatePCRegEt].function)
+#define Hal_PollJStateRegEt8                    (hal_functions_[ID_PollJStateRegEt8].function)
+#define Hal_PollJStateReg                       (hal_functions_[ID_PollJStateReg].function)
 
-#define HAL_IsJtagFuseBlown                     (this->*(hal_functions_[ID_IsJtagFuseBlown].function))
-#define HAL_ResetXv2                            (this->*(hal_functions_[ID_ResetXv2].function))
+#define HAL_IsJtagFuseBlown                     (hal_functions_[ID_IsJtagFuseBlown].function)
+#define HAL_ResetXv2                            (hal_functions_[ID_ResetXv2].function)
 
 
-#define HAL_GetDcoFrequency                     (this->*(hal_functions_[ID_GetDcoFrequency].function))
-#define HAL_GetFllFrequency                     (this->*(hal_functions_[ID_GetFllFrequency].function))
-#define HAL_WriteFramQuickXv2                   (this->*(hal_functions_[ID_WriteFramQuickXv2].function))
-#define HAL_SendJtagMailboxXv2                  (this->*(hal_functions_[ID_SendJtagMailboxXv2].function))
+#define HAL_GetDcoFrequency                     (hal_functions_[ID_GetDcoFrequency].function)
+#define HAL_GetFllFrequency                     (hal_functions_[ID_GetFllFrequency].function)
+#define HAL_WriteFramQuickXv2                   (hal_functions_[ID_WriteFramQuickXv2].function)
+#define HAL_SendJtagMailboxXv2                  (hal_functions_[ID_SendJtagMailboxXv2].function)
 
-#define HAL_ReadAllCpuRegsNon1377Xv2            (this->*(hal_functions_[ID_ReadAllCpuRegsNon1377Xv].function))
-#define HAL_SingleStepJStateXv2                 (this->*(hal_functions_[ID_SingleStepJStateXv2].function))
-#define HAL_ResetMsp430I                        (this->*(hal_functions_[ID_ResetMsp430I].function))
-#define HAL_PollMSP430I40xx                     (this->*(hal_functions_[ID_PollMSP430I40xx].function))
+#define HAL_ReadAllCpuRegsNon1377Xv2            (hal_functions_[ID_ReadAllCpuRegsNon1377Xv].function)
+#define HAL_SingleStepJStateXv2                 (hal_functions_[ID_SingleStepJStateXv2].function)
+#define HAL_ResetMsp430I                        (hal_functions_[ID_ResetMsp430I].function)
+#define HAL_PollMSP430I40xx                     (hal_functions_[ID_PollMSP430I40xx].function)
 
-#define HAL_LeaSyncConditional                  (this->*(hal_functions_[ID_LeaSyncConditional].function))
+#define HAL_LeaSyncConditional                  (hal_functions_[ID_LeaSyncConditional].function)
 
 //extern HalRec hal_functions_[HAL_FUNCTIONS_SIZE];
 
@@ -623,7 +623,7 @@ HAL_FUNCTION(_hal_BlowFuseXv2)
 
         // Write password into device
         STREAM_internal_stream(stream_in_tmp, sizeof(stream_in_tmp), MESSAGE_OUT_TO_DLL, 0, &stream_tmp);
-        HAL_ExecuteFuncletXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
+        (this->*HAL_ExecuteFuncletXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
         STREAM_external_stream(&stream_tmp);
 
         // now perform a BOR via JTAG - we loose control of the device then...
@@ -1532,7 +1532,7 @@ HAL_FUNCTION(_hal_ExecuteFunclet)
             uint8_t DummyIn[8] = {WDTCTL_ADDRESS & 0xFF,(WDTCTL_ADDRESS >> 8) & 0xFF,
                                         WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
             STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-            HAL_SyncJtag_Conditional_SaveContext(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+            (this->*HAL_SyncJtag_Conditional_SaveContext)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
             STREAM_external_stream(&stream_tmp);
         }
         setFuncletRegisters(registerBackups);
@@ -1560,7 +1560,7 @@ HAL_FUNCTION(_hal_ExecuteFunclet)
          uint8_t DummyIn[8] = {WDTCTL_ADDRESS & 0xFF,(WDTCTL_ADDRESS >> 8) & 0xFF,
                                      WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
          STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-         HAL_SyncJtag_Conditional_SaveContext(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+         (this->*HAL_SyncJtag_Conditional_SaveContext)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
          STREAM_external_stream(&stream_tmp);
 
          setFuncletRegisters(registerBackups);
@@ -1910,7 +1910,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletJtag)
             uint8_t DummyIn[8] = {WDTCTL_ADDRESS & 0xFF,(WDTCTL_ADDRESS >> 8) & 0xFF,
                                         WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
             STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-            HAL_SyncJtag_Conditional_SaveContext(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+            (this->*HAL_SyncJtag_Conditional_SaveContext)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
             STREAM_external_stream(&stream_tmp);
         }
         setFuncletRegisters(registerBackups);
@@ -2234,7 +2234,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletX)
             uint8_t DummyIn[8] = {WDTCTL_ADDRESS & 0xFF,(WDTCTL_ADDRESS >> 8) & 0xFF,
                                         WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
             STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-            HAL_SyncJtag_Conditional_SaveContextX(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+            (this->*HAL_SyncJtag_Conditional_SaveContextX)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
             STREAM_external_stream(&stream_tmp);
         }
         setFuncletRegisters(registerBackups);
@@ -2262,7 +2262,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletX)
          uint8_t DummyIn[8] = {WDTCTL_ADDRESS & 0xFF,(WDTCTL_ADDRESS >> 8) & 0xFF,
                                         WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
          STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-         HAL_SyncJtag_Conditional_SaveContextX(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+         (this->*HAL_SyncJtag_Conditional_SaveContextX)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
          STREAM_external_stream(&stream_tmp);
 
          setFuncletRegisters(registerBackups);
@@ -2511,7 +2511,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletXv2)
                                     WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
 
             STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-            HAL_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+            (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
             STREAM_external_stream(&stream_tmp);
 
             Mova = 0x0060 | (10 << 8) & 0x0F00;
@@ -2530,7 +2530,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletXv2)
                                     WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
 
             STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-            HAL_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+            (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
             STREAM_external_stream(&stream_tmp);
         }
 
@@ -2548,7 +2548,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletXv2)
                                      WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
 
          STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-         HAL_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+         (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
          STREAM_external_stream(&stream_tmp);
 
          ret_value = HALERR_EXECUTE_FUNCLET_EXECUTION_ERROR;
@@ -4850,7 +4850,7 @@ int16_t PollforLPMx5(uint64_t JStateValue, uint16_t forceSendState)
             uint8_t DummyIn[8] = {wdtctlAddress5xx & 0xFF,(wdtctlAddress5xx >> 8) & 0xFF,
                                      WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
             STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-            HAL_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+            (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
             STREAM_external_stream(&stream_tmp);
 
              // Stop polling in next loop run --> Device CPU is stoped due to BP Hit
@@ -5150,7 +5150,7 @@ uint8_t getSystemState()
                                             WDTHOLD_DEF|WDTSSEL_ACLK,WDTPW_DEF,0,0,0,0};
 
                     STREAM_internal_stream(Dummy, sizeof(Dummy), 0, 0, &stream_tmp);
-                    HAL_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+                    (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
                     STREAM_external_stream(&stream_tmp);
                 }
                 else
@@ -5276,7 +5276,7 @@ HAL_FUNCTION(_hal_Psa)
     }
 
     STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-    ret_value = HAL_SyncJtag_AssertPor_SaveContext(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+    ret_value = (this->*HAL_SyncJtag_AssertPor_SaveContext)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
     STREAM_external_stream(&stream_tmp);
     if(ret_value < 0)
     {
@@ -5314,7 +5314,7 @@ HAL_FUNCTION(_hal_Psa)
     }
 
     STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-    ret_value = HAL_SyncJtag_AssertPor_SaveContext(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+    ret_value = (this->*HAL_SyncJtag_AssertPor_SaveContext)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
     STREAM_external_stream(&stream_tmp);
 
     return(ret_value);
@@ -5354,7 +5354,7 @@ HAL_FUNCTION(_hal_PsaX)
     }
 
     STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-    ret_value = HAL_SyncJtag_AssertPor_SaveContextX(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+    ret_value = (this->*HAL_SyncJtag_AssertPor_SaveContextX)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
     STREAM_external_stream(&stream_tmp);
     if(ret_value < 0)
     {
@@ -5376,7 +5376,7 @@ HAL_FUNCTION(_hal_PsaX)
     JTAG_EnhancedPsaEnd();
 
     STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-    ret_value = HAL_SyncJtag_AssertPor_SaveContextX(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+    ret_value = (this->*HAL_SyncJtag_AssertPor_SaveContextX)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
     STREAM_external_stream(&stream_tmp);
 
     return(ret_value);
@@ -5428,7 +5428,7 @@ HAL_FUNCTION(_hal_PsaXv2)
         DummyIn[5+i]=mclk_modules[i];
     }
     STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-    HAL_SyncJtag_AssertPor_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+    (this->*HAL_SyncJtag_AssertPor_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
     STREAM_external_stream(&stream_tmp);
 
     {
@@ -5464,7 +5464,7 @@ HAL_FUNCTION(_hal_PsaXv2)
         DummyIn[5+i] = mclk_modules[i];
     }
     STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
-    HAL_SyncJtag_AssertPor_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+    (this->*HAL_SyncJtag_AssertPor_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
     STREAM_external_stream(&stream_tmp);
 
     return 0;
@@ -7246,7 +7246,7 @@ HAL_FUNCTION(_hal_SingleStep)
 
     // now sync the CPU again to JTAG control and save the current context
     STREAM_internal_stream(stream_in_sync, sizeof(stream_in_sync), MESSAGE_OUT_TO_DLL, 0, &stream_tmp);
-    RetState = HAL_SyncJtag_Conditional_SaveContext(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
+    RetState = (this->*HAL_SyncJtag_Conditional_SaveContext)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
     STREAM_external_stream(&stream_tmp);
 
     if(RetState != 0)
@@ -7417,7 +7417,7 @@ HAL_FUNCTION(_hal_SingleStepJStateXv2)
     {
       // take target under JTAG control
       STREAM_internal_stream(stream_in_sync, sizeof(stream_in_sync), MESSAGE_OUT_TO_DLL, 0, &stream_tmp);
-      RetState = HAL_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
+      RetState = (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
       STREAM_external_stream(&stream_tmp);
       // restore EEM Trigger Block 0
       MyIn[0]  = 0x05;
@@ -7456,7 +7456,7 @@ HAL_FUNCTION(_hal_SingleStepJStateXv2)
   {
       // take target under JTAG control
       STREAM_internal_stream(stream_in_sync, sizeof(stream_in_sync), MESSAGE_OUT_TO_DLL, 0, &stream_tmp);
-      RetState = HAL_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
+      RetState = (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
       STREAM_external_stream(&stream_tmp);
   }
   return RetState;
@@ -7621,7 +7621,7 @@ HAL_FUNCTION(_hal_SingleStepX)
 
     // now sync the CPU again to JTAG control and save the current context
     STREAM_internal_stream(stream_in_sync, sizeof(stream_in_sync), MESSAGE_OUT_TO_DLL, 0, &stream_tmp);
-    RetState = HAL_SyncJtag_Conditional_SaveContextX(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
+    RetState = (this->*HAL_SyncJtag_Conditional_SaveContextX)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
     STREAM_external_stream(&stream_tmp);
 
     if(RetState != 0)
@@ -7700,7 +7700,7 @@ HAL_FUNCTION(_hal_SingleStepXv2)
     {
       // take target under JTAG control
       STREAM_internal_stream(stream_in_sync, sizeof(stream_in_sync), MESSAGE_OUT_TO_DLL, 0, &stream_tmp);
-      RetState = HAL_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
+      RetState = (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
       STREAM_external_stream(&stream_tmp);
       // restore EEM Trigger Block 0
       MyIn[0]  = 0x05;
@@ -7742,7 +7742,7 @@ HAL_FUNCTION(_hal_SingleStepXv2)
       {
           // take target under JTAG control
           STREAM_internal_stream(stream_in_sync, sizeof(stream_in_sync), MESSAGE_OUT_TO_DLL, 0, &stream_tmp);
-          RetState = HAL_SyncJtag_Conditional_SaveContextXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
+          RetState = (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // In
           STREAM_external_stream(&stream_tmp);
       }
       else
