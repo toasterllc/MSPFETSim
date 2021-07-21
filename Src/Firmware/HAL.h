@@ -10,6 +10,7 @@
 #define DECL_STATIC_VAR(n) auto& n = sv.n
 
 #define setFuncletRegisters _CONCAT(setFuncletRegisters, THISFN)
+#define clkTclkAndCheckDTC  _CONCAT(clkTclkAndCheckDTC, THISFN)
 
 #define TA0R 0
 #define TB0R 0
@@ -8671,6 +8672,8 @@ int32_t clkTclkAndCheckDTC_hal_SyncJtag_Conditional_SaveContext(void)
 
 HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContext)
 {
+  #undef THISFN
+  #define THISFN _hal_SyncJtag_Conditional_SaveContext
   uint16_t i = 0, lOut = 0, ctl_sync = 0;
   int16_t MyOut[5] = {0};
   uint16_t address;
@@ -8999,6 +9002,8 @@ int32_t clkTclkAndCheckDTC_hal_SyncJtag_Conditional_SaveContextX(void)
 
 HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContextX)
 {
+  #undef THISFN
+  #define THISFN _hal_SyncJtag_Conditional_SaveContextX
   uint16_t ctl_sync = 0;
   uint16_t i = 0;
   int16_t MyOut[5] = {0};
