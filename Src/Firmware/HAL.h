@@ -2209,22 +2209,22 @@ HAL_FUNCTION(_hal_UnlockDap)
 #define FlashUpperBoarder 2140000ul // 2,14 MHz
 #define FlashLowerBoarder 1410000ul // 1,41 MHz
 
-static uint16_t loopDco[] =
+uint16_t loopDco[] =
 {
     0x40b2, 0x5a80, 0x0120, 0xc232, 0xc0f2, 0x003f, 0x0057, 0xd0f2,
     0x0007, 0x0057, 0x45c2, 0x0056, 0x46c2, 0x0057, 0x43c2, 0x0058,
     0xea0a, 0xe909, 0x5319, 0x23fe, 0x531a, 0x23fc, 0x4303, 0x3fff
 };
-static const uint16_t sizeLoopDco = (uint16_t)(sizeof(loopDco)/sizeof(*loopDco));
+const uint16_t sizeLoopDco = (uint16_t)(sizeof(loopDco)/sizeof(*loopDco));
 
-static uint16_t loopFll[] =
+uint16_t loopFll[] =
 {
     0x40b2, 0x5a80, 0x0120, 0xc232, 0xd072, 0x0040, 0x4032, 0x0040,
     0x40f2, 0x0080, 0x0052, 0x43c2, 0x0050, 0x45c2, 0x0051, 0xd0f2,
     0x0080, 0x0053, 0xc0f2, 0x005f, 0x0054, 0xea0a, 0xe909, 0x5319,
     0x23fe, 0x531a, 0x23fc, 0x4303, 0x3fff
 };
-static const uint16_t sizeLoopFll = (uint16_t)(sizeof(loopFll)/sizeof(*loopFll));
+const uint16_t sizeLoopFll = (uint16_t)(sizeof(loopFll)/sizeof(*loopFll));
 
 /*--------------------------------------------------------------------------------*/
 #ifdef MSP430_UIF
@@ -2299,12 +2299,12 @@ static const uint16_t sizeLoopFll = (uint16_t)(sizeof(loopFll)/sizeof(*loopFll))
 #endif
 
 
-static uint32_t (*ReadCounterRegsFunc)() = 0;
+uint32_t (*ReadCounterRegsFunc)() = 0;
 void (*WriteRegFunc)(int, uint32_t) = 0;
 void (*SetPCFunc)(uint32_t) = 0;
 void (*WriteRamFunc)(uint16_t, uint16_t*, uint16_t) = 0;
 void (*ReadRamFunc)(uint16_t, uint16_t*, uint16_t) = 0;
-static HalFuncInOut SyncFunc = 0;
+HalFuncInOut SyncFunc = 0;
 
 
 void readFromRam(uint16_t address, uint16_t* buffer, uint16_t numWords)
@@ -2347,7 +2347,7 @@ void writeToRamX(uint16_t address, uint16_t* data, uint16_t numWords)
     }
 }
 
-static uint32_t readCounterRegisters()
+uint32_t readCounterRegisters()
 {
     uint16_t r9 = 0 , r10 = 0;
     uint32_t counter = 0;
@@ -2358,7 +2358,7 @@ static uint32_t readCounterRegisters()
     return (counter << 16) | r9;
 }
 
-static uint32_t readCounterRegistersX()
+uint32_t readCounterRegistersX()
 {
     uint32_t r9 = 0, r10 = 0;
 
@@ -2395,7 +2395,7 @@ void setPCJtag(uint32_t address)
 
 
 
-static uint32_t measureFrequency(uint16_t RamStart, uint16_t DCO, uint16_t BCS1)
+uint32_t measureFrequency(uint16_t RamStart, uint16_t DCO, uint16_t BCS1)
 {
     uint32_t startTime;
     uint32_t stopTime;
@@ -8099,10 +8099,10 @@ HAL_FUNCTION(_hal_SyncJtag_AssertPor_SaveContextXv2)
 extern DeviceSettings deviceSettings;
 
 //--------------------------------------------------------------------------
-// static STATUS_T clkTclkAndCheckDTC(void)
+// STATUS_T clkTclkAndCheckDTC(void)
 // \todo Günther: Seems to only apply to devices with the DTC bug, determine the effect
 //       this code has on devices that do not have the DTC bug
-static int32_t clkTclkAndCheckDTC(void)
+int32_t clkTclkAndCheckDTC(void)
 {
 #define MAX_DTC_CYCLE 10
   uint16_t cntrlSig;
@@ -8424,10 +8424,10 @@ HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContext)
 extern DeviceSettings deviceSettings;
 
 //--------------------------------------------------------------------------
-// static STATUS_T clkTclkAndCheckDTC(void)
+// STATUS_T clkTclkAndCheckDTC(void)
 // \todo G?nther: Seems to only apply to devices with the DTC bug, determine the effect
 //       this code has on devices that do not have the DTC bug
-static int32_t clkTclkAndCheckDTC(void)
+int32_t clkTclkAndCheckDTC(void)
 {
 #define MAX_DTC_CYCLE 10
   uint16_t cntrlSig;
