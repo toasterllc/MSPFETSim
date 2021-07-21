@@ -3,10 +3,341 @@
 #include "Stream.h"
 #include "HIL.h"
 
+#define T_ARCH_MSP430 0
+#define T_ARCH_MSP432 1
+
+// Event types  send async to DLL First word in message
+enum EVENT_TYPE_FLAGS
+{
+    // set if breakpoint is hit
+    BP_HIT_FLAG = 0x1,
+    // State Sotrage Event
+    STATE_STORAGE_FLAG = 0x2,
+    //JSTATE Capute
+    JSTATE_CAPTURE_FLAG = 0x4,
+	//Power profiling data capture
+	ENERGYTRACE_INFO = 0x8,
+	// Variable watch event
+    VARIABLE_WATCH_FLAG = 0x10
+};
+
+#define NO_FLAG			0x00
+#define LOCK_INFO_A_FLAG	0x01
+
 #define HAL_FUNCTION(x) int16_t x (uint16_t flags)
 using HalFuncInOut = int16_t (MSPProbeSim::*)(uint16_t);
 
+struct _DeviceSettings_
+{
+    uint32_t  clockControlType;
+    uint16_t stopFLL;
+    uint16_t assertBslValidBit;
+};
+typedef struct _DeviceSettings_ DeviceSettings;
+
+struct _DevicePowerSettings_
+{
+    uint32_t powerTestRegMask;
+    uint32_t powerTestRegDefault;
+    uint32_t enableLpmx5TestReg;
+    uint32_t disableLpmx5TestReg;
+
+    uint16_t powerTestReg3VMask;
+    uint16_t powerTestReg3VDefault;
+    uint16_t enableLpmx5TestReg3V;
+    uint16_t disableLpmx5TestReg3V;
+};
+typedef struct _DevicePowerSettings_ DevicePowerSettings;
+
+typedef struct _ARMConfigSettings
+{
+    uint32_t scsBase; // System Control Space base address
+    uint32_t fpbBase; // FLASH Patch Block base address
+    uint32_t interruptOptions; // Options to enable/disable interrupts when single stepping or letting the device run
+    uint32_t ulpDebug; // Options to enable/disable entry to LPM. poll for PB hit in low poer mode
+} ARMConfigSettings;
+
+#ifndef HAL_REC
+#define HAL_REC
+struct _HalRec_
+{
+  uint16_t id;
+  HalFuncInOut function;
+};
+typedef struct _HalRec_ HalRec;
+#endif
+
+//extern void _init_Hal(void);
+
+#define MACRO_LIST                           \
+    MACRO(Init)                              \
+    MACRO(SetVcc)                            \
+    MACRO(GetVcc)                            \
+    MACRO(StartJtag)                         \
+    MACRO(StartJtagActivationCode)           \
+    MACRO(StopJtag)                          \
+    MACRO(Configure)                         \
+    MACRO(GetFuses)                          \
+    MACRO(BlowFuse)                          \
+    MACRO(WaitForEem)                        \
+    MACRO(BitSequence)                       \
+    MACRO(GetJtagId)                         \
+    MACRO(SetDeviceChainInfo)                \
+    MACRO(SetChainConfiguration)             \
+    MACRO(GetNumOfDevices)                   \
+    MACRO(GetInterfaceMode)                  \
+    MACRO(GetDeviceIdPtr)                    \
+    MACRO(SyncJtag_AssertPor_SaveContext)    \
+    MACRO(SyncJtag_Conditional_SaveContext)  \
+    MACRO(RestoreContext_ReleaseJtag)        \
+    MACRO(ReadMemBytes)                      \
+    MACRO(ReadMemWords)                      \
+    MACRO(ReadMemQuick)                      \
+    MACRO(WriteMemBytes)                     \
+    MACRO(WriteMemWords)                     \
+    MACRO(EemDataExchange)                   \
+    MACRO(EemDataExchangeAFE2xx)             \
+    MACRO(SingleStep)                        \
+    MACRO(ReadAllCpuRegs)                    \
+    MACRO(WriteAllCpuRegs)                   \
+    MACRO(Psa)                               \
+    MACRO(ExecuteFunclet)                    \
+    MACRO(ExecuteFuncletJtag)                \
+    MACRO(GetDcoFrequency)                   \
+    MACRO(GetDcoFrequencyJtag)               \
+    MACRO(GetFllFrequency)                   \
+    MACRO(GetFllFrequencyJtag)               \
+    MACRO(WaitForStorage)                    \
+    MACRO(SyncJtag_AssertPor_SaveContextX)   \
+    MACRO(SyncJtag_Conditional_SaveContextX) \
+    MACRO(RestoreContext_ReleaseJtagX)       \
+    MACRO(ReadMemBytesX)                     \
+    MACRO(ReadMemWordsX)                     \
+    MACRO(ReadMemQuickX)                     \
+    MACRO(WriteMemBytesX)                    \
+    MACRO(WriteMemWordsX)                    \
+    MACRO(EemDataExchangeX)                  \
+    MACRO(SingleStepX)                       \
+    MACRO(ReadAllCpuRegsX)                   \
+    MACRO(WriteAllCpuRegsX)                  \
+    MACRO(PsaX)                              \
+    MACRO(ExecuteFuncletX)                   \
+    MACRO(GetDcoFrequencyX)                  \
+    MACRO(GetFllFrequencyX)                  \
+    MACRO(WaitForStorageX)                   \
+    MACRO(BlowFuseXv2)                       \
+    MACRO(BlowFuseFram)                      \
+    MACRO(SyncJtag_AssertPor_SaveContextXv2) \
+    MACRO(SyncJtag_Conditional_SaveContextXv2)\
+    MACRO(RestoreContext_ReleaseJtagXv2)      \
+    MACRO(ReadMemWordsXv2)                    \
+    MACRO(ReadMemQuickXv2)                    \
+    MACRO(WriteMemWordsXv2)                   \
+    MACRO(EemDataExchangeXv2)                 \
+    MACRO(SingleStepXv2)                      \
+    MACRO(ReadAllCpuRegsXv2)                  \
+    MACRO(WriteAllCpuRegsXv2)                 \
+    MACRO(PsaXv2)                             \
+    MACRO(ExecuteFuncletXv2)                  \
+    MACRO(UnlockDeviceXv2)                    \
+    MACRO(MagicPattern)                       \
+    MACRO(UnlockC092)                         \
+    MACRO(HilCommand)                         \
+    MACRO(PollJStateReg)                      \
+    MACRO(PollJStateRegFR57xx)                \
+    MACRO(IsJtagFuseBlown)                    \
+    MACRO(ResetXv2)                           \
+    MACRO(WriteFramQuickXv2)                  \
+    MACRO(SendJtagMailboxXv2)                 \
+    MACRO(SingleStepJStateXv2)                \
+    MACRO(PollJStateRegEt8)                   \
+    MACRO(ResetStaticGlobalVars)              \
+    MACRO(Reset430I)                          \
+    MACRO(PollJStateReg430I)                  \
+    MACRO(PollJStateReg20)                    \
+    MACRO(SwitchMosfet)                       \
+    MACRO(ResetL092)                          \
+    MACRO(DummyMacro)                         \
+    MACRO(Reset5438Xv2)                       \
+    MACRO(LeaSyncConditional)                 \
+    MACRO(GetJtagIdCodeArm)                   \
+    MACRO(ScanApArm)                          \
+    MACRO(MemApTransactionArm)                \
+    MACRO(ReadAllCpuRegsArm)                  \
+    MACRO(WriteAllCpuRegsArm)                 \
+    MACRO(EnableDebugArm)                     \
+    MACRO(DisableDebugArm)                    \
+    MACRO(RunArm)                             \
+    MACRO(HaltArm)                            \
+    MACRO(ResetArm)                           \
+    MACRO(SingleStepArm)                      \
+    MACRO(WaitForDebugHaltArm)                \
+    MACRO(MemApTransactionArmSwd)             \
+    MACRO(GetInterfaceModeArm)                \
+    MACRO(PollDStatePCRegEt)                  \
+    MACRO(GetCpuIdArm)                        \
+    MACRO(CheckDapLockArm)                    \
+    MACRO(UnlockDap)                          \
+    MACRO(UssSyncConditional)
+
+#define MACRO(x)  ID_##x,
+enum hal_id
+{
+    MACRO(Zero)
+    MACRO_LIST
+    NUM_MACROS
+};
+#undef MACRO
+
+
+#define HAL_FUNCTIONS_DEFAULT_SIZE    NUM_MACROS
+#define HAL_FUNCTIONS_SIZE   (NUM_MACROS+2)
+
+///**
+// * HAL Function Prototypes
+// */
+//#define MACRO(x)  int16_t _hal_##x (uint16_t flags);
+//MACRO(Zero)
+//MACRO_LIST
+//#undef MACRO
+//
+//void _init_Hal(void);
+
+/**
+ * HAL Function Pointer - these are the HAL Exports
+ */
+// common macros
+#define HAL_Zero                              (this->*(hal_functions_[ID_Zero].function))
+#define HAL_Init                              (this->*(hal_functions_[ID_Init].function))
+//#define HAL_SetVcc                            (this->*(hal_functions_[ID_SetVcc].function))
+//#define HAL_GetVcc                            (this->*(hal_functions_[ID_GetVcc].function))
+#define HAL_StartJtag                         (this->*(hal_functions_[ID_StartJtag].function))
+#define HAL_StartJtagActivationCode           (this->*(hal_functions_[ID_StartJtagActivationCode].function))
+#define HAL_StopJtag                          (this->*(hal_functions_[ID_StopJtag].function))
+#define HAL_Configure                         (this->*(hal_functions_[ID_Configure].function))
+#define HAL_GetFuses                          (this->*(hal_functions_[ID_GetFuses].function))
+#define HAL_BlowFuse                          (this->*(hal_functions_[ID_BlowFuse].function))
+#define HAL_WaitForEem                        (this->*(hal_functions_[ID_WaitForEem].function))
+#define HAL_BitSequence                       (this->*(hal_functions_[ID_BitSequence].function))
+#define HAL_GetJtagId                         (this->*(hal_functions_[ID_GetJtagId].function))
+#define HAL_SetDeviceChainInfo                (this->*(hal_functions_[ID_SetDeviceChainInfo].function))
+#define HAL_SetChainConfiguration             (this->*(hal_functions_[ID_SetChainConfiguration].function))
+#define HAL_GetNumOfDevices                   (this->*(hal_functions_[ID_GetNumOfDevices].function))
+#define HAL_GetInterfaceMode                  (this->*(hal_functions_[ID_GetInterfaceMode].function))
+#define HAL_MagicPattern                      (this->*(hal_functions_[MagicPattern].function))
+// MSP430 architecture
+#define HAL_SyncJtag_AssertPor_SaveContext    (this->*(hal_functions_[ID_SyncJtag_AssertPor_SaveContext].function))
+#define HAL_SyncJtag_Conditional_SaveContext  (this->*(hal_functions_[ID_SyncJtag_Conditional_SaveContext].function))
+#define HAL_RestoreContext_ReleaseJtag        (this->*(hal_functions_[ID_RestoreContext_ReleaseJtag].function))
+#define HAL_ReadMemBytes                      (this->*(hal_functions_[ID_ReadMemBytes].function))
+#define HAL_ReadMemWords                      (this->*(hal_functions_[ID_ReadMemWords].function))
+#define HAL_ReadMemQuick                      (this->*(hal_functions_[ID_ReadMemQuick].function))
+#define HAL_WriteMemBytes                     (this->*(hal_functions_[ID_WriteMemBytes].function))
+#define HAL_WriteMemWords                     (this->*(hal_functions_[ID_WriteMemWords].function))
+#define HAL_EemDataExchange                   (this->*(hal_functions_[ID_EemDataExchange].function))
+#define HAL_SingleStep                        (this->*(hal_functions_[ID_SingleStep].function))
+#define HAL_ReadAllCpuRegs                    (this->*(hal_functions_[ID_ReadAllCpuRegs].function))
+#define HAL_WriteAllCpuRegs                   (this->*(hal_functions_[ID_WriteAllCpuRegs].function))
+#define HAL_Psa                               (this->*(hal_functions_[ID_Psa].function))
+#define HAL_ExecuteFunclet                    (this->*(hal_functions_[ExecuteFunclet].function))
+// MSP430X architecture
+#define HAL_SyncJtag_AssertPor_SaveContextX   (this->*(hal_functions_[ID_SyncJtag_AssertPor_SaveContextX].function))
+#define HAL_SyncJtag_Conditional_SaveContextX (this->*(hal_functions_[ID_SyncJtag_Conditional_SaveContextX].function))
+#define HAL_RestoreContext_ReleaseJtagX       (this->*(hal_functions_[ID_RestoreContext_ReleaseJtagX].function))
+#define HAL_ReadMemBytesX                     (this->*(hal_functions_[ID_ReadMemBytesX].function))
+#define HAL_ReadMemWordsX                     (this->*(hal_functions_[ID_ReadMemWordsX].function))
+#define HAL_ReadMemQuickX                     (this->*(hal_functions_[ID_ReadMemQuickX].function))
+#define HAL_WriteMemBytesX                    (this->*(hal_functions_[ID_WriteMemBytesX].function))
+#define HAL_WriteMemWordsX                    (this->*(hal_functions_[ID_WriteMemWordsX].function))
+#define HAL_EemDataExchangeX                  (this->*(hal_functions_[ID_EemDataExchangeX].function))
+#define HAL_SingleStepX                       (this->*(hal_functions_[ID_SingleStepX].function))
+#define HAL_ReadAllCpuRegsX                   (this->*(hal_functions_[ID_ReadAllCpuRegsX].function))
+#define HAL_WriteAllCpuRegsX                  (this->*(hal_functions_[ID_WriteAllCpuRegsX].function))
+#define HAL_PsaX                              (this->*(hal_functions_[ID_PsaX].function))
+#define HAL_ExecuteFuncletX                   (this->*(hal_functions_[ExecuteFuncletX].function))
+// CoreIp430Xv2 architecture
+#define HAL_SyncJtag_AssertPor_SaveContextXv2   (this->*(hal_functions_[ID_SyncJtag_AssertPor_SaveContextXv2].function))
+#define HAL_SyncJtag_Conditional_SaveContextXv2 (this->*(hal_functions_[ID_SyncJtag_Conditional_SaveContextXv2].function))
+#define HAL_RestoreContext_ReleaseJtagXv2       (this->*(hal_functions_[ID_RestoreContext_ReleaseJtagXv2].function))
+#define HAL_ReadMemBytesXv2                     (this->*(hal_functions_[ID_ReadMemBytesXv2].function))
+#define HAL_ReadMemWordsXv2                     (this->*(hal_functions_[ID_ReadMemWordsXv2].function))
+#define HAL_ReadMemQuickXv2                     (this->*(hal_functions_[ID_ReadMemQuickXv2].function))
+#define HAL_WriteMemBytesXv2                    (this->*(hal_functions_[ID_WriteMemBytesXv2].function))
+#define HAL_WriteMemWordsXv2                    (this->*(hal_functions_[ID_WriteMemWordsXv2].function))
+#define HAL_EemDataExchangeXv2                  (this->*(hal_functions_[ID_EemDataExchangeXv2].function))
+#define HAL_SingleStepXv2                       (this->*(hal_functions_[ID_SingleStepXv2].function))
+#define HAL_ReadAllCpuRegsXv2                   (this->*(hal_functions_[ID_ReadAllCpuRegsXv2].function))
+#define HAL_WriteAllCpuRegsXv2                  (this->*(hal_functions_[ID_WriteAllCpuRegsXv2].function))
+#define HAL_PsaXv2                              (this->*(hal_functions_[ID_PsaXv2].function))
+#define HAL_ExecuteFuncletXv2                   (this->*(hal_functions_[ID_ExecuteFuncletXv2].function))
+#define HAL_UnlockDeviceXv2                     (this->*(hal_functions_[ID_UnlockDeviceXv2].function))
+#define HAL_UnlockC092                          (this->*(hal_functions_[ID_UnlockC092].function))
+#define HAL_HilCommand                          (this->*(hal_functions_[ID_HilCommand].function))
+#define HAL_PollJStateRegFR57xx                 (this->*(hal_functions_[ID_PollJStateRegFR57xx].function))
+#define Hal_PollDStatePCRegEt                   (this->*(hal_functions_[ID_PollDStatePCRegEt].function))
+#define Hal_PollJStateRegEt8                    (this->*(hal_functions_[ID_PollJStateRegEt8].function))
+#define Hal_PollJStateReg                       (this->*(hal_functions_[ID_PollJStateReg].function))
+
+#define HAL_IsJtagFuseBlown                     (this->*(hal_functions_[ID_IsJtagFuseBlown].function))
+#define HAL_ResetXv2                            (this->*(hal_functions_[ID_ResetXv2].function))
+
+
+#define HAL_GetDcoFrequency                     (this->*(hal_functions_[ID_GetDcoFrequency].function))
+#define HAL_GetFllFrequency                     (this->*(hal_functions_[ID_GetFllFrequency].function))
+#define HAL_WriteFramQuickXv2                   (this->*(hal_functions_[ID_WriteFramQuickXv2].function))
+#define HAL_SendJtagMailboxXv2                  (this->*(hal_functions_[ID_SendJtagMailboxXv2].function))
+
+#define HAL_ReadAllCpuRegsNon1377Xv2            (this->*(hal_functions_[ID_ReadAllCpuRegsNon1377Xv].function))
+#define HAL_SingleStepJStateXv2                 (this->*(hal_functions_[ID_SingleStepJStateXv2].function))
+#define HAL_ResetMsp430I                        (this->*(hal_functions_[ID_ResetMsp430I].function))
+#define HAL_PollMSP430I40xx                     (this->*(hal_functions_[ID_PollMSP430I40xx].function))
+
+#define HAL_LeaSyncConditional                  (this->*(hal_functions_[ID_LeaSyncConditional].function))
+
+//extern HalRec hal_functions_[HAL_FUNCTIONS_SIZE];
+
+// global variables to handle JTAG chain
+uint16_t activeDevice = 0;
+REQUIRED(activeDevice)
+
+uint8_t numOfDevices = 0;
+REQUIRED(numOfDevices)
+
+uint16_t TCE = 0;
+REQUIRED(TCE)
+
+DevicePowerSettings devicePowerSettings = {};
+REQUIRED(devicePowerSettings)
+
+DeviceSettings deviceSettings = {};
+REQUIRED(deviceSettings)
+
+// global variables to handle Emulation clock control
+uint32_t _hal_mclkCntrl0 = 0;
+REQUIRED(_hal_mclkCntrl0)
+
+HalRec hal_functions_[HAL_FUNCTIONS_SIZE] = {};
+
+uint16_t setPCclockBeforeCapture = 0;
+REQUIRED(setPCclockBeforeCapture)
+
+uint16_t altRomAddressForCpuRead = 0;
+REQUIRED(altRomAddressForCpuRead)
+
+uint16_t wdtctlAddress5xx = 0x15C;
+REQUIRED(wdtctlAddress5xx)
+
+uint16_t enhancedPsa = 0;
+REQUIRED(enhancedPsa)
+
+int8_t traceBuffer[256] = {};              ///< Trace buffer used to print out JTAG IR and DR shofts to debug port
+
+// global variables use for JTAG/SWD DAP
+uint32_t cswValues[4] = {};
+REQUIRED(cswValues)
+
 ARMConfigSettings armConfigSettings = {};
+REQUIRED(armConfigSettings)
 
 /**
 * \ingroup MODULMACROS
@@ -936,26 +1267,37 @@ HAL_FUNCTION(_hal_EnableDebugArm)
 /*---------------------------------------------------------------------------*/
 
 
-
+#undef REG_ADDRESS
 #define REG_ADDRESS 5
+#undef REG_SIZE
 #define REG_SIZE    6
+#undef REG_LOCKA
 #define REG_LOCKA   8
+#undef REG_TYPE
 #define REG_TYPE    9
-
+#undef REG_GP1
 #define REG_GP1     10  // General purpose registers used by the funclet
+#undef REG_GP2
 #define REG_GP2     11
+#undef REG_GP3
 #define REG_GP3     12
 
+#undef WAIT_FOR_DEAD_START
 #define WAIT_FOR_DEAD_START (0x20)  // Code position where the WaitForDead loop starts
+#undef WAIT_FOR_DEAD_END
 #define WAIT_FOR_DEAD_END   (0x26)  // Code position where the WaitForDead loop ends
+#undef EXECUTE_FUNCLET
 #define EXECUTE_FUNCLET     (0x28)  // Location of actual funclet body
+#undef FINISHED_OFFSET
 #define FINISHED_OFFSET     (0x5C)  // Location of the final jmp $ instruction of the funclet
+#undef CONTROL_WORD_OFFSET
 #define CONTROL_WORD_OFFSET (0x5E)  // Location of the control word
+#undef DATA_OFFSET
 #define DATA_OFFSET         (0x60)  // Location where data starts
 
 //extern DeviceSettings deviceSettings;
 
-void setFuncletRegisters(const uint16_t* registerData)
+void setFuncletRegisters_hal_ExecuteFunclet(const uint16_t* registerData)
 {
     WriteCpuReg(REG_ADDRESS, registerData[0]);
     WriteCpuReg(REG_SIZE, registerData[1]);
@@ -1261,14 +1603,14 @@ HAL_FUNCTION(_hal_ExecuteFunclet)
 
 
 
-//#define REG_ADDRESS 5
-//#define REG_SIZE    6
-//#define REG_LOCKA   8
-//#define REG_TYPE    9
-//
-//#define REG_GP1     10  // General purpose registers used by the funclet
-//#define REG_GP2     11
-//#define REG_GP3     12
+#define REG_ADDRESS 5
+#define REG_SIZE    6
+#define REG_LOCKA   8
+#define REG_TYPE    9
+
+#define REG_GP1     10  // General purpose registers used by the funclet
+#define REG_GP2     11
+#define REG_GP3     12
 
 #define WAIT_FOR_DEAD_START (0x20)  // Code position where the WaitForDead loop starts
 #define WAIT_FOR_DEAD_END   (0x26)  // Code position where the WaitForDead loop ends
@@ -1279,7 +1621,7 @@ HAL_FUNCTION(_hal_ExecuteFunclet)
 
 //extern DeviceSettings deviceSettings;
 
-void setFuncletRegisters(const uint16_t* registerData)
+void setFuncletRegisters_hal_ExecuteFuncletJtag(const uint16_t* registerData)
 {
     WriteCpuReg(REG_ADDRESS, registerData[0]);
     WriteCpuReg(REG_SIZE, registerData[1]);
@@ -1290,7 +1632,7 @@ void setFuncletRegisters(const uint16_t* registerData)
 	WriteCpuReg(REG_GP3, registerData[6]);
 }
 
-static uint16_t funcletBackup[0x30] = {0};
+uint16_t funcletBackup[0x30] = {0};
 
 void stopAndRestoreRam(uint16_t startAddr)
 {
@@ -1607,23 +1949,36 @@ HAL_FUNCTION(_hal_ExecuteFuncletJtag)
 
 
 
-//#define REG_ADDRESS 5
-//#define REG_SIZE    6
-//#define REG_LOCKA   8
-//#define REG_TYPE    9
-//
-//#define REG_GP1     10  // General purpose registers used by the funclet
-//#define REG_GP2     11
-//#define REG_GP3     12
+#undef REG_ADDRESS
+#define REG_ADDRESS 5
+#undef REG_SIZE
+#define REG_SIZE    6
+#undef REG_LOCKA
+#define REG_LOCKA   8
+#undef REG_TYPE
+#define REG_TYPE    9
 
+#undef REG_GP1
+#define REG_GP1     10  // General purpose registers used by the funclet
+#undef REG_GP2
+#define REG_GP2     11
+#undef REG_GP3
+#define REG_GP3     12
+
+#undef WAIT_FOR_DEAD_START
 #define WAIT_FOR_DEAD_START (0x22)  // Code position where the WaitForDead loop starts
+#undef WAIT_FOR_DEAD_END
 #define WAIT_FOR_DEAD_END   (0x2C)  // Code position where the WaitForDead loop ends
+#undef EXECUTE_FUNCLET
 #define EXECUTE_FUNCLET     (0x2E)  // Location of actual funclet body
+#undef FINISHED_OFFSET
 #define FINISHED_OFFSET     (0x68)  // Location of the final jmp $ instruction of the funclet
+#undef CONTROL_WORD_OFFSET
 #define CONTROL_WORD_OFFSET (0x6A)  // Location of the control word
+#undef DATA_OFFSET
 #define DATA_OFFSET         (0x6C)  // Location where data starts
 
-void setFuncletRegisters(const uint32_t* registerData)
+void setFuncletRegisters_hal_ExecuteFuncletX(const uint32_t* registerData)
 {
     WriteCpuRegX(REG_ADDRESS, registerData[0]);
     WriteCpuRegX(REG_SIZE, registerData[1]);
@@ -1880,10 +2235,10 @@ HAL_FUNCTION(_hal_ExecuteFuncletX)
 
 #define startAddrOfs FlashWrite_o_[4]
 
-//#define REG_ADDRESS 5
-//#define REG_SIZE    6
-//#define REG_LOCKA   8
-//#define REG_TYPE    9
+#define REG_ADDRESS 5
+#define REG_SIZE    6
+#define REG_LOCKA   8
+#define REG_TYPE    9
 
 #define TIMEOUT_COUNT   300u
 /*
@@ -1897,7 +2252,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletX)
 //extern uint16_t altRomAddressForCpuRead;
 
 
-void setFuncletRegisters(const uint32_t* registerData)
+void setFuncletRegisters_hal_ExecuteFuncletXv2(const uint32_t* registerData)
 {
     uint32_t  Rx;
     uint16_t Mova;
@@ -2213,7 +2568,7 @@ HAL_FUNCTION(_hal_UnlockDap)
 #define FlashUpperBoarder 2140000ul // 2,14 MHz
 #define FlashLowerBoarder 1410000ul // 1,41 MHz
 
-uint16_t loopDco[] =
+uint16_t loopDco[24] =
 {
     0x40b2, 0x5a80, 0x0120, 0xc232, 0xc0f2, 0x003f, 0x0057, 0xd0f2,
     0x0007, 0x0057, 0x45c2, 0x0056, 0x46c2, 0x0057, 0x43c2, 0x0058,
@@ -2221,7 +2576,7 @@ uint16_t loopDco[] =
 };
 const uint16_t sizeLoopDco = (uint16_t)(sizeof(loopDco)/sizeof(*loopDco));
 
-uint16_t loopFll[] =
+uint16_t loopFll[29] =
 {
     0x40b2, 0x5a80, 0x0120, 0xc232, 0xd072, 0x0040, 0x4032, 0x0040,
     0x40f2, 0x0080, 0x0052, 0x43c2, 0x0050, 0x45c2, 0x0051, 0xd0f2,
@@ -2304,7 +2659,7 @@ const uint16_t sizeLoopFll = (uint16_t)(sizeof(loopFll)/sizeof(*loopFll));
 
 
 uint32_t (*ReadCounterRegsFunc)() = 0;
-void (*WriteRegFunc)(int, uint32_t) = 0;
+void (*WriteRegFunc)(int16_t, uint32_t) = 0;
 void (*SetPCFunc)(uint32_t) = 0;
 void (*WriteRamFunc)(uint16_t, uint16_t*, uint16_t) = 0;
 void (*ReadRamFunc)(uint16_t, uint16_t*, uint16_t) = 0;
@@ -2371,12 +2726,12 @@ uint32_t readCounterRegistersX()
     return (r10 << 16) | r9;
 }
 
-void writeRegister(int r, uint32_t value)
+void writeRegister(int16_t r, uint32_t value)
 {
     WriteCpuReg(r, value);
 }
 
-void writeRegisterX(int r, uint32_t value)
+void writeRegisterX(int16_t r, uint32_t value)
 {
     WriteCpuRegX(r, value);
 }
@@ -4194,8 +4549,8 @@ typedef enum ETMode
 } ETMode_t;
 
 
-uint32_t getTimeStamp();
-uint32_t getIMeasure();
+//uint32_t getTimeStamp();
+//uint32_t getIMeasure();
 
 #pragma inline=forced
 uint32_t getTimeStamp()
@@ -4422,7 +4777,7 @@ int16_t PollforLPMx5(uint64_t JStateValue, uint16_t forceSendState)
   inData:  <forceSendState(16)> <pollBreakpoints(16)> <pollLPM(16)> <doEnergyTrace(16)> <gateMode(16)>
   outData: <eventFlag(16)> [<JStateLow(32)> <JStateHigh(32)> / <numEnergyTraceRecords> <energyTrace records>]
 */
-int16_t PollJStateReg(uint16_t JStateVersion);
+//int16_t PollJStateReg(uint16_t JStateVersion);
 
 HAL_FUNCTION(_hal_PollJStateReg20)
 {
@@ -4638,7 +4993,7 @@ HAL_FUNCTION(_hal_PollJStateReg430I)
 #define ACTIVE              1
 #define LPM5_MODE           2
 
-int intstate = 0;
+int16_t intstate = 0;
 
 uint8_t getSystemState()
 {
@@ -8106,7 +8461,7 @@ HAL_FUNCTION(_hal_SyncJtag_AssertPor_SaveContextXv2)
 // STATUS_T clkTclkAndCheckDTC(void)
 // \todo Günther: Seems to only apply to devices with the DTC bug, determine the effect
 //       this code has on devices that do not have the DTC bug
-int32_t clkTclkAndCheckDTC(void)
+int32_t clkTclkAndCheckDTC_hal_SyncJtag_Conditional_SaveContext(void)
 {
 #define MAX_DTC_CYCLE 10
   uint16_t cntrlSig;
@@ -8431,7 +8786,7 @@ HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContext)
 // STATUS_T clkTclkAndCheckDTC(void)
 // \todo G?nther: Seems to only apply to devices with the DTC bug, determine the effect
 //       this code has on devices that do not have the DTC bug
-int32_t clkTclkAndCheckDTC(void)
+int32_t clkTclkAndCheckDTC_hal_SyncJtag_Conditional_SaveContextX(void)
 {
 #define MAX_DTC_CYCLE 10
   uint16_t cntrlSig;

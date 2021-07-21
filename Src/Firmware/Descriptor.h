@@ -1,6 +1,10 @@
 #pragma once
 #include "USB.h"
 
+// We need to use static within this file
+#pragma push_macro("static")
+#undef static
+
 struct Descriptor {
 
 #define SIZEOF_DEVICE_DESCRIPTOR        0x12
@@ -257,3 +261,5 @@ static const inline USB::StringDescriptor* stringDescs[] = {
 };
 
 };
+
+#pragma pop_macro("static")

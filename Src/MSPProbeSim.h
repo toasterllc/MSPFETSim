@@ -24,19 +24,19 @@ public:
             );
         }
         
-        ResetFirmware();
-        BIOS_InitCom();
-        
-        for (;;) {
-            // While V3OP_Scheduler has work to do (return=true), let it run for many iterations
-            // before checking for USB data (without blocking).
-            // When V3OP_Scheduler out of work (return=false), wait indefinitely for USB data.
-            bool serviced = true;
-            for (int i=0; i<100 && serviced; i++) {
-                serviced = V3OP_Scheduler();
-            }
-            _dequeueUSBRequest(serviced ? 1ms : 0ms);
-        }
+//        ResetFirmware();
+//        BIOS_InitCom();
+//        
+//        for (;;) {
+//            // While V3OP_Scheduler has work to do (return=true), let it run for many iterations
+//            // before checking for USB data (without blocking).
+//            // When V3OP_Scheduler out of work (return=false), wait indefinitely for USB data.
+//            bool serviced = true;
+//            for (int i=0; i<100 && serviced; i++) {
+//                serviced = V3OP_Scheduler();
+//            }
+//            _dequeueUSBRequest(serviced ? 1ms : 0ms);
+//        }
     }
     
     void stop() {

@@ -9,15 +9,6 @@
 #include "Bios/src/hal/JTAG_defs.h"
 #include "Bios/src/hal/EEM_defs.h"
 
-const int16_t SW_0 = (VERSION_MAJOR - 1) << 14 | (VERSION_MINOR << 8) | VERSION_PATCH;
-const int16_t SW_1 = VERSION_BUILD;
-
-const int16_t SWCMP_0 = (VERSION_MAJOR_CMP - 1) << 14 | (VERSION_MINOR_CMP << 8) | VERSION_PATCH_CMP;
-const int16_t SWCMP_1 = VERSION_BUILD_CMP;
-
-const uint16_t HIL_Version = MSP_FET_HIL_VERSION;
-const uint16_t HIL_VersionCMP = MSP_FET_HIL_VERSION_CMP;
-
 #define FPGA_VERSION 0x016
 #define FPGA_SIGNATURE 0xADACADAC
 
@@ -55,32 +46,15 @@ const uint16_t HIL_VersionCMP = MSP_FET_HIL_VERSION_CMP;
 #define COM_CHANNEL 2
 #define DEBUG_CHANNEL 0
 
-struct _DeviceSettings_
-{
-    uint32_t  clockControlType;
-    uint16_t stopFLL;
-    uint16_t assertBslValidBit;
-};
-typedef struct _DeviceSettings_ DeviceSettings;
+#define REQUIRED(x)
 
-struct _DevicePowerSettings_
-{
-    uint32_t powerTestRegMask;
-    uint32_t powerTestRegDefault;
-    uint32_t enableLpmx5TestReg;
-    uint32_t disableLpmx5TestReg;
+enum {JTAG = 0, SPYBIWIRE = 1, SPYBIWIREJTAG = 2, JTAGUNDEF = 4, SPYBIWIRE_SUBMCU = 5, SPYBIWIRE_MSP_FET=6, JTAG_432 = 7, SWD_432 = 8};
 
-    uint16_t powerTestReg3VMask;
-    uint16_t powerTestReg3VDefault;
-    uint16_t enableLpmx5TestReg3V;
-    uint16_t disableLpmx5TestReg3V;
-};
-typedef struct _DevicePowerSettings_ DevicePowerSettings;
+const int16_t SW_0 = (VERSION_MAJOR - 1) << 14 | (VERSION_MINOR << 8) | VERSION_PATCH;
+const int16_t SW_1 = VERSION_BUILD;
 
-typedef struct _ARMConfigSettings
-{
-    uint32_t scsBase; // System Control Space base address
-    uint32_t fpbBase; // FLASH Patch Block base address
-    uint32_t interruptOptions; // Options to enable/disable interrupts when single stepping or letting the device run
-    uint32_t ulpDebug; // Options to enable/disable entry to LPM. poll for PB hit in low poer mode
-} ARMConfigSettings;
+const int16_t SWCMP_0 = (VERSION_MAJOR_CMP - 1) << 14 | (VERSION_MINOR_CMP << 8) | VERSION_PATCH_CMP;
+const int16_t SWCMP_1 = VERSION_BUILD_CMP;
+
+const uint16_t HIL_Version = MSP_FET_HIL_VERSION;
+const uint16_t HIL_VersionCMP = MSP_FET_HIL_VERSION_CMP;
