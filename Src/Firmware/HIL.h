@@ -654,9 +654,10 @@ void IHIL_Tclk(uint8_t tclk) {
     }
 }
 
-void IHIL_Instr(uint8_t Instruction) {
+SBWShiftProxy<uint8_t> IHIL_Instr(uint8_t Instruction) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
+        return {};
     
     } else {
         // JTAG FSM state = Run-Test/Idle
@@ -675,34 +676,7 @@ void IHIL_Instr(uint8_t Instruction) {
         // JTAG FSM state = Capture-IR
         TMSL_TDIH();
         // JTAG FSM state = Shift-IR, Shiftin TDI (8 bit)
-        
-        sbw_Shift(Instruction,F_BYTE);  // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-uint8_t IHIL_Instr_R(uint8_t Instruction) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
-    
-    } else {
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSH_TDIH();
-        // JTAG FSM state = Select IR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-IR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-IR, Shiftin TDI (8 bit)
-        
-        return(sbw_Shift_R(Instruction,F_BYTE));  // JTAG FSM state = Run-Test/Idle
+        return SBWShiftProxy<uint8_t>(this, Instruction);
     }
 }
 
@@ -903,41 +877,34 @@ uint8_t IHIL_SwdTransferData(uint8_t regiser, uint32_t* data, uint8_t rnw)  { HI
 uint64_t SetReg8_64Bits(uint64_t data, uint16_t loopCount, uint16_t PG)     { HIL_UNIMP_RET0; }
 
 // JTAG instruction register access
-void cntrl_sig_low_byte()               { IHIL_Instr(IR_CNTRL_SIG_LOW_BYTE); }
-void cntrl_sig_capture()                { IHIL_Instr(IR_CNTRL_SIG_CAPTURE); }
-//uint8_t cntrl_sig_capture_r()           { return IHIL_Instr_R(IR_CNTRL_SIG_CAPTURE); }
-uint8_t cntrl_sig_capture_r()           {
-    #warning cleanup
-    const uint8_t r = IHIL_Instr_R(IR_CNTRL_SIG_CAPTURE);
-    printf("JTAG ID: %x\n", r);
-    return r;
-}
-void cntrl_sig_high_byte()              { IHIL_Instr(IR_CNTRL_SIG_HIGH_BYTE); }
-void cntrl_sig_16bit()                  { IHIL_Instr(IR_CNTRL_SIG_16BIT); }
-void cntrl_sig_release()                { IHIL_Instr(IR_CNTRL_SIG_RELEASE); }
-void addr_16bit()                       { IHIL_Instr(IR_ADDR_16BIT); }
-void addr_capture()                     { IHIL_Instr(IR_ADDR_CAPTURE); }
-void data_16bit()                       { IHIL_Instr(IR_DATA_16BIT); }
-void data_capture()                     { IHIL_Instr(IR_DATA_CAPTURE); }
-void data_to_addr()                     { IHIL_Instr(IR_DATA_TO_ADDR); }
-void data_quick()                       { IHIL_Instr(IR_DATA_QUICK); }
-void config_fuses()                     { IHIL_Instr(IR_CONFIG_FUSES); }
-void eem_data_exchange()                { IHIL_Instr(IR_EMEX_DATA_EXCHANGE); }
-void eem_data_exchange32()              { IHIL_Instr(IR_EMEX_DATA_EXCHANGE32); }
-void eem_read_control()                 { IHIL_Instr(IR_EMEX_READ_CONTROL); }
-void eem_write_control()                { IHIL_Instr(IR_EMEX_WRITE_CONTROL); }
-void eem_read_trigger()                 { IHIL_Instr(IR_EMEX_READ_TRIGGER); }
-void data_psa()                         { IHIL_Instr(IR_DATA_PSA); }
-void shift_out_psa()                    { IHIL_Instr(IR_SHIFT_OUT_PSA); }
-void flash_16bit_update()               { IHIL_Instr(IR_FLASH_16BIT_UPDATE); }
-void jmb_exchange()                     { IHIL_Instr(IR_JMB_EXCHANGE); }
-void device_ip_pointer()                { IHIL_Instr(IR_DEVICE_ID); }
-void core_ip_pointer()                  { IHIL_Instr(IR_COREIP_ID); }
-void jstate_read()                      { IHIL_Instr(IR_JSTATE_ID); }
-void test_reg()                         { IHIL_Instr(IR_TEST_REG); }
-void test_reg_3V()                      { IHIL_Instr(IR_TEST_3V_REG); }
-void prepare_blow()                     { IHIL_Instr(IR_PREPARE_BLOW); }
-void ex_blow()                          { IHIL_Instr(IR_EX_BLOW); }
+void cntrl_sig_low_byte()                   { IHIL_Instr(IR_CNTRL_SIG_LOW_BYTE); }
+SBWShiftProxy<uint8_t> cntrl_sig_capture()  { return IHIL_Instr(IR_CNTRL_SIG_CAPTURE); }
+void cntrl_sig_high_byte()                  { IHIL_Instr(IR_CNTRL_SIG_HIGH_BYTE); }
+void cntrl_sig_16bit()                      { IHIL_Instr(IR_CNTRL_SIG_16BIT); }
+void cntrl_sig_release()                    { IHIL_Instr(IR_CNTRL_SIG_RELEASE); }
+void addr_16bit()                           { IHIL_Instr(IR_ADDR_16BIT); }
+void addr_capture()                         { IHIL_Instr(IR_ADDR_CAPTURE); }
+void data_16bit()                           { IHIL_Instr(IR_DATA_16BIT); }
+void data_capture()                         { IHIL_Instr(IR_DATA_CAPTURE); }
+void data_to_addr()                         { IHIL_Instr(IR_DATA_TO_ADDR); }
+void data_quick()                           { IHIL_Instr(IR_DATA_QUICK); }
+void config_fuses()                         { IHIL_Instr(IR_CONFIG_FUSES); }
+void eem_data_exchange()                    { IHIL_Instr(IR_EMEX_DATA_EXCHANGE); }
+void eem_data_exchange32()                  { IHIL_Instr(IR_EMEX_DATA_EXCHANGE32); }
+void eem_read_control()                     { IHIL_Instr(IR_EMEX_READ_CONTROL); }
+void eem_write_control()                    { IHIL_Instr(IR_EMEX_WRITE_CONTROL); }
+void eem_read_trigger()                     { IHIL_Instr(IR_EMEX_READ_TRIGGER); }
+void data_psa()                             { IHIL_Instr(IR_DATA_PSA); }
+void shift_out_psa()                        { IHIL_Instr(IR_SHIFT_OUT_PSA); }
+void flash_16bit_update()                   { IHIL_Instr(IR_FLASH_16BIT_UPDATE); }
+void jmb_exchange()                         { IHIL_Instr(IR_JMB_EXCHANGE); }
+void device_ip_pointer()                    { IHIL_Instr(IR_DEVICE_ID); }
+void core_ip_pointer()                      { IHIL_Instr(IR_COREIP_ID); }
+void jstate_read()                          { IHIL_Instr(IR_JSTATE_ID); }
+void test_reg()                             { IHIL_Instr(IR_TEST_REG); }
+void test_reg_3V()                          { IHIL_Instr(IR_TEST_3V_REG); }
+void prepare_blow()                         { IHIL_Instr(IR_PREPARE_BLOW); }
+void ex_blow()                              { IHIL_Instr(IR_EX_BLOW); }
 
 #define OUT1RDY 0x0008
 #define OUT0RDY 0x0004
@@ -1195,7 +1162,7 @@ uint32_t ReadCpuRegXv2(uint16_t reg)
 {
     uint16_t Rx_l = 0;
     uint16_t Rx_h = 0;
-    const uint16_t jtagId = cntrl_sig_capture_r();
+    const uint16_t jtagId = cntrl_sig_capture();
     const uint16_t jmbAddr = (jtagId == 0x98) ? 0x14c : 0x18c;
 
     IHIL_Tclk(0);
