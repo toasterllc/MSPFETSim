@@ -7186,7 +7186,7 @@ HAL_FUNCTION(_hal_SingleStep)
 
     // now restore context and release CPU from JTAG control
     STREAM_internal_stream(stream_in_release, sizeof(stream_in_release), MESSAGE_NO_OUT, 0, &stream_tmp);
-    RetState = HAL_RestoreContext_ReleaseJtag(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
+    RetState = (this->*HAL_RestoreContext_ReleaseJtag)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
     STREAM_external_stream(&stream_tmp);
 
     if(RetState != 0)
@@ -7387,11 +7387,11 @@ HAL_FUNCTION(_hal_SingleStepJStateXv2)
   if((!(stream_in_release[8] & CPUOFF)) || (irRequest & 0x4))
   {
     STREAM_internal_stream(MyIn, sizeof(MyIn), MyOut, sizeof(MyOut), &stream_tmp);
-    HAL_EemDataExchangeXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+    (this->*HAL_EemDataExchangeXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
     STREAM_external_stream(&stream_tmp);
   }
   STREAM_internal_stream(stream_in_release, sizeof(stream_in_release), MESSAGE_NO_OUT, 0, &stream_tmp);
-  HAL_RestoreContext_ReleaseJtagXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
+  (this->*HAL_RestoreContext_ReleaseJtagXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
   STREAM_external_stream(&stream_tmp);
 
   jstate_read();
@@ -7448,7 +7448,7 @@ HAL_FUNCTION(_hal_SingleStepJStateXv2)
       MyIn[25] = MyOut[19];
 
       STREAM_internal_stream(MyIn, sizeof(MyIn), MESSAGE_NO_OUT, 0, &stream_tmp);
-      HAL_EemDataExchangeXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+      (this->*HAL_EemDataExchangeXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
       STREAM_external_stream(&stream_tmp);
     }
   }
@@ -7561,7 +7561,7 @@ HAL_FUNCTION(_hal_SingleStepX)
 
     // now restore context and release CPU from JTAG control
     STREAM_internal_stream(stream_in_release, sizeof(stream_in_release), MESSAGE_NO_OUT, 0, &stream_tmp);
-    RetState = HAL_RestoreContext_ReleaseJtagX(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
+    RetState = (this->*HAL_RestoreContext_ReleaseJtagX)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
     STREAM_external_stream(&stream_tmp);
 
     if(RetState != 0)
@@ -7679,11 +7679,11 @@ HAL_FUNCTION(_hal_SingleStepXv2)
   if((!(stream_in_release[8] & CPUOFF)) || (irRequest & 0x4))
   {
     STREAM_internal_stream(MyIn, sizeof(MyIn), MyOut, sizeof(MyOut), &stream_tmp);
-    HAL_EemDataExchangeXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+    (this->*HAL_EemDataExchangeXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
     STREAM_external_stream(&stream_tmp);
   }
   STREAM_internal_stream(stream_in_release, sizeof(stream_in_release), MESSAGE_NO_OUT, 0, &stream_tmp);
-  HAL_RestoreContext_ReleaseJtagXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
+  (this->*HAL_RestoreContext_ReleaseJtagXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG); // Data from DLL Stream
   STREAM_external_stream(&stream_tmp);
 
   if((!(stream_in_release[8] & CPUOFF)) || (irRequest & 0x4))
@@ -7731,7 +7731,7 @@ HAL_FUNCTION(_hal_SingleStepXv2)
       MyIn[25] = MyOut[19];
 
       STREAM_internal_stream(MyIn, sizeof(MyIn), MESSAGE_NO_OUT, 0, &stream_tmp);
-      HAL_EemDataExchangeXv2(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+      (this->*HAL_EemDataExchangeXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
       STREAM_external_stream(&stream_tmp);
     }
   }
