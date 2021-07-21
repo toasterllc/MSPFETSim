@@ -859,7 +859,7 @@ SBWShiftProxy<uint32_t> SetReg_32Bits(uint32_t Data) {
     }
 }
 
-SBWShiftProxy<uint64_t,35> SetReg_35Bits_R(uint64_t *Data) {
+SBWShiftProxy<uint64_t> SetReg_35Bits(uint64_t *Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
         return {};

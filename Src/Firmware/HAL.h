@@ -3,8 +3,12 @@
 #include "Stream.h"
 #include "HIL.h"
 
-#define STATIC_VARS_START(n) auto& sv = n##_staticVars
+#define _CONCAT2(x, y) x ## y
+#define _CONCAT(x, y) _CONCAT2(x, y)
+#define STATIC_VARS_START() auto& sv = _CONCAT(THISFN, _staticVars)
 #define DECL_STATIC_VAR(n) auto& n = sv.n
+
+#define setFuncletRegisters _CONCAT(setFuncletRegisters, THISFN)
 
 #define T_ARCH_MSP430 0
 #define T_ARCH_MSP432 1
@@ -1329,7 +1333,9 @@ struct {
 
 HAL_FUNCTION(_hal_ExecuteFunclet)
 {
-    STATIC_VARS_START(_hal_ExecuteFunclet);
+    #undef THISFN
+    #define THISFN _hal_ExecuteFunclet
+    STATIC_VARS_START();
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(ret_len);
     DECL_STATIC_VAR(Addr);
@@ -1697,7 +1703,9 @@ struct {
 
 HAL_FUNCTION(_hal_ExecuteFuncletJtag)
 {
-    STATIC_VARS_START(_hal_ExecuteFuncletJtag);
+    #undef THISFN
+    #define THISFN _hal_ExecuteFuncletJtag
+    STATIC_VARS_START();
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(Addr);
     DECL_STATIC_VAR(memSize);
@@ -2040,7 +2048,9 @@ struct {
 
 HAL_FUNCTION(_hal_ExecuteFuncletX)
 {
-    STATIC_VARS_START(_hal_ExecuteFuncletX);
+    #undef THISFN
+    #define THISFN _hal_ExecuteFuncletX
+    STATIC_VARS_START();
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(ret_len);
     DECL_STATIC_VAR(Addr);
@@ -2364,7 +2374,9 @@ struct {
 
 HAL_FUNCTION(_hal_ExecuteFuncletXv2)
 {
-    STATIC_VARS_START(_hal_ExecuteFuncletXv2);
+    #undef THISFN
+    #define THISFN _hal_ExecuteFuncletXv2
+    STATIC_VARS_START();
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(ret_len);
     DECL_STATIC_VAR(registerBackups);
@@ -2692,36 +2704,40 @@ const uint16_t sizeLoopFll = (uint16_t)(sizeof(loopFll)/sizeof(*loopFll));
     }
 #endif
 
-/*--------------------------------------------------------------------------------*/
+///*--------------------------------------------------------------------------------*/
+//
+//#ifdef MSP_FET
+//    void StartTimer()
+//    {
+//        TA2CTL = 0;                                             // STOP Timer
+//        TA2CTL = ID__8 + TASSEL__SMCLK;                         // Timer_A source:SMCLK ,SMCLK/0 = 25
+//        TA2CCR0 = 0x7d8;                                        // Load CCR0 with delay... (1ms delay)
+//        TA2CCTL0 &= ~CCIFG;                                     // Clear the interrupt flag
+//        TA2CCTL0 |= CCIE ;
+//        TA2CTL |= TACLR + MC__UP;
+//    }
+//
+//    void StopTimer()
+//    {
+//        TA2CTL &= ~MC__UP;
+//        TA2CTL = 0;                                             // STOP Timer
+//        // restore timer A2 1ms delay value
+//        IHIL_InitDelayTimer();
+//    }
+//#endif
 
-#ifdef MSP_FET
-    void StartTimer()
-    {
-        TA2CTL = 0;                                             // STOP Timer
-        TA2CTL = ID__8 + TASSEL__SMCLK;                         // Timer_A source:SMCLK ,SMCLK/0 = 25
-        TA2CCR0 = 0x7d8;                                        // Load CCR0 with delay... (1ms delay)
-        TA2CCTL0 &= ~CCIFG;                                     // Clear the interrupt flag
-        TA2CCTL0 |= CCIE ;
-        TA2CTL |= TACLR + MC__UP;
-    }
+using ReadCounterRegsFuncType   = uint32_t (MSPProbeSim::*)();
+using WriteRegFuncType          = void (MSPProbeSim::*)(int16_t, uint32_t);
+using SetPCFuncType             = void (MSPProbeSim::*)(uint32_t);
+using WriteRamFuncType          = void (MSPProbeSim::*)(uint16_t, const uint16_t*, uint16_t);
+using ReadRamFuncType           = void (MSPProbeSim::*)(uint16_t, uint16_t*, uint16_t);
 
-    void StopTimer()
-    {
-        TA2CTL &= ~MC__UP;
-        TA2CTL = 0;                                             // STOP Timer
-        // restore timer A2 1ms delay value
-        IHIL_InitDelayTimer();
-    }
-#endif
-
-
-uint32_t (*ReadCounterRegsFunc)() = 0;
-void (*WriteRegFunc)(int16_t, uint32_t) = 0;
-void (*SetPCFunc)(uint32_t) = 0;
-void (*WriteRamFunc)(uint16_t, uint16_t*, uint16_t) = 0;
-void (*ReadRamFunc)(uint16_t, uint16_t*, uint16_t) = 0;
-HalFuncInOut SyncFunc = 0;
-
+ReadCounterRegsFuncType     ReadCounterRegsFunc     = nullptr;
+WriteRegFuncType            WriteRegFunc            = nullptr;
+SetPCFuncType               SetPCFunc               = nullptr;
+WriteRamFuncType            WriteRamFunc            = nullptr;
+ReadRamFuncType             ReadRamFunc             = nullptr;
+HalFuncInOut SyncFunc                               = nullptr;
 
 void readFromRam(uint16_t address, uint16_t* buffer, uint16_t numWords)
 {
@@ -2733,7 +2749,7 @@ void readFromRam(uint16_t address, uint16_t* buffer, uint16_t numWords)
     }
 }
 
-void writeToRam(uint16_t address, uint16_t* data, uint16_t numWords)
+void writeToRam(uint16_t address, const uint16_t* data, uint16_t numWords)
 {
     while (numWords-- > 0)
     {
@@ -2753,7 +2769,7 @@ void readFromRamX(uint16_t address, uint16_t* buffer, uint16_t numWords)
     }
 }
 
-void writeToRamX(uint16_t address, uint16_t* data, uint16_t numWords)
+void writeToRamX(uint16_t address, const uint16_t* data, uint16_t numWords)
 {
     while (numWords-- > 0)
     {
@@ -2810,64 +2826,67 @@ void setPCJtag(uint32_t address)
 }
 
 
-
-uint32_t measureFrequency(uint16_t RamStart, uint16_t DCO, uint16_t BCS1)
-{
-    uint32_t startTime;
-    uint32_t stopTime;
-    uint32_t elapseTime = 0;
-    uint32_t counter = 0;
-    uint32_t freq = 0;
-
-    #if defined(eZ_FET) || defined(MSP_FET)
-    uint16_t *TimerTick = 0;
-    #endif
-    WriteRegFunc(5, DCO);
-    WriteRegFunc(6, BCS1);
-
-    SetPCFunc(RamStart);
-    cntrl_sig_release();
-
-    #if defined(eZ_FET) || defined(MSP_FET)
-        STREAM_getSharedVariable(ID_SHARED_MEMORY_TYPE_TIMER_TICK, &TimerTick);
-    #endif
-
-    StartTimer(); // Time the delay (as we could be interrupted, etc.).
-
-    #if defined(eZ_FET) || defined(MSP_FET)
-        startTime =  *(uint16_t*)TimerTick; // System timestamp (in milliseconds).
-        __delay_cycles(800000ul);
-        stopTime =  *(uint16_t*)TimerTick;
-    #endif
-
-    #ifdef MSP430_UIF
-        startTime = Time; // System timestamp (in milliseconds).
-        __delay_cycles(240000ul); //~30ms
-        stopTime = Time;
-    #endif
-
-    StopTimer();
-    {
-        StreamSafe stream_tmp;
-        uint8_t DummyIn[8] = {0x20,0x01,0x80,0x5A,0,0,0,0}; // wdtAddr, wdtCtrl
-        STREAM_internal_stream(DummyIn, sizeof(DummyIn), 0, 0, &stream_tmp);
-        SyncFunc(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
-        STREAM_external_stream(&stream_tmp);
-    }
-
-    elapseTime = startTime < stopTime ? stopTime - startTime : startTime - stopTime; // System time can wrap.
-
-    counter = ReadCounterRegsFunc();
-
-    // Calculate a device speed (cycles/second). Multiply counter value by 3 (3 clock cycles per loop),
-    // and add 31 cycles for funclet setup, then normalize to one second.
-    freq = ((counter * 3 + 31) * 1000) / elapseTime;
-
-    #if defined(eZ_FET) || defined(MSP_FET)
-        STREAM_deleteSharedVariable(ID_SHARED_MEMORY_TYPE_TIMER_TICK);
-    #endif
-    return freq;
+uint32_t measureFrequency(uint16_t RamStart, uint16_t DCO, uint16_t BCS1) {
+    return 0;
 }
+
+//uint32_t measureFrequency(uint16_t RamStart, uint16_t DCO, uint16_t BCS1)
+//{
+//    uint32_t startTime;
+//    uint32_t stopTime;
+//    uint32_t elapseTime = 0;
+//    uint32_t counter = 0;
+//    uint32_t freq = 0;
+//
+//    #if defined(eZ_FET) || defined(MSP_FET)
+//    uint16_t *TimerTick = 0;
+//    #endif
+//    WriteRegFunc(5, DCO);
+//    WriteRegFunc(6, BCS1);
+//
+//    SetPCFunc(RamStart);
+//    cntrl_sig_release();
+//
+//    #if defined(eZ_FET) || defined(MSP_FET)
+//        STREAM_getSharedVariable(ID_SHARED_MEMORY_TYPE_TIMER_TICK, &TimerTick);
+//    #endif
+//
+//    StartTimer(); // Time the delay (as we could be interrupted, etc.).
+//
+//    #if defined(eZ_FET) || defined(MSP_FET)
+//        startTime =  *(uint16_t*)TimerTick; // System timestamp (in milliseconds).
+//        __delay_cycles(800000ul);
+//        stopTime =  *(uint16_t*)TimerTick;
+//    #endif
+//
+//    #ifdef MSP430_UIF
+//        startTime = Time; // System timestamp (in milliseconds).
+//        __delay_cycles(240000ul); //~30ms
+//        stopTime = Time;
+//    #endif
+//
+//    StopTimer();
+//    {
+//        StreamSafe stream_tmp;
+//        uint8_t DummyIn[8] = {0x20,0x01,0x80,0x5A,0,0,0,0}; // wdtAddr, wdtCtrl
+//        STREAM_internal_stream(DummyIn, sizeof(DummyIn), 0, 0, &stream_tmp);
+//        SyncFunc(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
+//        STREAM_external_stream(&stream_tmp);
+//    }
+//
+//    elapseTime = startTime < stopTime ? stopTime - startTime : startTime - stopTime; // System time can wrap.
+//
+//    counter = ReadCounterRegsFunc();
+//
+//    // Calculate a device speed (cycles/second). Multiply counter value by 3 (3 clock cycles per loop),
+//    // and add 31 cycles for funclet setup, then normalize to one second.
+//    freq = ((counter * 3 + 31) * 1000) / elapseTime;
+//
+//    #if defined(eZ_FET) || defined(MSP_FET)
+//        STREAM_deleteSharedVariable(ID_SHARED_MEMORY_TYPE_TIMER_TICK);
+//    #endif
+//    return freq;
+//}
 
 
 
@@ -2896,13 +2915,13 @@ int16_t findDcoSettings(uint16_t jtagBug)
         BCS1 = 0x9;
     }
 
-    SetPCFunc(ROM_ADDR); //Prevent Ram corruption on F123/F413
+    (this->*SetPCFunc)(ROM_ADDR); //Prevent Ram corruption on F123/F413
 
     //----------------Backup original Ram content--------------
-    ReadRamFunc(RamStart, BackupRam, sizeLoopDco);
+    (this->*ReadRamFunc)(RamStart, BackupRam, sizeLoopDco);
 
     // ----------------Download DCO measure funclet------------
-    WriteRamFunc(RamStart, loopDco, sizeLoopDco);
+    (this->*WriteRamFunc)(RamStart, loopDco, sizeLoopDco);
 
     // do measurement
     int16_t allowedSteps = 40;
@@ -2914,7 +2933,7 @@ int16_t findDcoSettings(uint16_t jtagBug)
         //Reupload on every iteration
         if (jtagBug)
         {
-            WriteRamFunc(RamStart, loopDco, sizeLoopDco);
+            (this->*WriteRamFunc)(RamStart, loopDco, sizeLoopDco);
         }
 
         if (DcoFreq == 0)
@@ -2952,7 +2971,7 @@ int16_t findDcoSettings(uint16_t jtagBug)
     while (--allowedSteps > 0);
 
     // restore Ram content
-    WriteRamFunc(RamStart, BackupRam, sizeLoopDco);
+    (this->*WriteRamFunc)(RamStart, BackupRam, sizeLoopDco);
 
     if (allowedSteps <= 0)
     {
@@ -2981,13 +3000,13 @@ int16_t findFllSettings(uint16_t jtagBug)
         return(HALERR_EXECUTE_FUNCLET_NO_RAM_START);
     }
 
-    SetPCFunc(ROM_ADDR); //Prevent Ram corruption on F123/F413
+    (this->*SetPCFunc)(ROM_ADDR); //Prevent Ram corruption on F123/F413
 
     //----------------Backup original Ram content--------------
-    ReadRamFunc(RamStart, BackupRam, sizeLoopFll);
+    (this->*ReadRamFunc)(RamStart, BackupRam, sizeLoopFll);
 
     // ----------------Download FLL measure funclet------------
-    WriteRamFunc(RamStart, loopFll, sizeLoopFll);
+    (this->*WriteRamFunc)(RamStart, loopFll, sizeLoopFll);
 
     // Binary search through the available frequencies selecting the highest frequency < (476KHz - 10%).
     while (first + 1 < last)
@@ -3002,7 +3021,7 @@ int16_t findFllSettings(uint16_t jtagBug)
         //Reupload on every iteration
         if (jtagBug)
         {
-            WriteRamFunc(RamStart, loopFll, sizeLoopFll);
+            (this->*WriteRamFunc)(RamStart, loopFll, sizeLoopFll);
         }
 
 
@@ -3029,7 +3048,7 @@ int16_t findFllSettings(uint16_t jtagBug)
     }
 
     // restore Ram content
-    WriteRamFunc(RamStart, BackupRam, sizeLoopDco);
+    (this->*WriteRamFunc)(RamStart, BackupRam, sizeLoopDco);
 
     if (((DcoFreq < 257000 * 5) || (DcoFreq > 476000 * 5)))
     {
@@ -3049,66 +3068,66 @@ int16_t findFllSettings(uint16_t jtagBug)
 
 HAL_FUNCTION(_hal_GetDcoFrequency)
 {
-    ReadCounterRegsFunc = readCounterRegisters;
-    WriteRegFunc = writeRegister;
-    SetPCFunc = setPC;
-    WriteRamFunc = writeToRam;
-    ReadRamFunc = readFromRam;
+    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegisters;
+    WriteRegFunc = &MSPProbeSim::writeRegister;
+    SetPCFunc = &MSPProbeSim::setPC;
+    WriteRamFunc = &MSPProbeSim::writeToRam;
+    ReadRamFunc = &MSPProbeSim::readFromRam;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContext;
     return findDcoSettings(0);
 }
 
 HAL_FUNCTION(_hal_GetDcoFrequencyJtag)
 {
-    ReadCounterRegsFunc = readCounterRegisters;
-    WriteRegFunc = writeRegister;
-    SetPCFunc = setPCJtag;
-    WriteRamFunc = writeToRam;
-    ReadRamFunc = readFromRam;
+    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegisters;
+    WriteRegFunc = &MSPProbeSim::writeRegister;
+    SetPCFunc = &MSPProbeSim::setPCJtag;
+    WriteRamFunc = &MSPProbeSim::writeToRam;
+    ReadRamFunc = &MSPProbeSim::readFromRam;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContext;
     return findDcoSettings(1);
 }
 
 HAL_FUNCTION(_hal_GetDcoFrequencyX)
 {
-    ReadCounterRegsFunc = readCounterRegistersX;
-    WriteRegFunc = writeRegisterX;
-    SetPCFunc = setPCX;
-    WriteRamFunc = writeToRamX;
-    ReadRamFunc = readFromRamX;
+    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegistersX;
+    WriteRegFunc = &MSPProbeSim::writeRegisterX;
+    SetPCFunc = &MSPProbeSim::setPCX;
+    WriteRamFunc = &MSPProbeSim::writeToRamX;
+    ReadRamFunc = &MSPProbeSim::readFromRamX;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContextX;
     return findDcoSettings(0);
 }
 
 HAL_FUNCTION(_hal_GetFllFrequency)
 {
-    ReadCounterRegsFunc = readCounterRegisters;
-    WriteRegFunc = writeRegister;
-    SetPCFunc = setPC;
-    WriteRamFunc = writeToRam;
-    ReadRamFunc = readFromRam;
+    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegisters;
+    WriteRegFunc = &MSPProbeSim::writeRegister;
+    SetPCFunc = &MSPProbeSim::setPC;
+    WriteRamFunc = &MSPProbeSim::writeToRam;
+    ReadRamFunc = &MSPProbeSim::readFromRam;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContext;
     return findFllSettings(0);
 }
 
 HAL_FUNCTION(_hal_GetFllFrequencyJtag)
 {
-    ReadCounterRegsFunc = readCounterRegisters;
-    WriteRegFunc = writeRegister;
-    SetPCFunc = setPCJtag;
-    WriteRamFunc = writeToRam;
-    ReadRamFunc = readFromRam;
+    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegisters;
+    WriteRegFunc = &MSPProbeSim::writeRegister;
+    SetPCFunc = &MSPProbeSim::setPCJtag;
+    WriteRamFunc = &MSPProbeSim::writeToRam;
+    ReadRamFunc = &MSPProbeSim::readFromRam;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContext;
     return findFllSettings(1);
 }
 
 HAL_FUNCTION(_hal_GetFllFrequencyX)
 {
-    ReadCounterRegsFunc = readCounterRegistersX;
-    WriteRegFunc = writeRegisterX;
-    SetPCFunc = setPCX;
-    WriteRamFunc = writeToRamX;
-    ReadRamFunc = readFromRamX;
+    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegistersX;
+    WriteRegFunc = &MSPProbeSim::writeRegisterX;
+    SetPCFunc = &MSPProbeSim::setPCX;
+    WriteRamFunc = &MSPProbeSim::writeToRamX;
+    ReadRamFunc = &MSPProbeSim::readFromRamX;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContextX;
     return findFllSettings(0);
 }
@@ -4212,7 +4231,9 @@ struct {
 
 HAL_FUNCTION(_hal_MemApTransactionArm)
 {
-    STATIC_VARS_START(_hal_MemApTransactionArm);
+    #undef THISFN
+    #define THISFN _hal_MemApTransactionArm
+    STATIC_VARS_START();
     DECL_STATIC_VAR(apsel);
     DECL_STATIC_VAR(rnw);
     DECL_STATIC_VAR(dataWidth);
@@ -4366,7 +4387,9 @@ struct {
 
 HAL_FUNCTION(_hal_MemApTransactionArmSwd)
 {
-    STATIC_VARS_START(_hal_MemApTransactionArmSwd);
+    #undef THISFN
+    #define THISFN _hal_MemApTransactionArmSwd
+    STATIC_VARS_START();
     DECL_STATIC_VAR(apsel);
     DECL_STATIC_VAR(rnw);
     DECL_STATIC_VAR(dataWidth);
@@ -4683,7 +4706,9 @@ struct {
 
 HAL_FUNCTION(_hal_PollJStateRegEt8)
 {
-    STATIC_VARS_START(_hal_PollJStateRegEt8);
+    #undef THISFN
+    #define THISFN _hal_PollJStateRegEt8
+    STATIC_VARS_START();
     DECL_STATIC_VAR(buffer);
     DECL_STATIC_VAR(currentIndex);
     
@@ -4884,7 +4909,9 @@ struct {
 
 int16_t PollJStateReg(uint16_t JStateVersion)
 {
-    STATIC_VARS_START(PollJStateReg);
+    #undef THISFN
+    #define THISFN PollJStateReg
+    STATIC_VARS_START();
     DECL_STATIC_VAR(buffer);
     DECL_STATIC_VAR(currentIndex);
     
@@ -6978,7 +7005,9 @@ struct {
 
 HAL_FUNCTION(_hal_SendJtagMailboxXv2)
 {
-    STATIC_VARS_START(_hal_SendJtagMailboxXv2);
+    #undef THISFN
+    #define THISFN _hal_SendJtagMailboxXv2
+    STATIC_VARS_START();
     DECL_STATIC_VAR(MailBoxMode);
     DECL_STATIC_VAR(DATA1);
     DECL_STATIC_VAR(DATA2);
@@ -9804,7 +9833,9 @@ struct {
 
 HAL_FUNCTION(_hal_WaitForStorage)
 {
-    STATIC_VARS_START(_hal_WaitForStorage);
+    #undef THISFN
+    #define THISFN _hal_WaitForStorage
+    STATIC_VARS_START();
     DECL_STATIC_VAR(noChangeSince);
     
     int16_t RetState = 2;
@@ -9957,7 +9988,9 @@ struct {
 
 HAL_FUNCTION(_hal_WaitForStorageX)
 {
-    STATIC_VARS_START(_hal_WaitForStorageX);
+    #undef THISFN
+    #define THISFN _hal_WaitForStorageX
+    STATIC_VARS_START();
     DECL_STATIC_VAR(noChangeSince);
     
     int16_t RetState = 2;
@@ -10303,7 +10336,9 @@ struct {
 
 HAL_FUNCTION(_hal_WriteFramQuickXv2)
 {
-    STATIC_VARS_START(_hal_WriteFramQuickXv2);
+    #undef THISFN
+    #define THISFN _hal_WriteFramQuickXv2
+    STATIC_VARS_START();
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(Addr);
     DECL_STATIC_VAR(Mova);
@@ -10424,9 +10459,11 @@ struct {
 
 HAL_FUNCTION(_hal_WriteMemBytes)
 {
-    STATIC_VARS_START(_hal_WriteMemBytes);
+    #undef THISFN
+    #define THISFN _hal_WriteMemBytes
+    STATIC_VARS_START();
     DECL_STATIC_VAR(lLen);
-    DECL_STATIC_VAR(Addr);
+    DECL_STATIC_VAR(lAddr);
     
     int16_t ret_value = 0;
     uint8_t value;
@@ -10490,9 +10527,11 @@ struct {
 
 HAL_FUNCTION(_hal_WriteMemBytesX)
 {
-    STATIC_VARS_START(_hal_WriteMemBytesX);
+    #undef THISFN
+    #define THISFN _hal_WriteMemBytesX
+    STATIC_VARS_START();
     DECL_STATIC_VAR(lLen);
-    DECL_STATIC_VAR(Addr);
+    DECL_STATIC_VAR(lAddr);
     
     int16_t ret_value = 0;
     uint8_t tmp_uchar;
@@ -10592,9 +10631,11 @@ struct {
 
 HAL_FUNCTION(_hal_WriteMemWords)
 {
-    STATIC_VARS_START(_hal_WriteMemWords);
+    #undef THISFN
+    #define THISFN _hal_WriteMemWords
+    STATIC_VARS_START();
     DECL_STATIC_VAR(lLen);
-    DECL_STATIC_VAR(Addr);
+    DECL_STATIC_VAR(lAddr);
     
     int16_t ret_value = 0;
     uint16_t tmp_uint;
@@ -10657,9 +10698,11 @@ struct {
 
 HAL_FUNCTION(_hal_WriteMemWordsX)
 {
-    STATIC_VARS_START(_hal_WriteMemWordsX);
+    #undef THISFN
+    #define THISFN _hal_WriteMemWordsX
+    STATIC_VARS_START();
     DECL_STATIC_VAR(lLen);
-    DECL_STATIC_VAR(Addr);
+    DECL_STATIC_VAR(lAddr);
     
     int16_t ret_value = 0;
     uint16_t tmp_uint;
@@ -10734,9 +10777,11 @@ struct {
 
 HAL_FUNCTION(_hal_WriteMemWordsXv2)
 {
-    STATIC_VARS_START(_hal_WriteMemWordsXv2);
+    #undef THISFN
+    #define THISFN _hal_WriteMemWordsXv2
+    STATIC_VARS_START();
     DECL_STATIC_VAR(lLen);
-    DECL_STATIC_VAR(Addr);
+    DECL_STATIC_VAR(lAddr);
     
     uint16_t *pBuf;
     uint16_t sizeOfBuf;
