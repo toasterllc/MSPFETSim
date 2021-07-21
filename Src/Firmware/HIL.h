@@ -27,67 +27,20 @@ uint16_t regulationOn = 0;
 uint16_t prevInstruction = 0;
 bool TCLK_saved = 1;
 
-void _setTest(bool x) {
-    _msp.sbwPin(MSPInterface::Pin::Test, (x ? MSPInterface::Op::Out1 : MSPInterface::Op::Out0));
-}
-
-void _setRst(bool x) {
-    _msp.sbwPin(MSPInterface::Pin::Rst, (x ? MSPInterface::Op::Out1 : MSPInterface::Op::Out0));
-}
-
-void _flushBoundary() {
-    _msp.sbwFlush();
-}
-
-void _flushToHardware() {
-    _msp.sbwRead(nullptr, 0);
-}
-
-void _sbwio(bool tms, bool tclk, bool tdi, bool tdoRead) {
-    using Pin = MSPInterface::Pin;
-    using Op = MSPInterface::Op;
-    
-    // Write TMS
-    {
-        _setRst(tms);
-        _setTest(0);
-        _setRst(tclk);
-        _setTest(1);
-    }
-    
-    // Write TDI
-    {
-        _setRst(tdi);
-        _setTest(0);
-        _setTest(1);
-        _msp.sbwPin(Pin::Rst, Op::In);
-    }
-    
-    // Read TDO
-    {
-        _setTest(0);
-        if (tdoRead) _msp.sbwPin(Pin::Rst, Op::Read);
-        _setTest(1);
-        _setRst(tdi); // TODO: can we make this a constant instead of returning to the TDI state?
-    }
-    
-    _flushBoundary();
-}
-
 void _sbwio(bool tms, bool tdi) {
     // With no `tclk` specified, use the value for TMS, so that the line stays constant
     // between registering the TMS value and outputting the TDI value
-    _sbwio(tms, tms, tdi, false);
+    _msp.sbwIO(tms, tms, tdi, false);
 }
 
 void _sbwio_r(bool tms, bool tdi) {
     // With no `tclk` specified, use the value for TMS, so that the line stays constant
     // between registering the TMS value and outputting the TDI value
-    _sbwio(tms, tms, tdi, true);
+    _msp.sbwIO(tms, tms, tdi, true);
 }
 
 void _sbwioTclk(bool tms, bool tclk) {
-    _sbwio(tms, TCLK_saved, tclk, false);
+    _msp.sbwIO(tms, TCLK_saved, tclk, false);
     TCLK_saved = tclk;
 }
 
@@ -251,36 +204,36 @@ void _hil_Delay_1ms(uint16_t ms) {
 
 void RSTset1()
 {
-    _setRst(1);
+    _msp.sbwRst(MSPInterface::PinState::Out1);
     _hil_Delay_1ms(5);
 }
 
 void RSTset0()
 {
-    _setRst(0);
+    _msp.sbwRst(MSPInterface::PinState::Out0);
     _hil_Delay_1ms(5);
 }
 
 void TSTset1()
 {
-    _setTest(1);
+    _msp.sbwTest(MSPInterface::PinState::Out1);
     _hil_Delay_1ms(5);
 }
 
 void TSTset0()
 {
-    _setTest(0);
+    _msp.sbwTest(MSPInterface::PinState::Out0);
     _hil_Delay_1ms(5);
 }
 
 void TSTset1NoDelay()
 {
-    _setTest(1);
+    _msp.sbwTest(MSPInterface::PinState::Out1);
 }
 
 void TSTset0NoDelay()
 {
-    _setTest(0);
+    _msp.sbwTest(MSPInterface::PinState::Out0);
 }
 
 void TCLKset1()
@@ -330,6 +283,10 @@ void hil_fpga_enable_bypass() {
 }
 
 void hil_fpga_disable_bypass() {
+}
+
+void _flush() {
+    _msp.sbwRead(nullptr, 0);
 }
 
 // HIL common methods (common = identical implementations for JTAG/SBW )
@@ -524,12 +481,12 @@ int16_t IHIL_Close() {
 }
 
 void IHIL_Delay_1us(uint16_t usecs) {
-    _flushToHardware();
+    _flush();
     usleep(usecs);
 };
 
 void IHIL_Delay_1ms(uint16_t msecs) {
-    _flushToHardware();
+    _flush();
     usleep(msecs*1000);
 };
 
@@ -1812,8 +1769,8 @@ void _hil_Release() {
 }
 
 void qDriveSbw(void) {
-    _setTest(0);
-    _setRst(1);
+    // TEST=0, RST=1
+    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out1);
 }
 
 void qDriveJTAG(void) {
@@ -1822,48 +1779,38 @@ void qDriveJTAG(void) {
 
 void _hil_EntrySequences_RstHigh_SBW() {
     // TEST=0, RST=0
-    _setTest(0);
-    _setRst(0);
+    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out0);
     IHIL_Delay_1ms(5);
     
     // RST=1
-    _setRst(1);
+    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out1);
     IHIL_Delay_1ms(5);
     
     // TEST=1
-    _setTest(1);
+    _msp.sbwPins(MSPInterface::PinState::Out1, MSPInterface::PinState::Out1);
     IHIL_Delay_1ms(100);
     
     // TEST pulse 1->0->1
-    _setTest(0);
-    _setTest(1);
+    _msp.sbwPins(MSPInterface::PinState::Pulse01, MSPInterface::PinState::Out1);
     IHIL_Delay_1ms(5);
-    
-    // Commands above are timing critical, so issue flush
-    _flushBoundary();
 }
 
 void _hil_EntrySequences_RstLow_SBW() {
     // TEST=0, RST=0
-    _setTest(0);
-    _setRst(0);
+    _msp.sbwPins(MSPInterface::PinState::Out0, MSPInterface::PinState::Out0);
     IHIL_Delay_1ms(5);
     
     // TEST=1
-    _setTest(1);
+    _msp.sbwPins(MSPInterface::PinState::Out1, MSPInterface::PinState::Out0);
     IHIL_Delay_1ms(100);
     
     // RST=1
-    _setRst(1);
+    _msp.sbwPins(MSPInterface::PinState::Out1, MSPInterface::PinState::Out1);
     IHIL_Delay_1ms(5);
     
     // TEST pulse 1->0->1
-    _setTest(0);
-    _setTest(1);
+    _msp.sbwPins(MSPInterface::PinState::Pulse01, MSPInterface::PinState::Out1);
     IHIL_Delay_1ms(5);
-    
-    // Commands above are timing critical, so issue flush
-    _flushBoundary();
 }
 
 void initGeneric() {
