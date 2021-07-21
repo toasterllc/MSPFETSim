@@ -2,6 +2,7 @@
 #include "Types.h"
 #include "Stream.h"
 #include "HIL.h"
+#include "EDT.h"
 
 #define _CONCAT2(x, y) x ## y
 #define _CONCAT(x, y) _CONCAT2(x, y)
@@ -9,6 +10,39 @@
 #define DECL_STATIC_VAR(n) auto& n = sv.n
 
 #define setFuncletRegisters _CONCAT(setFuncletRegisters, THISFN)
+
+#define TA0R 0
+#define TB0R 0
+
+int16_t jtagIdIsValid(uint32_t id)
+{
+	return id == 0x89 || id == 0x8D || id == 0x91 || id == 0x95 || id == 0x98 || id == 0x99 || id == 0x4ba00477;
+}
+
+int16_t jtagIdIsMSP432(uint32_t id)
+{
+	return id == 0x4ba00477;
+}
+
+int16_t jtagIdIsMSP430(uint32_t id)
+{
+	return id == 0x89 || id == 0x8D || id == 0x91 || id == 0x95 || id == 0x98 || id == 0x99;
+}
+
+int16_t jtagIdIsXv2(uint32_t id)
+{
+	return id == 0x91 || id == 0x95 || id == 0x98 || id == 0x99;
+}
+
+uint16_t* getTargetRunningVar(void)
+{
+    uint16_t* syncWithRunVarAddress;
+    if(STREAM_getSharedVariable(ID_SHARED_MEMORY_TYPE_SYNC_RUN, &syncWithRunVarAddress))
+    {
+        return syncWithRunVarAddress;
+    }
+    return 0;
+}
 
 #define T_ARCH_MSP430 0
 #define T_ARCH_MSP432 1
@@ -5595,42 +5629,42 @@ HAL_FUNCTION(_hal_ReadAllCpuRegsArm)
 */
 
 
-/**
-  ReadAllCpuRegsXv2
-  Read CPU register values, except R0 and R2. This function is for 16bit CPUs.
-  inData:  -
-  outData: <SP(24)> <Rn(24)>{12}
-  SP: stack pointer register (R1)
-  Rn: registers R4-R15
-*/
-
-//extern uint16_t romAddressForCpuRead;
-
-HAL_FUNCTION(_hal_ReadAllCpuRegsNon1377Xv2)
-{
-  decl_out
-  uint16_t Registers;
-  uint16_t Mova;
-  uint32_t Rx;
-
-  // Read the General Purpose registers.
-  for (Registers = 1; Registers < 16; Registers++) // Read registers SP, and R4 through R15.
-  {
-    if(Registers == 2)
-    {
-      Registers += 2;
-    }
-    Mova  = 0x0060;
-    Mova += (Registers << 8) & 0x0F00;
-    ReadCpuRegXv2(Mova, Rx);
-    STREAM_put_bytes((uint8_t*)&Rx, 3);
-  }
-
-  // all CPU register values have been moved to the JMBOUT register address
-  // -> JMB needs to be cleared again!!
-  i_ReadJmbOut(Rx)
-  return 0;
-}
+///**
+//  ReadAllCpuRegsXv2
+//  Read CPU register values, except R0 and R2. This function is for 16bit CPUs.
+//  inData:  -
+//  outData: <SP(24)> <Rn(24)>{12}
+//  SP: stack pointer register (R1)
+//  Rn: registers R4-R15
+//*/
+//
+////extern uint16_t romAddressForCpuRead;
+//
+//HAL_FUNCTION(_hal_ReadAllCpuRegsNon1377Xv2)
+//{
+//  decl_out
+//  uint16_t Registers;
+//  uint16_t Mova;
+//  uint32_t Rx;
+//
+//  // Read the General Purpose registers.
+//  for (Registers = 1; Registers < 16; Registers++) // Read registers SP, and R4 through R15.
+//  {
+//    if(Registers == 2)
+//    {
+//      Registers += 2;
+//    }
+//    Mova  = 0x0060;
+//    Mova += (Registers << 8) & 0x0F00;
+//    ReadCpuRegXv2(Mova, Rx);
+//    STREAM_put_bytes((uint8_t*)&Rx, 3);
+//  }
+//
+//  // all CPU register values have been moved to the JMBOUT register address
+//  // -> JMB needs to be cleared again!!
+//  i_ReadJmbOut(Rx)
+//  return 0;
+//}
 
 /**
 * \ingroup MODULMACROSX
