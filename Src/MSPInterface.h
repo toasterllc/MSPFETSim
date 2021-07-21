@@ -4,7 +4,7 @@ class MSPInterface {
 public:
     virtual ~MSPInterface() {}
     
-    // sbwTestSet() / sbwRstSet(): Set output value of pin
+    // sbwTestSet() / sbwRstSet(): Set output value of a pin
     virtual void sbwTestSet(bool val) {}
     virtual void sbwRstSet(bool val) {}
     

@@ -42,23 +42,20 @@ public:
 //        _reset();
 //    }
     
-    // Verify that MSPInterface::PinState values == MSPDebugCmd::PinState values,
-    // so we can use the types interchangeably
-    static_assert((uint8_t)MSPInterface::PinState::Out0 ==
-                  (uint8_t)STLoader::MSPDebugCmd::PinStates::Out0);
-    static_assert((uint8_t)MSPInterface::PinState::Out1 ==
-                  (uint8_t)STLoader::MSPDebugCmd::PinStates::Out1);
-    static_assert((uint8_t)MSPInterface::PinState::In ==
-                  (uint8_t)STLoader::MSPDebugCmd::PinStates::In);
-    static_assert((uint8_t)MSPInterface::PinState::Pulse01 ==
-                  (uint8_t)STLoader::MSPDebugCmd::PinStates::Pulse01);
+    void sbwTestSet(bool val) {
+        _s.cmds.emplace_back(STLoader::MSPDebugCmd::TestSet, val);
+    }
     
-    void sbwPins(MSPInterface::PinState test, MSPInterface::PinState rst) override {
-        _s.cmds.emplace_back((STLoader::MSPDebugCmd::PinState)test, (STLoader::MSPDebugCmd::PinState)rst);
+    void sbwRstSet(bool val) {
+        _s.cmds.emplace_back(STLoader::MSPDebugCmd::RstSet, val);
+    }
+    
+    void sbwTestPulse() {
+        _s.cmds.emplace_back(STLoader::MSPDebugCmd::TestPulse);
     }
     
     void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
-        _s.cmds.emplace_back(tms, tclk, tdi, tdoRead);
+        _s.cmds.emplace_back(STLoader::MSPDebugCmd::SBWIO, tms, tclk, tdi, tdoRead);
         if (tdoRead) _s.readLen++;
     }
     
