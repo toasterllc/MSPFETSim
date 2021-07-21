@@ -3,6 +3,11 @@
 #include "Stream.h"
 #include "HIL.h"
 
+#define HAL_FUNCTION(x) int16_t x (uint16_t flags)
+using HalFuncInOut = int16_t (MSPProbeSim::*)(uint16_t);
+
+ARMConfigSettings armConfigSettings = {};
+
 /**
 * \ingroup MODULMACROS
 *
@@ -250,7 +255,7 @@ HAL_FUNCTION(_hal_BlowFuseFram)
   tgtHasTest: specifies if target device has TEST pin or not (bool)
 */
 
-extern uint32_t JTAGLock5xx;
+uint32_t JTAGLock5xx = 0xCACACACA;
 
 //! \todo implementation & rename to jtag access protection
 #if defined(MSP430_UIF) || defined(MSP_FET)
@@ -319,25 +324,24 @@ HAL_FUNCTION(_hal_BlowFuseXv2)
   value: specifies the vlaue to which to set the parameter
 */
 
-#if defined(MSP430_UIF)
-    #ifdef ARCH_MSP432
-        extern ARMConfigSettings armConfigSettings;
-    #endif
-#endif
-
-#if defined(MSP_FET)
-        extern ARMConfigSettings armConfigSettings;
-#endif
-
-extern ARMConfigSettings armConfigSettings;
-
-extern DeviceSettings deviceSettings;
-extern DevicePowerSettings devicePowerSettings;
-extern uint16_t altRomAddressForCpuRead;
-extern uint16_t wdtctlAddress5xx;
-extern uint16_t assertBslValidBit;
-extern uint16_t enhancedPsa;
-uint32_t JTAGLock5xx = 0xCACACACA;
+//#if defined(MSP430_UIF)
+//    #ifdef ARCH_MSP432
+//        extern ARMConfigSettings armConfigSettings;
+//    #endif
+//#endif
+//
+//#if defined(MSP_FET)
+//        extern ARMConfigSettings armConfigSettings;
+//#endif
+//
+//extern ARMConfigSettings armConfigSettings;
+//
+//extern DeviceSettings deviceSettings;
+//extern DevicePowerSettings devicePowerSettings;
+//extern uint16_t altRomAddressForCpuRead;
+//extern uint16_t wdtctlAddress5xx;
+//extern uint16_t assertBslValidBit;
+//extern uint16_t enhancedPsa;
 
 HAL_FUNCTION(_hal_Configure)
 {
@@ -487,9 +491,9 @@ HAL_FUNCTION(_hal_Configure)
 /**
   DisableDebugArm: disables Debug
 */
-#if defined(MSP430_UIF) || defined(MSP_FET)
-extern ARMConfigSettings armConfigSettings;
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//extern ARMConfigSettings armConfigSettings;
+//#endif
 
 HAL_FUNCTION(_hal_DisableDebugArm)
 {
@@ -656,7 +660,7 @@ HAL_FUNCTION(_hal_DisableDebugArm)
   ovalue: one for each read operation
 */
 
-extern uint16_t lastTraceWritePos;
+//extern uint16_t lastTraceWritePos;
 
 HAL_FUNCTION(_hal_EemDataExchange)
 {
@@ -728,7 +732,7 @@ HAL_FUNCTION(_hal_EemDataExchangeAFE2xx)
   ivalue: only present for write operations
   ovalue: one for each read operation
 */
-extern uint16_t lastTraceWritePos;
+//extern uint16_t lastTraceWritePos;
 
 HAL_FUNCTION(_hal_EemDataExchangeX)
 {
@@ -785,8 +789,8 @@ HAL_FUNCTION(_hal_EemDataExchangeX)
   ivalue: only present for write operations
   ovalue: one for each read operation
 */
-extern uint16_t lastTraceWritePos;
-extern uint32_t _hal_mclkCntrl0;
+//extern uint16_t lastTraceWritePos;
+//extern uint32_t _hal_mclkCntrl0;
 
 HAL_FUNCTION(_hal_EemDataExchangeXv2)
 {
@@ -854,9 +858,9 @@ HAL_FUNCTION(_hal_EemDataExchangeXv2)
 /**
   EnableDebug: halts the CPU and enables Debug
 */
-#if defined(MSP430_UIF) || defined(MSP_FET)
-extern ARMConfigSettings armConfigSettings;
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//extern ARMConfigSettings armConfigSettings;
+//#endif
 
 HAL_FUNCTION(_hal_EnableDebugArm)
 {
@@ -949,7 +953,7 @@ HAL_FUNCTION(_hal_EnableDebugArm)
 #define CONTROL_WORD_OFFSET (0x5E)  // Location of the control word
 #define DATA_OFFSET         (0x60)  // Location where data starts
 
-extern DeviceSettings deviceSettings;
+//extern DeviceSettings deviceSettings;
 
 void setFuncletRegisters(const uint16_t* registerData)
 {
@@ -1257,14 +1261,14 @@ HAL_FUNCTION(_hal_ExecuteFunclet)
 
 
 
-#define REG_ADDRESS 5
-#define REG_SIZE    6
-#define REG_LOCKA   8
-#define REG_TYPE    9
-
-#define REG_GP1     10  // General purpose registers used by the funclet
-#define REG_GP2     11
-#define REG_GP3     12
+//#define REG_ADDRESS 5
+//#define REG_SIZE    6
+//#define REG_LOCKA   8
+//#define REG_TYPE    9
+//
+//#define REG_GP1     10  // General purpose registers used by the funclet
+//#define REG_GP2     11
+//#define REG_GP3     12
 
 #define WAIT_FOR_DEAD_START (0x20)  // Code position where the WaitForDead loop starts
 #define WAIT_FOR_DEAD_END   (0x26)  // Code position where the WaitForDead loop ends
@@ -1273,7 +1277,7 @@ HAL_FUNCTION(_hal_ExecuteFunclet)
 #define CONTROL_WORD_OFFSET (0x5E)  // Location of the control word
 #define DATA_OFFSET         (0x60)  // Location where data starts
 
-extern DeviceSettings deviceSettings;
+//extern DeviceSettings deviceSettings;
 
 void setFuncletRegisters(const uint16_t* registerData)
 {
@@ -1603,14 +1607,14 @@ HAL_FUNCTION(_hal_ExecuteFuncletJtag)
 
 
 
-#define REG_ADDRESS 5
-#define REG_SIZE    6
-#define REG_LOCKA   8
-#define REG_TYPE    9
-
-#define REG_GP1     10  // General purpose registers used by the funclet
-#define REG_GP2     11
-#define REG_GP3     12
+//#define REG_ADDRESS 5
+//#define REG_SIZE    6
+//#define REG_LOCKA   8
+//#define REG_TYPE    9
+//
+//#define REG_GP1     10  // General purpose registers used by the funclet
+//#define REG_GP2     11
+//#define REG_GP3     12
 
 #define WAIT_FOR_DEAD_START (0x22)  // Code position where the WaitForDead loop starts
 #define WAIT_FOR_DEAD_END   (0x2C)  // Code position where the WaitForDead loop ends
@@ -1876,10 +1880,10 @@ HAL_FUNCTION(_hal_ExecuteFuncletX)
 
 #define startAddrOfs FlashWrite_o_[4]
 
-#define REG_ADDRESS 5
-#define REG_SIZE    6
-#define REG_LOCKA   8
-#define REG_TYPE    9
+//#define REG_ADDRESS 5
+//#define REG_SIZE    6
+//#define REG_LOCKA   8
+//#define REG_TYPE    9
 
 #define TIMEOUT_COUNT   300u
 /*
@@ -1890,7 +1894,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletX)
 #define LockA        FlashWrite_o_[10]
 */
 
-extern uint16_t altRomAddressForCpuRead;
+//extern uint16_t altRomAddressForCpuRead;
 
 
 void setFuncletRegisters(const uint32_t* registerData)
@@ -2995,9 +2999,9 @@ HAL_FUNCTION(_hal_GetNumOfDevices)
 /**
   Halt: Halts the Core
 */
-#if defined(MSP430_UIF) || defined(MSP_FET)
-extern ARMConfigSettings armConfigSettings;
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//extern ARMConfigSettings armConfigSettings;
+//#endif
 
 HAL_FUNCTION(_hal_HaltArm)
 {
@@ -3444,13 +3448,13 @@ HAL_FUNCTION(_hal_LeaSyncConditional)
 
 #define BOOT_DATA_CRC_WRONG 0xC3C3
 
-#ifdef uController_uif
-extern void JSBW_EntrySequences(uint8_t states);
-extern void JSBW_TapReset(void);
-extern void JSBW_MagicPattern(void);
-extern void JSBW_JtagUnlock(void);
-extern void jRelease(void);
-#endif
+//#ifdef uController_uif
+//extern void JSBW_EntrySequences(uint8_t states);
+//extern void JSBW_TapReset(void);
+//extern void JSBW_MagicPattern(void);
+//extern void JSBW_JtagUnlock(void);
+//extern void jRelease(void);
+//#endif
 
 #define BOOT_DATA_CRC_WRONG 0xC3C3
 
@@ -3637,9 +3641,9 @@ int16_t magicPatternJsbw2()
   Address<32>: Destination address
   Count<32>: The number of bytes to write
 */
-#if defined(MSP430_UIF) || defined(MSP_FET)
-    extern uint32_t cswValues[4];
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//    extern uint32_t cswValues[4];
+//#endif
 
 #define ADDRESS_WRAPPING 0x00000FFFul
 
@@ -4773,7 +4777,7 @@ HAL_FUNCTION(_hal_PollJStateRegFR57xx)
 */
 
 
-extern uint16_t enhancedPsa;
+//extern uint16_t enhancedPsa;
 
 HAL_FUNCTION(_hal_Psa)
 {
@@ -4915,7 +4919,7 @@ HAL_FUNCTION(_hal_PsaX)
 */
 
 
-extern uint8_t mclk_modules[32];
+//extern uint8_t mclk_modules[32];
 
 /**
   PsaXv2
@@ -5042,9 +5046,9 @@ HAL_FUNCTION(_hal_ReadAllCpuRegs)
   inData:  -
   outData: R0-R12, SP, LR, PC, SR, XPRS,SpecialRegs, MSP_SP, PSP_SP
 */
-#if defined(MSP430_UIF) || defined(MSP_FET)
-extern ARMConfigSettings armConfigSettings;
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//extern ARMConfigSettings armConfigSettings;
+//#endif
 
 int16_t ReadCpurRegArm(uint32_t *data, uint32_t Rx)
 {
@@ -5128,7 +5132,7 @@ HAL_FUNCTION(_hal_ReadAllCpuRegsArm)
   Rn: registers R4-R15
 */
 
-extern uint16_t romAddressForCpuRead;
+//extern uint16_t romAddressForCpuRead;
 
 HAL_FUNCTION(_hal_ReadAllCpuRegsNon1377Xv2)
 {
@@ -5191,7 +5195,7 @@ HAL_FUNCTION(_hal_ReadAllCpuRegsX)
 */
 
 
-extern uint16_t altRomAddressForCpuRead;
+//extern uint16_t altRomAddressForCpuRead;
 
 /**
 ReadAllCpuRegsXv2
@@ -5536,8 +5540,8 @@ HAL_FUNCTION(_hal_ReadMemQuickXv2)
 */
 
 
-    extern uint32_t lAddr;
-    extern uint32_t lLen;
+//    extern uint32_t lAddr;
+//    extern uint32_t lLen;
 
 /**
   ReadMemWords
@@ -5727,9 +5731,9 @@ HAL_FUNCTION(_hal_Reset430I)
 /**
   Halt: Resets and Halts the Core
 */
-#if defined(MSP430_UIF) || defined(MSP_FET)
-extern ARMConfigSettings armConfigSettings;
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//extern ARMConfigSettings armConfigSettings;
+//#endif
 
 HAL_FUNCTION(_hal_ResetArm)
 {
@@ -5857,7 +5861,7 @@ HAL_FUNCTION(_hal_ResetL092)
 */
 
 
-extern DeviceSettings deviceSettings;
+//extern DeviceSettings deviceSettings;
 
 /**
   RestoreContext_ReleaseJtag
@@ -6015,7 +6019,7 @@ HAL_FUNCTION(_hal_RestoreContext_ReleaseJtag)
 */
 
 
-extern DeviceSettings deviceSettings;
+//extern DeviceSettings deviceSettings;
 
 
 HAL_FUNCTION(_hal_RestoreContext_ReleaseJtagX)
@@ -6134,7 +6138,7 @@ HAL_FUNCTION(_hal_RestoreContext_ReleaseJtagX)
   mdb: value to be put on the Memory Data Bus before release (in case !0)
 */
 
-extern DevicePowerSettings devicePowerSettings;
+//extern DevicePowerSettings devicePowerSettings;
 
 HAL_FUNCTION(_hal_RestoreContext_ReleaseJtagXv2)
 {
@@ -6279,11 +6283,11 @@ HAL_FUNCTION(_hal_RestoreContext_ReleaseJtagXv2)
 #define DISABLE_INTERRUPTS_RUN 0x02
 #define DISABLE_INTERRUPTS_UPDATE_PRIMSK 0x80
 
-#if defined(MSP430_UIF) || defined(MSP_FET)
-extern ARMConfigSettings armConfigSettings;
-extern int16_t writeCpuRegsArm(uint32_t data, uint32_t Rx);
-extern int16_t ReadCpurRegArm(uint32_t *data, uint32_t Rx);
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//extern ARMConfigSettings armConfigSettings;
+//extern int16_t writeCpuRegsArm(uint32_t data, uint32_t Rx);
+//extern int16_t ReadCpurRegArm(uint32_t *data, uint32_t Rx);
+//#endif
 
 int16_t confSystemHighPower()
 {
@@ -6466,9 +6470,9 @@ HAL_FUNCTION(_hal_RunArm)
 /**
   ScanAP: Scan access port and provide back nil terminated list
 */
-#if defined(MSP430_UIF) || defined(MSP_FET)
-    extern uint32_t cswValues[4];
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//    extern uint32_t cswValues[4];
+//#endif
 
 HAL_FUNCTION(_hal_ScanApArm)
 {
@@ -6783,9 +6787,9 @@ HAL_FUNCTION(_hal_SingleStep)
 
 #define DISABLE_INTERRUPTS_SINGLE_STEP 0x01
 
-#if defined(MSP430_UIF) || defined(MSP_FET)
-extern ARMConfigSettings armConfigSettings;
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//extern ARMConfigSettings armConfigSettings;
+//#endif
 
 HAL_FUNCTION(_hal_SingleStepArm)
 {
@@ -7444,7 +7448,7 @@ HAL_FUNCTION(_hal_StartJtagActivationCode)
 */
 
 
-extern DevicePowerSettings devicePowerSettings;
+//extern DevicePowerSettings devicePowerSettings;
 
 /**
   StopJtag
@@ -7468,7 +7472,7 @@ HAL_FUNCTION(_hal_StopJtag)
 */
 
 
-extern DeviceSettings deviceSettings;
+//extern DeviceSettings deviceSettings;
 
 /**
   SyncJtag_AssertPor_SaveContext
@@ -7690,7 +7694,7 @@ HAL_FUNCTION(_hal_SyncJtag_AssertPor_SaveContext)
 */
 
 
-extern DeviceSettings deviceSettings;
+//extern DeviceSettings deviceSettings;
 
 /**
   SyncJtag_AssertPor_SaveContextX
@@ -7900,7 +7904,7 @@ HAL_FUNCTION(_hal_SyncJtag_AssertPor_SaveContextX)
 
 
 
-extern uint32_t _hal_mclkCntrl0;
+//extern uint32_t _hal_mclkCntrl0;
 uint8_t mclk_modules[32];
 
 /**
@@ -7913,7 +7917,7 @@ uint8_t mclk_modules[32];
   SR: status register (R2)
 */
 
-extern DevicePowerSettings devicePowerSettings;
+//extern DevicePowerSettings devicePowerSettings;
 
 HAL_FUNCTION(_hal_SyncJtag_AssertPor_SaveContextXv2)
 {
@@ -8096,7 +8100,7 @@ HAL_FUNCTION(_hal_SyncJtag_AssertPor_SaveContextXv2)
   SR:      status register (R2)
 */
 
-extern DeviceSettings deviceSettings;
+//extern DeviceSettings deviceSettings;
 
 //--------------------------------------------------------------------------
 // STATUS_T clkTclkAndCheckDTC(void)
@@ -8421,7 +8425,7 @@ HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContext)
   SR:      status register (R2)
 */
 
-extern DeviceSettings deviceSettings;
+//extern DeviceSettings deviceSettings;
 
 //--------------------------------------------------------------------------
 // STATUS_T clkTclkAndCheckDTC(void)
@@ -8695,7 +8699,7 @@ HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContextX)
 #define SR             2
 #define	EEM_STOPPED    0x0080
 
-extern uint16_t altRomAddressForCpuRead;
+//extern uint16_t altRomAddressForCpuRead;
 
 /**
   SyncJtag_Conditional_SaveContextXv2
@@ -8707,7 +8711,7 @@ extern uint16_t altRomAddressForCpuRead;
   SR:      status register (R2)
 */
 
-extern DevicePowerSettings devicePowerSettings;
+//extern DevicePowerSettings devicePowerSettings;
 
 //! \todo EEM cycle counter, decide if it should be handled by host DLL!
 HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContextXv2)
@@ -9187,9 +9191,9 @@ HAL_FUNCTION(_hal_UssSyncConditional)
           Mask: the bits to look for
           Ctrl: the read DHCSR register
 */
-#if defined(MSP430_UIF) || defined(MSP_FET)
-extern ARMConfigSettings armConfigSettings;
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//extern ARMConfigSettings armConfigSettings;
+//#endif
 
 int16_t checkDhcsrRegForBbHit()
 {
@@ -9479,7 +9483,7 @@ HAL_FUNCTION(_hal_WaitForStorage)
 */
 
 
-extern uint16_t lastTraceWritePos;
+//extern uint16_t lastTraceWritePos;
 
 /**
   WaitForStorageX
@@ -9667,9 +9671,9 @@ HAL_FUNCTION(_hal_WriteAllCpuRegs)
   inData: R0-R12, SP, LR, PC, SR, XPRS, SpecialRegs, MSP_SP, PSP_SP
   outData: -
 */
-#if defined(MSP430_UIF) || defined(MSP_FET)
-extern ARMConfigSettings armConfigSettings;
-#endif
+//#if defined(MSP430_UIF) || defined(MSP_FET)
+//extern ARMConfigSettings armConfigSettings;
+//#endif
 
 int16_t writeCpuRegsArm(uint32_t data, uint32_t Rx)
 {
