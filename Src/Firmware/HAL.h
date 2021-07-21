@@ -66,9 +66,6 @@ enum EVENT_TYPE_FLAGS
 #define NO_FLAG			0x00
 #define LOCK_INFO_A_FLAG	0x01
 
-#define HAL_FUNCTION(x) int16_t x (uint16_t flags)
-using HalFuncInOut = int16_t (MSPProbeSim::*)(uint16_t);
-
 struct _DeviceSettings_
 {
     uint32_t  clockControlType;
@@ -98,16 +95,6 @@ typedef struct _ARMConfigSettings
     uint32_t interruptOptions; // Options to enable/disable interrupts when single stepping or letting the device run
     uint32_t ulpDebug; // Options to enable/disable entry to LPM. poll for PB hit in low poer mode
 } ARMConfigSettings;
-
-#ifndef HAL_REC
-#define HAL_REC
-struct _HalRec_
-{
-  uint16_t id;
-  HalFuncInOut function;
-};
-typedef struct _HalRec_ HalRec;
-#endif
 
 //extern void _init_Hal(void);
 
@@ -336,57 +323,6 @@ enum hal_id
 
 #define HAL_LeaSyncConditional                  (hal_functions_[ID_LeaSyncConditional].function)
 
-//extern HalRec hal_functions_[HAL_FUNCTIONS_SIZE];
-
-// global variables to handle JTAG chain
-uint16_t activeDevice = 0;
-REQUIRED(activeDevice)
-
-uint8_t numOfDevices = 0;
-REQUIRED(numOfDevices)
-
-uint16_t TCE = 0;
-REQUIRED(TCE)
-
-DevicePowerSettings devicePowerSettings = {};
-REQUIRED(devicePowerSettings)
-
-DeviceSettings deviceSettings = {};
-REQUIRED(deviceSettings)
-
-// global variables to handle Emulation clock control
-uint32_t _hal_mclkCntrl0 = 0;
-REQUIRED(_hal_mclkCntrl0)
-
-HalRec hal_functions_[HAL_FUNCTIONS_SIZE] = {};
-
-// Unused, but also defined by HIL.h, where it is used
-//uint16_t setPCclockBeforeCapture = 0;
-//REQUIRED(setPCclockBeforeCapture)
-
-uint16_t altRomAddressForCpuRead = 0;
-REQUIRED(altRomAddressForCpuRead)
-
-uint16_t wdtctlAddress5xx = 0x15C;
-REQUIRED(wdtctlAddress5xx)
-
-uint16_t enhancedPsa = 0;
-REQUIRED(enhancedPsa)
-
-int8_t traceBuffer[256] = {};              ///< Trace buffer used to print out JTAG IR and DR shofts to debug port
-
-// global variables use for JTAG/SWD DAP
-uint32_t cswValues[4] = {};
-REQUIRED(cswValues)
-
-ARMConfigSettings armConfigSettings = {};
-REQUIRED(armConfigSettings)
-
-
-
-
-
-
 #define HAL_SIGNATURE 0xBEEFBEEFul
 
 //extern void globalVarsInit(void);
@@ -483,6 +419,178 @@ struct stream_funcs *_stream_Funcs;
 
 HAL_INFOS hal_infos_in_ram_;
 
+void globalVarsInit(void)
+{
+    memset(&hal_infos_in_ram_, 0, sizeof(HAL_INFOS));
+
+    //SyncJtagAssertPor_SaveContextXv2.c
+    memset(mclk_modules, 0, sizeof(mclk_modules));
+    memset(cswValues, 0, sizeof(cswValues));
+    armConfigSettings.scsBase = 0xE000E000; // Default location of the SCS
+    activeDevice = 0;
+    numOfDevices = 0;
+    TCE = 0;
+    _hal_mclkCntrl0 = 0x0417;
+    // Disable device power settings by default
+    memset(&devicePowerSettings, 0, sizeof(devicePowerSettings));
+}
+
+// global variables to handle JTAG chain
+uint16_t activeDevice = 0;
+REQUIRED(activeDevice)
+
+uint8_t numOfDevices = 0;
+REQUIRED(numOfDevices)
+
+uint16_t TCE = 0;
+REQUIRED(TCE)
+
+DevicePowerSettings devicePowerSettings = {};
+REQUIRED(devicePowerSettings)
+
+DeviceSettings deviceSettings = {};
+REQUIRED(deviceSettings)
+
+// global variables to handle Emulation clock control
+uint32_t _hal_mclkCntrl0 = 0;
+REQUIRED(_hal_mclkCntrl0)
+
+HalRec hal_functions_[HAL_FUNCTIONS_SIZE] = {};
+
+// Unused, but also defined by HIL.h, where it is used
+//uint16_t setPCclockBeforeCapture = 0;
+//REQUIRED(setPCclockBeforeCapture)
+
+uint16_t altRomAddressForCpuRead = 0;
+REQUIRED(altRomAddressForCpuRead)
+
+uint16_t wdtctlAddress5xx = 0x15C;
+REQUIRED(wdtctlAddress5xx)
+
+uint16_t enhancedPsa = 0;
+REQUIRED(enhancedPsa)
+
+int8_t traceBuffer[256] = {};              ///< Trace buffer used to print out JTAG IR and DR shofts to debug port
+
+// global variables use for JTAG/SWD DAP
+uint32_t cswValues[4] = {};
+REQUIRED(cswValues)
+
+ARMConfigSettings armConfigSettings = {};
+REQUIRED(armConfigSettings)
+
+#ifndef __data20
+#define __data20
+#endif
+
+#define MACRO(x)  {ID_##x, &MSPProbeSim::_hal_##x },
+HalRec hal_functions_default_[HAL_FUNCTIONS_DEFAULT_SIZE] =
+{
+    MACRO(Zero)
+    MACRO_LIST
+};
+#undef MACRO
+
+REQUIRED(_init_Hal)
+
+
+void _init_Hal(void)
+{
+    uint8_t i;
+
+    for(i=0; i < (sizeof(hal_functions_)/sizeof(HalRec)); i++)
+    {
+        if(i < (sizeof(hal_functions_default_)/sizeof(HalRec)))
+        {
+            hal_functions_[i].id = hal_functions_default_[i].id;
+            hal_functions_[i].function = hal_functions_default_[i].function;
+        }
+        else
+        {
+            hal_functions_[i].id = 0xFFFF;
+            hal_functions_[i].function = NULL;
+        }
+    }
+}
+
+HAL_FUNCTION(_hal_Zero)
+{
+    return 0;
+}
+
+HAL_FUNCTION(_hal_Init)
+{
+    //EDT_Init();
+    return 0;
+}
+
+//extern uint16_t LPMx5_DEVICE_STATE;
+//extern int16_t intstate;
+//extern uint64_t prevJState;
+//extern uint16_t lastTraceWritePos;
+
+
+HAL_FUNCTION(_hal_ResetStaticGlobalVars)
+{
+    LPMx5_DEVICE_STATE = 1;
+    intstate = 0;
+    prevJState = 0x0000000000000000;
+    lastTraceWritePos = 0;
+    return 0;
+}
+
+HAL_FUNCTION(_hal_SetVcc)
+{
+    uint16_t vcc;
+    STREAM_get_word(&vcc);
+    IHIL_SetVcc(vcc);
+    return 0;
+}
+
+
+HAL_FUNCTION(_hal_SwitchMosfet)
+{
+#ifdef  MSP_FET
+    uint16_t on = 0;
+    STREAM_get_word(&on);
+    if (on)
+    {
+        IHIL_SwitchVccFET(1);
+    }
+    else
+    {
+        IHIL_SwitchVccFET(0);
+    }
+    return 0;
+#else
+    return -1;
+#endif
+}
+
+
+HAL_FUNCTION(_hal_GetVcc)
+{
+    double vcc = 0;
+    double ext_vcc = 0;
+
+    IHIL_GetVcc(&vcc, &ext_vcc);
+    STREAM_put_word((uint16_t)vcc);
+    STREAM_put_word((uint16_t)ext_vcc);
+    return 0;
+}
+
+HAL_FUNCTION(_hal_GetFuses)
+{
+    config_fuses();
+    STREAM_put_byte((uint8_t)SetReg_8Bits(0));
+    return 0;
+}
+
+HAL_FUNCTION(_hal_DummyMacro)
+{
+    return -1;
+}
+
 // called via cstartup form BIOS_HalInterfaceInit
 REQUIRED(ResetFirmware)
 void *ResetFirmware(void *stream_adr, uint32_t device_flags, uint8_t v3opHilCrcOk, uint8_t v3opDcdcCcOk)
@@ -516,12 +624,12 @@ void *ResetFirmware(void *stream_adr, uint32_t device_flags, uint8_t v3opHilCrcO
 
 #ifdef MSP_FET
             // Force to not update for Beta1
-            hal_infos_in_ram_.fpga_version = _edt_Common_Methods.getFpgaVersion();
+            hal_infos_in_ram_.fpga_version          = CALL_MEMBER_FN_PTR(_edt_Common_Methods.getFpgaVersion)();
             // power up VCC as FET power supply
             if(v3opDcdcCcOk)
             {
-                _edt_Common_Methods.SetVcc(3300);
-                _edt_Common_Methods.SwitchVccFET(1);
+                CALL_MEMBER_FN_PTR(_edt_Common_Methods.SetVcc)(3300);
+                CALL_MEMBER_FN_PTR(_edt_Common_Methods.SwitchVccFET)(1);
             }
 #else
             hal_infos_in_ram_.fpga_version = 0;
@@ -533,52 +641,52 @@ void *ResetFirmware(void *stream_adr, uint32_t device_flags, uint8_t v3opHilCrcO
             hal_infos_in_ram_.hil_version = 0;
             hal_infos_in_ram_.fpga_version = 0;
 
-            _edt_Common_Methods.Init =              _dummy_Init;
-            _edt_Common_Methods.SetVcc =            _dummy_SetVcc;
-            _edt_Common_Methods.GetVcc =            _dummy_GetVcc;
-            _edt_Common_Methods.SetProtocol =       _dummy_SetProtocol;
-            _edt_Common_Methods.SetPsaTCLK =        _dummy_SetPsaTCLK;
-            _edt_Common_Methods.Open =              _dummy_Open;
-            _edt_Common_Methods.Close =             _dummy_Close;
-            _edt_Common_Methods.Delay_1us =         _dummy;
-            _edt_Common_Methods.Delay_1ms =         _dummy;
-            _edt_Common_Methods.Loop =              _dummy_IccMonitor_Process;
-            _edt_Common_Methods.EntrySequences =    _dummy_EntrySequences;
-            _edt_Common_Methods.SetReset =          _dummy_SetReset;
-            _edt_Common_Methods.SetTest =           _dummy_SetTest;
-            _edt_Common_Methods.SetTMS =            _dummy_SetTMS;
-            _edt_Common_Methods.SetTDI =            _dummy_SetTDI;
-            _edt_Common_Methods.SetTCK =            _dummy_SetTCK;
-            _edt_Common_Methods.SetJtagSpeed =      _dummy_SetJtagSpeed;
-            _edt_Common_Methods.ConfigureSetPc =    _dummy_ConfigureSetPc;
-            _edt_Common_Methods.initDelayTimer =    _dummy_initDelayTimer;
-            _edt_Common_Methods.regulateVcc =       _dummy_regulateVcc;
-            _edt_Common_Methods.getFpgaVersion =    _dummy_getFpgaVersion;
-            _edt_Common_Methods.BSL_EntrySequence = _dummy_BSL_EntrySequence;
-            _edt_Common_Methods.SwitchVccFET      = _dummy_SwitchVccFET;
-            _edt_Common_Methods.setFpgaTimeOut    = _dummy_setFpgaTimeOut;
-            _edt_Common_Methods.regulateVcc       = _dummy_regulateVcc;
-            _edt_Common_Methods.ReadADC12         = _dummy_ReadADC12;
-            _edt_Common_Methods.ConfigFpgaIoMode  = _dummy_ConfigFpgaIoMode;
+            _edt_Common_Methods.Init                 = MEMBER_FN_PTR(_dummy_Init);
+            _edt_Common_Methods.SetVcc               = MEMBER_FN_PTR(_dummy_SetVcc);
+            _edt_Common_Methods.GetVcc               = MEMBER_FN_PTR(_dummy_GetVcc);
+            _edt_Common_Methods.SetProtocol          = MEMBER_FN_PTR(_dummy_SetProtocol);
+            _edt_Common_Methods.SetPsaTCLK           = MEMBER_FN_PTR(_dummy_SetPsaTCLK);
+            _edt_Common_Methods.Open                 = MEMBER_FN_PTR(_dummy_Open);
+            _edt_Common_Methods.Close                = MEMBER_FN_PTR(_dummy_Close);
+            _edt_Common_Methods.Delay_1us            = MEMBER_FN_PTR(_dummy);
+            _edt_Common_Methods.Delay_1ms            = MEMBER_FN_PTR(_dummy);
+            _edt_Common_Methods.Loop                 = MEMBER_FN_PTR(_dummy_IccMonitor_Process);
+            _edt_Common_Methods.EntrySequences       = MEMBER_FN_PTR(_dummy_EntrySequences);
+            _edt_Common_Methods.SetReset             = MEMBER_FN_PTR(_dummy_SetReset);
+            _edt_Common_Methods.SetTest              = MEMBER_FN_PTR(_dummy_SetTest);
+            _edt_Common_Methods.SetTMS               = MEMBER_FN_PTR(_dummy_SetTMS);
+            _edt_Common_Methods.SetTDI               = MEMBER_FN_PTR(_dummy_SetTDI);
+            _edt_Common_Methods.SetTCK               = MEMBER_FN_PTR(_dummy_SetTCK);
+            _edt_Common_Methods.SetJtagSpeed         = MEMBER_FN_PTR(_dummy_SetJtagSpeed);
+            _edt_Common_Methods.ConfigureSetPc       = MEMBER_FN_PTR(_dummy_ConfigureSetPc);
+            _edt_Common_Methods.initDelayTimer       = MEMBER_FN_PTR(_dummy_initDelayTimer);
+            _edt_Common_Methods.regulateVcc          = MEMBER_FN_PTR(_dummy_regulateVcc);
+            _edt_Common_Methods.getFpgaVersion       = MEMBER_FN_PTR(_dummy_getFpgaVersion);
+            _edt_Common_Methods.BSL_EntrySequence    = MEMBER_FN_PTR(_dummy_BSL_EntrySequence);
+            _edt_Common_Methods.SwitchVccFET         = MEMBER_FN_PTR(_dummy_SwitchVccFET);
+            _edt_Common_Methods.setFpgaTimeOut       = MEMBER_FN_PTR(_dummy_setFpgaTimeOut);
+            _edt_Common_Methods.regulateVcc          = MEMBER_FN_PTR(_dummy_regulateVcc);
+            _edt_Common_Methods.ReadADC12            = MEMBER_FN_PTR(_dummy_ReadADC12);
+            _edt_Common_Methods.ConfigFpgaIoMode     = MEMBER_FN_PTR(_dummy_ConfigFpgaIoMode);
 
-            _edt_Distinct_Methods.TapReset =            _dummy_TapReset_Dma;
-            _edt_Distinct_Methods.CheckJtagFuse =       _dummy_CheckJtagFuse_Dma;
-            _edt_Distinct_Methods.Instr =               _dummy_Instr_Dma;
-            _edt_Distinct_Methods.SetReg_XBits08 =      _dummy_SetReg_XBits08_Dma;
-            _edt_Distinct_Methods.SetReg_XBits16 =      _dummy_SetReg_XBits16_Dma;
-            _edt_Distinct_Methods.SetReg_XBits20 =      _dummy_SetReg_XBits20_Dma;
-            _edt_Distinct_Methods.SetReg_XBits32 =      _dummy_SetReg_XBits32_Dma;
-            _edt_Distinct_Methods.SetReg_XBits64 =      _dummy_SetReg_XBits64_Dma;
-            _edt_Distinct_Methods.SetReg_XBits8_64 =    _dummy_SetReg_XBits8_64_Dma;
-            _edt_Distinct_Methods.Tclk =                _dummy_Tclk_Dma;
-            _edt_Distinct_Methods.StepPsa =             _dummy_StepPsaTclkHigh_Dma;
-            _edt_Distinct_Methods.BlowFuse =            _dummy_BlowFuse_Dma;
-            _edt_Distinct_Methods.GetPrevInstruction  = _dummy_GetPrevInstruction;
-            _edt_Distinct_Methods.SetReg_XBits =        _dummy_SetReg_XBits;
-            _edt_Distinct_Methods.Instr04 =             _dummy_Instr_4;
-            _edt_Distinct_Methods.write_read_Dp =       _dummy_write_read_Dp;
-            _edt_Distinct_Methods.write_read_Ap =       _dummy_write_read_Ap;
-            _edt_Distinct_Methods.write_read_mem_Ap =   _dummy_write_read_mem_Ap;
+            _edt_Distinct_Methods.TapReset           = MEMBER_FN_PTR(_dummy_TapReset_Dma);
+            _edt_Distinct_Methods.CheckJtagFuse      = MEMBER_FN_PTR(_dummy_CheckJtagFuse_Dma);
+            _edt_Distinct_Methods.Instr              = MEMBER_FN_PTR(_dummy_Instr_Dma);
+            _edt_Distinct_Methods.SetReg_XBits08     = MEMBER_FN_PTR(_dummy_SetReg_XBits08_Dma);
+            _edt_Distinct_Methods.SetReg_XBits16     = MEMBER_FN_PTR(_dummy_SetReg_XBits16_Dma);
+            _edt_Distinct_Methods.SetReg_XBits20     = MEMBER_FN_PTR(_dummy_SetReg_XBits20_Dma);
+            _edt_Distinct_Methods.SetReg_XBits32     = MEMBER_FN_PTR(_dummy_SetReg_XBits32_Dma);
+            _edt_Distinct_Methods.SetReg_XBits64     = MEMBER_FN_PTR(_dummy_SetReg_XBits64_Dma);
+            _edt_Distinct_Methods.SetReg_XBits8_64   = MEMBER_FN_PTR(_dummy_SetReg_XBits8_64_Dma);
+            _edt_Distinct_Methods.Tclk               = MEMBER_FN_PTR(_dummy_Tclk_Dma);
+            _edt_Distinct_Methods.StepPsa            = MEMBER_FN_PTR(_dummy_StepPsaTclkHigh_Dma);
+            _edt_Distinct_Methods.BlowFuse           = MEMBER_FN_PTR(_dummy_BlowFuse_Dma);
+            _edt_Distinct_Methods.GetPrevInstruction = MEMBER_FN_PTR(_dummy_GetPrevInstruction);
+            _edt_Distinct_Methods.SetReg_XBits       = MEMBER_FN_PTR(_dummy_SetReg_XBits);
+            _edt_Distinct_Methods.Instr04            = MEMBER_FN_PTR(_dummy_Instr_4);
+            _edt_Distinct_Methods.write_read_Dp      = MEMBER_FN_PTR(_dummy_write_read_Dp);
+            _edt_Distinct_Methods.write_read_Ap      = MEMBER_FN_PTR(_dummy_write_read_Ap);
+            _edt_Distinct_Methods.write_read_mem_Ap  = MEMBER_FN_PTR(_dummy_write_read_mem_Ap);
         }
     }
 
@@ -2983,6 +3091,7 @@ void (MSPProbeSim::*WriteRegFunc)(int16_t, uint32_t) = nullptr;
 void (MSPProbeSim::*SetPCFunc)(uint32_t) = nullptr;
 void (MSPProbeSim::*WriteRamFunc)(uint16_t, const uint16_t*, uint16_t) = nullptr;
 void (MSPProbeSim::*ReadRamFunc)(uint16_t, uint16_t*, uint16_t) = nullptr;
+HalFuncInOut SyncFunc = nullptr;
 
 void readFromRam(uint16_t address, uint16_t* buffer, uint16_t numWords)
 {
@@ -3563,7 +3672,7 @@ HAL_FUNCTION(_hal_GetInterfaceModeArm)
         // Reset TAP state machine -> Run-Test/Idle
         IHIL_TapReset();
         // Run Fuse Check
-        idCode = _edt_Distinct_Methods.GetJtagIdCode();
+        idCode = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods.GetJtagIdCode)();
 
         if (idCode != 0xFFFFFFFE)
         {
@@ -3625,7 +3734,7 @@ HAL_FUNCTION(_hal_GetJtagId)
 HAL_FUNCTION(_hal_GetJtagIdCodeArm)
 {
 #if defined(MSP430_UIF) || defined(MSP_FET)
-    uint32_t JtagId = _edt_Distinct_Methods.GetJtagIdCode();
+    uint32_t JtagId = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods.GetJtagIdCode)();
     if (JtagId)
     {
         STREAM_put_long(JtagId);
@@ -3845,7 +3954,7 @@ HAL_FUNCTION(_hal_HilCommand)
             break;
 
         case HIL_CMD_JTAG_IR:
-            shiftedOut = _edt_Distinct_Methods.Instr((uint8_t)value);
+            shiftedOut = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods.Instr)((uint8_t)value);
             STREAM_put_long( (uint32_t)(shiftedOut &0xFFFFFFFF) );
             STREAM_put_long( (uint32_t)(shiftedOut >> 32) );
             break;
@@ -4174,7 +4283,7 @@ HAL_FUNCTION(_hal_MagicPattern)
 
     IHIL_Close();
 
-    _edt_Common_Methods.regulateVcc();
+    CALL_MEMBER_FN_PTR(_edt_Common_Methods.regulateVcc)();
     
     IHIL_Open(RSTLOW);
     IHIL_TapReset();

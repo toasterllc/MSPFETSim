@@ -133,15 +133,16 @@ void STREAM_resetSharedVariables();
 typedef void *(MSPProbeSim::*HalMainFunc)(void *stream_adr, uint32_t, uint8_t v3opHilCrcOk, uint8_t v3opDcdcCrcOk);
 typedef int16_t (MSPProbeSim::*FuncInOut)  (uint16_t id);
 
-#ifndef HAL_REC
-#define HAL_REC
-struct _HalRec_
-{
-    uint16_t id;
-    void  *function;
-};
-typedef struct _HalRec_ HalRec;
-#endif
+// MSPProbeSim: Moved to Types.h
+//#ifndef HAL_REC
+//#define HAL_REC
+//struct _HalRec_
+//{
+//    uint16_t id;
+//    void  *function;
+//};
+//typedef struct _HalRec_ HalRec;
+//#endif
 
 #define DEVICE_FLAG_XONOFF  0x00000001
 #define DEVICE_FLAG_SBW4    0x00000002

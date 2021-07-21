@@ -53,8 +53,8 @@
 
 #define INLINE(x)
 
-#define CALL_MEMBER_FN_PTR(fn) (this->*fn)
-#define MEMBER_FN_PTR(fn) (&MSPProbeSim::fn)
+#define MEMBER_FN_PTR(fn)       (&MSPProbeSim::fn)
+#define CALL_MEMBER_FN_PTR(fn)  (this->*fn)
 
 const int16_t SW_0 = (VERSION_MAJOR - 1) << 14 | (VERSION_MINOR << 8) | VERSION_PATCH;
 const int16_t SW_1 = VERSION_BUILD;
@@ -438,12 +438,19 @@ typedef union
 } s_FPGA_PB;
 
 
-
-
-
-
 #define UNIMP_FN()          printf("### UNIMPLEMENTED: %s\n", __FUNCTION__)
 
-#define RO_PLACEMENT_NO_INIT
-
 #define CONST_AT(x, y) const x
+
+#define HAL_FUNCTION(x) int16_t x (uint16_t flags)
+using HalFuncInOut = int16_t (MSPProbeSim::*)(uint16_t);
+
+#ifndef HAL_REC
+#define HAL_REC
+struct _HalRec_
+{
+  uint16_t id;
+  HalFuncInOut function;
+};
+typedef struct _HalRec_ HalRec;
+#endif

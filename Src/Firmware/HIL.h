@@ -77,7 +77,8 @@ const uint16_t hil_versionCmp_ = MSP_FET_HIL_VERSION_CMP;
 const uint32_t hil_signature_ = HIL_SIGNATURE;
 //#pragma required=hil_signature_
 
-
+// MSPProbeSim: not sure what this value is supposed to be
+const uint16_t hil_Start_UP_ = 0;
 
 
 uint16_t gTclkHighWhilePsa = 0;
