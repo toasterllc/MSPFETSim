@@ -700,7 +700,7 @@ void IHIL_TCLK() {
     }
 }
 
-void IHIL_SetReg_XBits(uint64_t *Data, uint16_t count) {
+void SetReg_XBits(uint64_t *Data, uint16_t count) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
     } else {
@@ -708,7 +708,7 @@ void IHIL_SetReg_XBits(uint64_t *Data, uint16_t count) {
     }
 }
 
-void IHIL_SetReg_8Bits(uint8_t Data) {
+void SetReg_8Bits(uint8_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
     } else {
@@ -732,7 +732,7 @@ void IHIL_SetReg_8Bits(uint8_t Data) {
     }
 }
 
-uint8_t IHIL_SetReg_8Bits_R(uint8_t Data) {
+uint8_t SetReg_8Bits_R(uint8_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     } else {
@@ -756,7 +756,7 @@ uint8_t IHIL_SetReg_8Bits_R(uint8_t Data) {
     }
 }
 
-void IHIL_SetReg_16Bits(uint16_t Data) {
+void SetReg_16Bits(uint16_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
     
@@ -781,7 +781,7 @@ void IHIL_SetReg_16Bits(uint16_t Data) {
     }
 }
 
-uint16_t IHIL_SetReg_16Bits_R(uint16_t Data) {
+uint16_t SetReg_16Bits_R(uint16_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     
@@ -806,7 +806,7 @@ uint16_t IHIL_SetReg_16Bits_R(uint16_t Data) {
     }
 }
 
-void IHIL_SetReg_20Bits(uint32_t Data) {
+void SetReg_20Bits(uint32_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
     
@@ -831,7 +831,7 @@ void IHIL_SetReg_20Bits(uint32_t Data) {
     }
 }
 
-uint32_t IHIL_SetReg_20Bits_R(uint32_t Data) {
+uint32_t SetReg_20Bits_R(uint32_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     
@@ -856,7 +856,7 @@ uint32_t IHIL_SetReg_20Bits_R(uint32_t Data) {
     }
 }
 
-void IHIL_SetReg_32Bits(uint32_t Data) {
+void SetReg_32Bits(uint32_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
     } else {
@@ -880,7 +880,7 @@ void IHIL_SetReg_32Bits(uint32_t Data) {
     }
 }
 
-uint32_t IHIL_SetReg_32Bits_R(uint32_t Data) {
+uint32_t SetReg_32Bits_R(uint32_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     
@@ -905,7 +905,7 @@ uint32_t IHIL_SetReg_32Bits_R(uint32_t Data) {
     }
 }
 
-void IHIL_SetReg_35Bits(uint64_t *Data) {
+void SetReg_35Bits(uint64_t *Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
     } else {
@@ -913,7 +913,7 @@ void IHIL_SetReg_35Bits(uint64_t *Data) {
     }
 }
 
-uint64_t IHIL_SetReg_35Bits_R(uint64_t *Data) {
+uint64_t SetReg_35Bits_R(uint64_t *Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     } else {
@@ -921,7 +921,7 @@ uint64_t IHIL_SetReg_35Bits_R(uint64_t *Data) {
     }
 }
 
-void IHIL_SetReg_64Bits(uint64_t Data) {
+void SetReg_64Bits(uint64_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP;
     } else {
@@ -945,7 +945,7 @@ void IHIL_SetReg_64Bits(uint64_t Data) {
     }
 }
 
-uint64_t IHIL_SetReg_64Bits_R(uint64_t Data) {
+uint64_t SetReg_64Bits_R(uint64_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     } else {
@@ -1027,7 +1027,7 @@ void ex_blow()                          { IHIL_Instr(IR_EX_BLOW); }
 int16_t isInstrLoad()
 {
     cntrl_sig_capture();
-    if((IHIL_SetReg_16Bits_R(0) & (CNTRL_SIG_INSTRLOAD | CNTRL_SIG_READ)) != (CNTRL_SIG_INSTRLOAD | CNTRL_SIG_READ))
+    if((SetReg_16Bits_R(0) & (CNTRL_SIG_INSTRLOAD | CNTRL_SIG_READ)) != (CNTRL_SIG_INSTRLOAD | CNTRL_SIG_READ))
     {
         return -1;
     }
@@ -1039,7 +1039,7 @@ int16_t instrLoad()
     uint16_t i = 0;
 
     cntrl_sig_low_byte();
-    IHIL_SetReg_8Bits(CNTRL_SIG_READ);
+    SetReg_8Bits(CNTRL_SIG_READ);
     IHIL_Tclk(1);
 
     for(i = 0; i < 10; i++)
@@ -1056,10 +1056,10 @@ int16_t instrLoad()
 void halt_cpu()
 {
     data_16bit();
-    IHIL_SetReg_16Bits(0x3FFF);
+    SetReg_16Bits(0x3FFF);
     IHIL_Tclk(0);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x2409);
+    SetReg_16Bits(0x2409);
     IHIL_Tclk(1);
 }
 
@@ -1067,7 +1067,7 @@ void release_cpu()
 {
     IHIL_Tclk(0);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x2401);
+    SetReg_16Bits(0x2401);
     addr_capture();
     IHIL_Tclk(1);
 }
@@ -1078,11 +1078,11 @@ uint16_t ReadMemWord(uint16_t address)
     halt_cpu();
     IHIL_Tclk(0);
     addr_16bit();
-    IHIL_SetReg_16Bits(address);
+    SetReg_16Bits(address);
     data_to_addr();
     IHIL_Tclk(1);
     IHIL_Tclk(0);
-    data = IHIL_SetReg_16Bits_R(0);
+    data = SetReg_16Bits_R(0);
     release_cpu();
     return data;
 }
@@ -1093,11 +1093,11 @@ uint16_t ReadMemWordX(uint32_t address)
     halt_cpu();
     IHIL_Tclk(0);
     addr_16bit();
-    IHIL_SetReg_20Bits(address & 0xFFFFF);
+    SetReg_20Bits(address & 0xFFFFF);
     data_to_addr();
     IHIL_Tclk(1);
     IHIL_Tclk(0);
-    data = IHIL_SetReg_16Bits_R(0);
+    data = SetReg_16Bits_R(0);
     release_cpu();
     return data;
 }
@@ -1107,11 +1107,11 @@ uint16_t ReadMemWordXv2(uint32_t address)
     uint16_t data = 0;
     IHIL_Tclk(0);
     addr_16bit();
-    IHIL_SetReg_20Bits(address & 0xFFFFF);
+    SetReg_20Bits(address & 0xFFFFF);
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     data_capture();
-    data = IHIL_SetReg_16Bits_R(0);
+    data = SetReg_16Bits_R(0);
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     IHIL_Tclk(1);
@@ -1123,11 +1123,11 @@ void WriteMemWord(uint16_t address, uint16_t data)
     halt_cpu();
     IHIL_Tclk(0);
     cntrl_sig_low_byte();
-    IHIL_SetReg_8Bits(0x08);
+    SetReg_8Bits(0x08);
     addr_16bit();
-    IHIL_SetReg_16Bits(address);
+    SetReg_16Bits(address);
     data_to_addr();
-    IHIL_SetReg_16Bits(data);
+    SetReg_16Bits(data);
     IHIL_Tclk(1);
     release_cpu();
 }
@@ -1137,11 +1137,11 @@ void WriteMemWordX(uint32_t address, uint16_t data)
     halt_cpu();
     IHIL_Tclk(0);
     cntrl_sig_low_byte();
-    IHIL_SetReg_8Bits(0x08);
+    SetReg_8Bits(0x08);
     addr_16bit();
-    IHIL_SetReg_20Bits(address & 0xFFFFF);
+    SetReg_20Bits(address & 0xFFFFF);
     data_to_addr();
-    IHIL_SetReg_16Bits(data);
+    SetReg_16Bits(data);
     IHIL_Tclk(1);
     release_cpu();
 }
@@ -1150,15 +1150,15 @@ void WriteMemWordXv2(uint32_t address, uint16_t data)
 {
     IHIL_Tclk(0);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x0500);
+    SetReg_16Bits(0x0500);
     addr_16bit();
-    IHIL_SetReg_20Bits(address);
+    SetReg_20Bits(address);
     IHIL_Tclk(1);
     data_to_addr();
-    IHIL_SetReg_16Bits(data);
+    SetReg_16Bits(data);
     IHIL_Tclk(0);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x0501);
+    SetReg_16Bits(0x0501);
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     IHIL_Tclk(1);
@@ -1169,9 +1169,9 @@ void WriteMemByte(uint32_t address, uint16_t data)
     halt_cpu();
     IHIL_Tclk(0);
     addr_16bit();
-    IHIL_SetReg_16Bits(address);
+    SetReg_16Bits(address);
     data_to_addr();
-    IHIL_SetReg_8Bits(data);
+    SetReg_8Bits(data);
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     release_cpu();
@@ -1183,25 +1183,25 @@ uint16_t ReadCpuReg_uint16_t(uint16_t reg)
     uint16_t data = 0;
 
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x3401);
+    SetReg_16Bits(0x3401);
     data_16bit();
     op = ((reg << 8) & 0x0F00) | 0x4082;
-    IHIL_SetReg_16Bits(op);
+    SetReg_16Bits(op);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     data_16bit();
-    IHIL_SetReg_16Bits(0x00fe);
+    SetReg_16Bits(0x00fe);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(0);
-    data = IHIL_SetReg_16Bits_R(0);
+    SetReg_16Bits(0);
+    data = SetReg_16Bits_R(0);
     IHIL_Tclk(0);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x2401);
+    SetReg_16Bits(0x2401);
     IHIL_Tclk(1);
     return data;
 }
@@ -1212,24 +1212,24 @@ uint16_t ReadCpuReg(uint16_t reg)
     uint16_t data = 0;
 
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x3401);
+    SetReg_16Bits(0x3401);
     data_16bit();
     op = ((reg << 8) & 0x0F00) | 0x4082;
-    IHIL_SetReg_16Bits(op);
+    SetReg_16Bits(op);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     data_16bit();
-    IHIL_SetReg_16Bits(0x00fe);
+    SetReg_16Bits(0x00fe);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     IHIL_Tclk(1);
-    data = IHIL_SetReg_16Bits_R(0);
+    data = SetReg_16Bits_R(0);
     IHIL_Tclk(0);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x2401);
+    SetReg_16Bits(0x2401);
     IHIL_Tclk(1);
     return data;
 }
@@ -1241,27 +1241,27 @@ uint32_t ReadCpuRegX(uint16_t reg)
     uint16_t Rx_h = 0;
 
     cntrl_sig_high_byte();
-    IHIL_SetReg_16Bits(0x34);
+    SetReg_16Bits(0x34);
     op = ((reg << 8) & 0x0F00) | 0x60;
     data_16bit();
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(op);
+    SetReg_16Bits(op);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     data_16bit();
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(0x00fc);
+    SetReg_16Bits(0x00fc);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
-    Rx_l = IHIL_SetReg_16Bits_R(0);
+    Rx_l = SetReg_16Bits_R(0);
     IHIL_Tclk(0);
     IHIL_Tclk(1);
-    Rx_h = IHIL_SetReg_16Bits_R(0);
+    Rx_h = SetReg_16Bits_R(0);
     IHIL_Tclk(0);
     cntrl_sig_high_byte();
-    IHIL_SetReg_8Bits(0x24);
+    SetReg_8Bits(0x24);
     IHIL_Tclk(1);
     return ((uint32_t)Rx_h<<16) + Rx_l;
 }
@@ -1276,39 +1276,39 @@ uint32_t ReadCpuRegXv2(uint16_t reg)
     IHIL_Tclk(0);
     data_16bit();
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(reg);
+    SetReg_16Bits(reg);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x1401);
+    SetReg_16Bits(0x1401);
     data_16bit();
     IHIL_TCLK();
     if (altRomAddressForCpuRead)
     {
-        IHIL_SetReg_16Bits(0x0ff6);
+        SetReg_16Bits(0x0ff6);
     }
     else
     {
-        IHIL_SetReg_16Bits(jmbAddr);
+        SetReg_16Bits(jmbAddr);
     }
     IHIL_TCLK();
-    IHIL_SetReg_16Bits(0x3ffd);
+    SetReg_16Bits(0x3ffd);
     IHIL_Tclk(0);
     if (altRomAddressForCpuRead)
     {
         cntrl_sig_16bit();
-        IHIL_SetReg_16Bits(0x0501);
+        SetReg_16Bits(0x0501);
     }
     data_capture();
     IHIL_Tclk(1);
-    Rx_l = IHIL_SetReg_16Bits_R(0);
+    Rx_l = SetReg_16Bits_R(0);
     IHIL_TCLK();
-    Rx_h = IHIL_SetReg_16Bits_R(0);
+    Rx_h = SetReg_16Bits_R(0);
     IHIL_TCLK();
     IHIL_TCLK();
     IHIL_TCLK();
     if (!altRomAddressForCpuRead)
     {
         cntrl_sig_16bit();
-        IHIL_SetReg_16Bits(0x0501);
+        SetReg_16Bits(0x0501);
     }
     IHIL_Tclk(0);
     data_capture();
@@ -1320,26 +1320,26 @@ void WriteCpuReg(uint16_t reg, uint16_t data)
 {
     uint16_t op = 0;
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x3401);
+    SetReg_16Bits(0x3401);
     data_16bit();
     op = (0x4030 | reg);
-    IHIL_SetReg_16Bits(op);
+    SetReg_16Bits(op);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     data_16bit();
-    IHIL_SetReg_16Bits(data);
+    SetReg_16Bits(data);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     data_16bit();
-    IHIL_SetReg_16Bits(0x3ffd);
+    SetReg_16Bits(0x3ffd);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x2401);
+    SetReg_16Bits(0x2401);
     IHIL_Tclk(1);
 }
 
@@ -1347,28 +1347,28 @@ void WriteCpuRegX(uint16_t mova, uint32_t data)
 {
     uint16_t op = 0x0080 | mova | ((data >> 8) & 0x0F00);
     cntrl_sig_high_byte();
-    IHIL_SetReg_8Bits(0x34);
+    SetReg_8Bits(0x34);
     data_16bit();
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(op);
+    SetReg_16Bits(op);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     data_16bit();
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(data & 0xFFFF);
+    SetReg_16Bits(data & 0xFFFF);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     data_16bit();
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(0x3ffd);
+    SetReg_16Bits(0x3ffd);
     IHIL_Tclk(0);
     data_capture();
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     cntrl_sig_high_byte();
-    IHIL_SetReg_8Bits(0x24);
+    SetReg_8Bits(0x24);
     IHIL_Tclk(1);
 }
 
@@ -1378,21 +1378,21 @@ void WriteCpuRegXv2(uint16_t mova, uint16_t data)
     IHIL_Tclk(0);
     data_16bit();
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(mova);
+    SetReg_16Bits(mova);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x1401);
+    SetReg_16Bits(0x1401);
     data_16bit();
     IHIL_TCLK();
-    IHIL_SetReg_16Bits(data);
+    SetReg_16Bits(data);
     IHIL_TCLK();
-    IHIL_SetReg_16Bits(0x3ffd);
+    SetReg_16Bits(0x3ffd);
     IHIL_TCLK();
     IHIL_Tclk(0);
     addr_capture();
-    IHIL_SetReg_20Bits(0x00000);
+    SetReg_20Bits(0x00000);
     IHIL_Tclk(1);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x0501);
+    SetReg_16Bits(0x0501);
     IHIL_TCLK();
     IHIL_Tclk(0);
     data_capture();
@@ -1402,26 +1402,26 @@ void WriteCpuRegXv2(uint16_t mova, uint16_t data)
 void SetPc(uint16_t pc)
 {
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x3401);
+    SetReg_16Bits(0x3401);
     data_16bit();
-    IHIL_SetReg_16Bits(0x4030);
+    SetReg_16Bits(0x4030);
     IHIL_TCLK();
-    IHIL_SetReg_16Bits(pc);
+    SetReg_16Bits(pc);
     IHIL_TCLK();
     addr_capture();
     IHIL_Tclk(0);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x2401);
+    SetReg_16Bits(0x2401);
     IHIL_Tclk(1);
 }
 
 void SetPcJtagBug(uint16_t pc)
 {
     data_16bit();
-    IHIL_SetReg_16Bits(0x4030);
+    SetReg_16Bits(0x4030);
     IHIL_Tclk(1);
     IHIL_Tclk(0);
-    IHIL_SetReg_16Bits(pc);
+    SetReg_16Bits(pc);
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     IHIL_Tclk(1);
@@ -1433,51 +1433,51 @@ void SetPcX(uint32_t pc)
     uint16_t pc_high = (uint16_t)(0x80 | (((pc)>>8) & 0x0F00));
     uint16_t pc_low  = (uint16_t)((pc) & 0xFFFF);
     cntrl_sig_high_byte();
-    IHIL_SetReg_8Bits(0x34);
+    SetReg_8Bits(0x34);
     data_16bit();
-    IHIL_SetReg_16Bits(pc_high);
+    SetReg_16Bits(pc_high);
     IHIL_TCLK();
-    IHIL_SetReg_16Bits(pc_low);
+    SetReg_16Bits(pc_low);
     IHIL_TCLK();
     addr_capture();
     IHIL_Tclk(0);
     cntrl_sig_high_byte();
-    IHIL_SetReg_8Bits(0x24);
+    SetReg_8Bits(0x24);
     IHIL_Tclk(1);
 }
 
 void SetPcXv2(uint16_t Mova, uint16_t pc)
 {
     cntrl_sig_capture();
-    IHIL_SetReg_16Bits(0x0000);
+    SetReg_16Bits(0x0000);
     IHIL_Tclk(0);
     data_16bit();
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(Mova);
+    SetReg_16Bits(Mova);
     IHIL_Tclk(0);
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x1400);
+    SetReg_16Bits(0x1400);
     data_16bit();
     IHIL_Tclk(0);
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(pc);
+    SetReg_16Bits(pc);
     IHIL_Tclk(0);
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(0x4303);
+    SetReg_16Bits(0x4303);
     IHIL_Tclk(0);
     addr_capture();
-    IHIL_SetReg_20Bits(0x00000);
+    SetReg_20Bits(0x00000);
 }
 
 uint16_t SyncJtag()
 {
     uint16_t lOut = 0, i = 50;
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x2401);
+    SetReg_16Bits(0x2401);
     cntrl_sig_capture();
     do
     {
-        lOut = IHIL_SetReg_16Bits_R(0x0000);
+        lOut = SetReg_16Bits_R(0x0000);
         i--;
     }
     while(((lOut == 0xFFFF) || !(lOut & 0x0200)) && i);
@@ -1492,28 +1492,28 @@ void SyncJtagX()
 {
     uint16_t lOut = 0, i = 50;
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x2401);
+    SetReg_16Bits(0x2401);
     cntrl_sig_capture();
-    IHIL_SetReg_16Bits(0x0000);
+    SetReg_16Bits(0x0000);
     IHIL_Tclk(1);
     if (!(lOut & 0x0200))
     {
         cntrl_sig_high_byte();
-        IHIL_SetReg_8Bits(0x34);
+        SetReg_8Bits(0x34);
         eem_data_exchange32();
-        IHIL_SetReg_32Bits(0x89);
-        IHIL_SetReg_32Bits(0);
+        SetReg_32Bits(0x89);
+        SetReg_32Bits(0);
         eem_data_exchange32();
-        IHIL_SetReg_32Bits(0x88);
-        IHIL_SetReg_32Bits(lOut|0x40);
+        SetReg_32Bits(0x88);
+        SetReg_32Bits(lOut|0x40);
         eem_data_exchange32();
-        IHIL_SetReg_32Bits(0x88);
-        IHIL_SetReg_32Bits(lOut);
+        SetReg_32Bits(0x88);
+        SetReg_32Bits(lOut);
     }
     cntrl_sig_capture();
     do
     {
-        lOut = IHIL_SetReg_16Bits_R(0x0000);
+        lOut = SetReg_16Bits_R(0x0000);
         i--;
     }
     while(((lOut == 0xFFFF) || !(lOut & 0x0200)) && i);
@@ -1523,11 +1523,11 @@ void SyncJtagXv2()
 {
     uint16_t i = 50, lOut = 0 ;
     cntrl_sig_16bit();
-    IHIL_SetReg_16Bits(0x1501);
+    SetReg_16Bits(0x1501);
     cntrl_sig_capture();
     do
     {
-        lOut = IHIL_SetReg_16Bits_R(0x0000);
+        lOut = SetReg_16Bits_R(0x0000);
         i--;
     }
     while(((lOut == 0xFFFF) || !(lOut & 0x0200)) && i);
@@ -1538,7 +1538,7 @@ uint16_t wait_for_synch()
     uint16_t i = 0;
     cntrl_sig_capture();
 
-    while(!(IHIL_SetReg_16Bits_R(0) & 0x0200) && i++ < 50);
+    while(!(SetReg_16Bits_R(0) & 0x0200) && i++ < 50);
     if(i >= 50)
     {
         return 0;
@@ -1551,13 +1551,13 @@ void RestoreTestRegs()
     if(devicePowerSettings.powerTestReg3VMask)
     {
         test_reg_3V();
-        IHIL_SetReg_16Bits(devicePowerSettings.powerTestReg3VDefault);
+        SetReg_16Bits(devicePowerSettings.powerTestReg3VDefault);
         IHIL_Delay_1ms(20);
     }
     if(devicePowerSettings.powerTestRegMask)
     {
         test_reg();
-        IHIL_SetReg_32Bits(devicePowerSettings.powerTestRegDefault);
+        SetReg_32Bits(devicePowerSettings.powerTestRegDefault);
         IHIL_Delay_1ms(20);
     }
 }
@@ -1568,9 +1568,9 @@ void EnableLpmx5()
     {
         uint16_t reg_3V = 0;
         test_reg_3V();
-        reg_3V = IHIL_SetReg_16Bits_R(devicePowerSettings.powerTestReg3VDefault);
+        reg_3V = SetReg_16Bits_R(devicePowerSettings.powerTestReg3VDefault);
 
-        IHIL_SetReg_16Bits((reg_3V & ~devicePowerSettings.powerTestReg3VMask)|
+        SetReg_16Bits((reg_3V & ~devicePowerSettings.powerTestReg3VMask)|
                        devicePowerSettings.enableLpmx5TestReg3V);
 
         IHIL_Delay_1ms(20);
@@ -1580,9 +1580,9 @@ void EnableLpmx5()
     {
         uint32_t reg_test = 0;
         test_reg();
-        reg_test = IHIL_SetReg_32Bits_R(devicePowerSettings.powerTestRegDefault);
+        reg_test = SetReg_32Bits_R(devicePowerSettings.powerTestRegDefault);
 
-        IHIL_SetReg_32Bits((reg_test & ~devicePowerSettings.powerTestRegMask)|
+        SetReg_32Bits((reg_test & ~devicePowerSettings.powerTestRegMask)|
         devicePowerSettings.enableLpmx5TestReg);
 
         IHIL_Delay_1ms(20);
@@ -1595,9 +1595,9 @@ void DisableLpmx5()
     {
         uint16_t reg_3V = 0;
         test_reg_3V();
-        reg_3V = IHIL_SetReg_16Bits_R(devicePowerSettings.powerTestReg3VDefault);
+        reg_3V = SetReg_16Bits_R(devicePowerSettings.powerTestReg3VDefault);
 
-        IHIL_SetReg_16Bits((reg_3V & ~devicePowerSettings.powerTestReg3VMask)|
+        SetReg_16Bits((reg_3V & ~devicePowerSettings.powerTestReg3VMask)|
             devicePowerSettings.disableLpmx5TestReg3V);
         IHIL_Delay_1ms(20);
     }
@@ -1606,9 +1606,9 @@ void DisableLpmx5()
     {
         uint32_t reg_test = 0;
         test_reg();
-        IHIL_SetReg_32Bits(devicePowerSettings.powerTestRegDefault);
+        SetReg_32Bits(devicePowerSettings.powerTestRegDefault);
 
-        IHIL_SetReg_32Bits((reg_test & ~devicePowerSettings.powerTestRegMask)|
+        SetReg_32Bits((reg_test & ~devicePowerSettings.powerTestRegMask)|
             devicePowerSettings.disableLpmx5TestReg);
 
         IHIL_Delay_1ms(20);
@@ -1618,12 +1618,12 @@ void DisableLpmx5()
 uint32_t i_ReadJmbOut() {
     uint16_t sJMBOUT0 = 0, sJMBOUT1 = 0, sJMBINCTL = 0;
     jmb_exchange();
-    if(IHIL_SetReg_16Bits_R(sJMBINCTL) & OUT1RDY)
+    if(SetReg_16Bits_R(sJMBINCTL) & OUT1RDY)
     {
         sJMBINCTL |= JMB32B + OUTREQ;
-        IHIL_SetReg_16Bits(sJMBINCTL);
-        sJMBOUT0 = IHIL_SetReg_16Bits_R(0);
-        sJMBOUT1 = IHIL_SetReg_16Bits_R(0);
+        SetReg_16Bits(sJMBINCTL);
+        sJMBOUT0 = SetReg_16Bits_R(0);
+        sJMBOUT1 = SetReg_16Bits_R(0);
         return ((uint32_t)sJMBOUT1<<16) + sJMBOUT0;
     }
     return 0;
@@ -1632,11 +1632,11 @@ uint32_t i_ReadJmbOut() {
 uint16_t i_ReadJmbOut16() {
     uint16_t sJMBINCTL = 0;
     jmb_exchange();
-    if(IHIL_SetReg_16Bits_R(sJMBINCTL) & OUT0RDY)
+    if(SetReg_16Bits_R(sJMBINCTL) & OUT0RDY)
     {
         sJMBINCTL |=  OUTREQ;
-        IHIL_SetReg_16Bits(sJMBINCTL);
-        return IHIL_SetReg_16Bits_R(0);
+        SetReg_16Bits(sJMBINCTL);
+        return SetReg_16Bits_R(0);
     }
     return 0;
 }
@@ -1649,7 +1649,7 @@ int16_t i_WriteJmbIn(uint16_t data) {
     jmb_exchange();
     do
     {
-        lOut = IHIL_SetReg_16Bits_R(0x0000);
+        lOut = SetReg_16Bits_R(0x0000);
         if(Timeout++ >= 3000)
         {
             return 1;
@@ -1659,8 +1659,8 @@ int16_t i_WriteJmbIn(uint16_t data) {
 
     if(Timeout < 3000)
     {
-        IHIL_SetReg_16Bits(sJMBINCTL);
-        IHIL_SetReg_16Bits(sJMBIN0);
+        SetReg_16Bits(sJMBINCTL);
+        SetReg_16Bits(sJMBIN0);
     }
     return 0;
 }
@@ -1676,7 +1676,7 @@ int16_t i_WriteJmbIn32(uint16_t dataA, uint16_t dataB) {
     jmb_exchange();
     do
     {
-        lOut = IHIL_SetReg_16Bits_R(0x0000);
+        lOut = SetReg_16Bits_R(0x0000);
         if(Timeout++ >= 3000)
         {
             return 1;
@@ -1686,9 +1686,9 @@ int16_t i_WriteJmbIn32(uint16_t dataA, uint16_t dataB) {
     if(Timeout < 3000)
     {
         sJMBINCTL = 0x11;
-        IHIL_SetReg_16Bits(sJMBINCTL);
-        IHIL_SetReg_16Bits(sJMBIN0);
-        IHIL_SetReg_16Bits(sJMBIN1);
+        SetReg_16Bits(sJMBINCTL);
+        SetReg_16Bits(sJMBIN0);
+        SetReg_16Bits(sJMBIN1);
     }
     return 0;
 }
@@ -1700,17 +1700,17 @@ void JTAG_PsaSetup(uint32_t StartAddr)
 {
     data_16bit();
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(MOV_IMM_PC);
+    SetReg_16Bits(MOV_IMM_PC);
     IHIL_Tclk(0);
     IHIL_Tclk(1);
-    IHIL_SetReg_16Bits(StartAddr - 2);
+    SetReg_16Bits(StartAddr - 2);
     IHIL_Tclk(0);
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     IHIL_Tclk(1);
     IHIL_Tclk(0);
     addr_capture();
-    IHIL_SetReg_16Bits(0x0000);
+    SetReg_16Bits(0x0000);
 }
 
 // -----------------------------------------------------------------------------
@@ -1719,7 +1719,7 @@ void JTAG_EnhancedPsaSetup(uint32_t StartAddr)
     halt_cpu();
     IHIL_Tclk(0);
     data_16bit();
-    IHIL_SetReg_16Bits(StartAddr - 2);
+    SetReg_16Bits(StartAddr - 2);
 }
 
 // -----------------------------------------------------------------------------

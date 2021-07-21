@@ -9,10 +9,12 @@
 #define short   BADTYPE
 #define int     BADTYPE
 #define long    BADTYPE
+#define static  BADSTATIC
 
 #include "USB.h"
 #include "Descriptor.h"
 
+#undef static
 #undef char
 #undef short
 #undef int

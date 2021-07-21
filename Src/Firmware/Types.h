@@ -9,14 +9,14 @@
 #include "Bios/src/hal/JTAG_defs.h"
 #include "Bios/src/hal/EEM_defs.h"
 
-static constexpr int16_t SW_0 = (VERSION_MAJOR - 1) << 14 | (VERSION_MINOR << 8) | VERSION_PATCH;
-static constexpr int16_t SW_1 = VERSION_BUILD;
+const int16_t SW_0 = (VERSION_MAJOR - 1) << 14 | (VERSION_MINOR << 8) | VERSION_PATCH;
+const int16_t SW_1 = VERSION_BUILD;
 
-static constexpr int16_t SWCMP_0 = (VERSION_MAJOR_CMP - 1) << 14 | (VERSION_MINOR_CMP << 8) | VERSION_PATCH_CMP;
-static constexpr int16_t SWCMP_1 = VERSION_BUILD_CMP;
+const int16_t SWCMP_0 = (VERSION_MAJOR_CMP - 1) << 14 | (VERSION_MINOR_CMP << 8) | VERSION_PATCH_CMP;
+const int16_t SWCMP_1 = VERSION_BUILD_CMP;
 
-static constexpr uint16_t HIL_Version = MSP_FET_HIL_VERSION;
-static constexpr uint16_t HIL_VersionCMP = MSP_FET_HIL_VERSION_CMP;
+const uint16_t HIL_Version = MSP_FET_HIL_VERSION;
+const uint16_t HIL_VersionCMP = MSP_FET_HIL_VERSION_CMP;
 
 #define FPGA_VERSION 0x016
 #define FPGA_SIGNATURE 0xADACADAC
