@@ -61,6 +61,47 @@ uint64_t _read(uint8_t w) {
     }
 }
 
+template <class...> static constexpr std::false_type _AlwaysFalse;
+
+template <typename T, size_t W=sizeof(T)*8>
+class SBWShiftProxy {
+public:
+    SBWShiftProxy(uint64_t data) : _data(data) {}
+    // Copy constructor: not allowed
+    SBWShiftProxy(const SBWShiftProxy& x) = delete;
+    // Move constructor: not allowed
+    SBWShiftProxy(SBWShiftProxy&& x) = delete;
+    
+    ~SBWShiftProxy() {
+        if (!_read) {
+            // Perform non-read shift
+                 if constexpr (W ==  8) sbw_Shift(_data, F_BYTE);
+            else if constexpr (W == 16) sbw_Shift(_data, F_WORD);
+            else if constexpr (W == 20) sbw_Shift(_data, F_ADDR);
+            else if constexpr (W == 32) sbw_Shift(_data, F_LONG);
+            else if constexpr (W == 64) sbw_Shift(_data, F_LONG_LONG);
+            else                        static_assert(_AlwaysFalse<T>);
+        }
+    }
+    
+    operator T() {
+        // Perform read shift and return result
+        printf("Perform read %zu-bit shift\n", W);
+        _read = true;
+        
+             if constexpr (W ==  8) return sbw_Shift_R(_data, F_BYTE);
+        else if constexpr (W == 16) return sbw_Shift_R(_data, F_WORD);
+        else if constexpr (W == 20) return sbw_Shift_R(_data, F_ADDR);
+        else if constexpr (W == 32) return sbw_Shift_R(_data, F_LONG);
+        else if constexpr (W == 64) return sbw_Shift_R(_data, F_LONG_LONG);
+        else                        static_assert(_AlwaysFalse<T>);
+    }
+    
+private:
+    uint64_t _data = 0;
+    bool _read = false;
+};
+
 void TMSL_TDIL() { _sbwio(0,0); }
 void TMSH_TDIL() { _sbwio(1,0); }
 void TMSL_TDIH() { _sbwio(0,1); }
@@ -708,31 +749,7 @@ void SetReg_XBits(uint64_t *Data, uint16_t count) {
     }
 }
 
-void SetReg_8Bits(uint8_t Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-    } else {
-        // From msp_fet:_hil_2w_SetReg_XBits08()
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-DR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        sbw_Shift(Data, F_BYTE);
-        // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-uint8_t SetReg_8Bits_R(uint8_t Data) {
+SBWShiftProxy<uint8_t> SetReg_8Bits_R(uint8_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     } else {
@@ -751,37 +768,12 @@ uint8_t SetReg_8Bits_R(uint8_t Data) {
         // JTAG FSM state = Capture-DR
         TMSL_TDIH();
         // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return (sbw_Shift_R(Data, F_BYTE));
+        return SBWShiftProxy<uint8_t>(Data);
         // JTAG FSM state = Run-Test/Idle
     }
 }
 
-void SetReg_16Bits(uint16_t Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-    
-    } else {
-        // From msp_fet:_hil_2w_SetReg_XBits16()
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-DR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        sbw_Shift(Data, F_WORD);
-        // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-uint16_t SetReg_16Bits_R(uint16_t Data) {
+SBWShiftProxy<uint16_t> SetReg_16Bits_R(uint16_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     
@@ -801,37 +793,12 @@ uint16_t SetReg_16Bits_R(uint16_t Data) {
         // JTAG FSM state = Capture-DR
         TMSL_TDIH();
         // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return (sbw_Shift_R(Data, F_WORD));
+        return SBWShiftProxy<uint16_t>(Data);
         // JTAG FSM state = Run-Test/Idle
     }
 }
 
-void SetReg_20Bits(uint32_t Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-    
-    } else {
-        // From msp_fet:_hil_2w_SetReg_XBits20()
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-DR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        sbw_Shift(Data, F_ADDR);
-        // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-uint32_t SetReg_20Bits_R(uint32_t Data) {
+SBWShiftProxy<uint32_t,20> SetReg_20Bits_R(uint32_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     
@@ -851,36 +818,12 @@ uint32_t SetReg_20Bits_R(uint32_t Data) {
         // JTAG FSM state = Capture-DR
         TMSL_TDIH();
         // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return (sbw_Shift_R(Data, F_ADDR));
+        return SBWShiftProxy<uint32_t,20>(Data);
         // JTAG FSM state = Run-Test/Idle
     }
 }
 
-void SetReg_32Bits(uint32_t Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-    } else {
-        // From msp_fet:_hil_2w_SetReg_XBits32()
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-DR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        sbw_Shift(Data, F_LONG);
-        // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-uint32_t SetReg_32Bits_R(uint32_t Data) {
+SBWShiftProxy<uint32_t> SetReg_32Bits_R(uint32_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     
@@ -900,16 +843,8 @@ uint32_t SetReg_32Bits_R(uint32_t Data) {
         // JTAG FSM state = Capture-DR
         TMSL_TDIH();
         // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return (sbw_Shift_R(Data, F_LONG));
+        return SBWShiftProxy<uint32_t>(Data);
         // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-void SetReg_35Bits(uint64_t *Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-    } else {
-        HIL_UNIMP;
     }
 }
 
@@ -921,31 +856,7 @@ uint64_t SetReg_35Bits_R(uint64_t *Data) {
     }
 }
 
-void SetReg_64Bits(uint64_t Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-    } else {
-        // From msp_fet:_hil_2w_SetReg_XBits64()
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-DR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        sbw_Shift(Data, F_LONG_LONG);
-        // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-uint64_t SetReg_64Bits_R(uint64_t Data) {
+SBWShiftProxy<uint64_t> SetReg_64Bits_R(uint64_t Data) {
     if (gprotocol_id == JTAG) {
         HIL_UNIMP_RET0;
     } else {
@@ -964,7 +875,7 @@ uint64_t SetReg_64Bits_R(uint64_t Data) {
         // JTAG FSM state = Capture-DR
         TMSL_TDIH();
         // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return (sbw_Shift_R(Data, F_LONG_LONG));
+        return SBWShiftProxy<uint64_t>(Data);
         // JTAG FSM state = Run-Test/Idle
     }
 }
