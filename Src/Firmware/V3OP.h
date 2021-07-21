@@ -6,9 +6,6 @@
 #define V3OP_LOOP_WAIT_FLAG   0x01
 #define V3OP_LOOP_ARRAY_COUNT 4
 
-#define V3OP_UNIMP          printf("### V3OP: UNIMPLEMENTED: %s\n", __FUNCTION__)
-#define V3OP_UNIMP_RET0     V3OP_UNIMP; return 0
-
 struct _V3opLoopArray_
 {
   uint16_t addr;
@@ -73,7 +70,8 @@ uint32_t Bios_getHil_signature() {
 }
 
 int16_t dcdc_Restart(uint16_t fetType_) {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 int16_t dcdc_getSubMcuVersion() {
@@ -89,7 +87,8 @@ int16_t dcdc_getLayerVersionCmp() {
 }
 
 int16_t dcdc_powerDown() {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 int16_t dcdc_setVcc(uint16_t vcc) {
@@ -293,31 +292,36 @@ void V3OP_KillAllLoops(void)
 }
 
 int16_t V3OP_HalInterfaceClear() {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 int16_t V3OP_HalInterfaceInit() {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 void V3OP_DcdcInterfaceClear() {
-    V3OP_UNIMP;
+    UNIMP_FN();
 }
 
 int16_t V3OP_DcdcInterfaceInit() {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 int16_t V3OP_ComInterfaceInit() {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 void V3OP_ComInterfaceClear() {
-    V3OP_UNIMP;
+    UNIMP_FN();
 }
 
 int16_t V3OP_HalFpgaUpdate() {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 uint8_t V3OP_DcdcCrcOk() {
@@ -329,27 +333,31 @@ uint8_t V3OP_ComChannelCrcOk() {
 }
 
 void V3OP_HwReset() {
-    V3OP_UNIMP;
+    UNIMP_FN();
 }
 
 int16_t V3OP_CoreFlashFunctionInit(const uint8_t* payload) {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 int16_t V3OP_CoreFlashFunctionErase(const uint8_t* payload) {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 int16_t V3OP_CoreFlashFunctionWrite(const uint8_t* payload, uint16_t v30p_stream_flags_) {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 int16_t V3OP_CoreFlashFunctionRead(const uint8_t* payload) {
-    V3OP_UNIMP_RET0;
+    UNIMP_FN();
+    return 0;
 }
 
 void V3OP_UpCore() {
-    V3OP_UNIMP;
+    UNIMP_FN();
 }
 
 int16_t dcdc_calibrate(uint16_t resistors[5], uint16_t resCount, uint16_t vcc) {

@@ -360,8 +360,9 @@ REQUIRED(_hal_mclkCntrl0)
 
 HalRec hal_functions_[HAL_FUNCTIONS_SIZE] = {};
 
-uint16_t setPCclockBeforeCapture = 0;
-REQUIRED(setPCclockBeforeCapture)
+// Unused, but also defined by HIL.h, where it is used
+//uint16_t setPCclockBeforeCapture = 0;
+//REQUIRED(setPCclockBeforeCapture)
 
 uint16_t altRomAddressForCpuRead = 0;
 REQUIRED(altRomAddressForCpuRead)
@@ -380,6 +381,222 @@ REQUIRED(cswValues)
 
 ARMConfigSettings armConfigSettings = {};
 REQUIRED(armConfigSettings)
+
+
+
+
+
+
+#define HAL_SIGNATURE 0xBEEFBEEFul
+
+//extern void globalVarsInit(void);
+
+REQUIRED(_edt_Common_Methods)
+edt_common_methods_t  _edt_Common_Methods;
+
+REQUIRED(_edt_Distinct_Methods)
+edt_distinct_methods_t _edt_Distinct_Methods;
+
+//extern int16_t _hil_Init( void );
+//extern uint32_t _hal_mclkCntrl0;
+
+// prototypes for core/HAL interface
+//void *ResetFirmware(void *stream_adr, uint32_t device_flags, uint8_t v3opHilCrcOk, uint8_t v3opDcdcCcOk);
+
+CONST_AT(HAL_INFOS hal_infos_, 0x1904) =
+{
+  MEMBER_FN_PTR(ResetFirmware),                // _initTask
+  (int16_t)((VERSION_MAJOR - 1) << 14 | (VERSION_MINOR << 8) | VERSION_PATCH),
+  VERSION_BUILD
+};
+REQUIRED(hal_infos_)
+
+const uint32_t hal_Signature_ = HAL_SIGNATURE;
+//#pragma required = hal_Signature_
+
+////! \brief Pointer to HAL IRQ vector table
+//RO_PLACEMENT_NO_INIT volatile const uint16_t hil_Start_UP_;
+//RO_PLACEMENT_NO_INIT volatile const uint32_t  hil_signature_;
+//RO_PLACEMENT_NO_INIT volatile const uint16_t  hil_version_;
+//RO_PLACEMENT_NO_INIT volatile const uint16_t  hil_versionCmp_;
+
+
+int16_t _dummy_Init( void ){return 0;};
+int16_t _dummy_SetVcc(uint16_t Vcc){return 0;};
+void _dummy_SwitchVccFET(uint16_t state) {return;};
+int16_t _dummy_GetVcc(double* Vcc, double* ExtVcc){return 0;};
+
+int16_t _dummy_SetProtocol(uint16_t protocol_id){return 0;};
+void  _dummy_SetPsaSetup(uint16_t enhanced){return;};
+void  _dummy_SetPsaTCLK(uint16_t tclkValue){return;};
+
+int16_t _dummy_Open( uint8_t state ){return 0;};
+int16_t _dummy_Close( void ){return 0;};
+int16_t _dummy_IccMonitor_Process(uint16_t flags){return 0;}; // flags: to be compatible with HIL calls
+void  _dummy_EntrySequences(uint8_t states){return;};
+
+void _dummy_SetReset(uint8_t value){return;};
+void _dummy_SetTest(uint8_t value){return;};
+void _dummy_SetTMS(uint8_t value){return;};
+void _dummy_SetTDI(uint8_t value){return;};
+void _dummy_SetTCK(uint8_t value){return;};
+
+void _dummy_SetJtagSpeed(uint16_t jtagSpeed, uint16_t sbwSpeed){return;};
+void _dummy_ConfigureSetPc (uint16_t PCclockBeforeCapture){return;};
+
+void _dummy_initDelayTimer(void) {return;};
+int16_t _dummy_regulateVcc(void) {return 0;};
+uint16_t _dummy_getFpgaVersion(void) {return 0;};
+
+void _dummy(uint16_t dummy){return;};
+
+int16_t _dummy_TapReset_Dma(void){return 0;}
+int16_t _dummy_CheckJtagFuse_Dma(void){return 0;}
+uint8_t _dummy_Instr_Dma(uint8_t Instruction){return 0;}
+uint8_t _dummy_SetReg_XBits08_Dma(uint8_t Data){return 0;}
+uint16_t _dummy_SetReg_XBits16_Dma(uint16_t Data){return 0;}
+uint32_t _dummy_SetReg_XBits20_Dma(uint32_t Data){return 0;}
+uint32_t _dummy_SetReg_XBits32_Dma(uint32_t Data){return 0;}
+uint64_t _dummy_SetReg_XBits64_Dma(uint64_t Data){return 0;}
+uint64_t _dummy_SetReg_XBits8_64_Dma(uint64_t Data, uint16_t loopCount, uint16_t Pg){return 0;}
+void  _dummy_Tclk_Dma(uint8_t state){return;}
+void  _dummy_StepPsa_Dma(uint32_t length){return;}
+void  _dummy_StepPsaTclkHigh_Dma(uint32_t length){return;}
+int16_t _dummy_BlowFuse_Dma(uint8_t targetHasTestVpp){return 0;}
+void  _dummy_ConfigureSpeed_Dma(uint16_t speed){return;}
+void  _dummy_initTimerB0(void){return;}
+void  _dummy_BSL_EntrySequence(uint16_t switchBypassOff){return;}
+uint8_t _dummy_GetPrevInstruction (void){return 0;}
+void  _dummy_ReadADC12(void){return;}
+void _dummy_ConfigFpgaIoMode(uint16_t mode){return;}
+
+uint64_t _dummy_SetReg_XBits(uint64_t *data, uint16_t count){return 0;}
+uint8_t _dummy_Instr_4(uint8_t Data){return 0;}
+
+int16_t _dummy_write_read_Dp(uint8_t address, uint32_t *data, uint16_t rnw) {return -1;}
+int16_t _dummy_write_read_Ap(uint32_t address, uint32_t *data, uint16_t rnw) {return -1;}
+int16_t _dummy_write_read_mem_Ap(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw) {return -1;}
+
+void _dummy_setFpgaTimeOut(uint16_t state) {return;};
+
+struct stream_funcs *_stream_Funcs;
+
+HAL_INFOS hal_infos_in_ram_;
+
+// called via cstartup form BIOS_HalInterfaceInit
+REQUIRED(ResetFirmware)
+void *ResetFirmware(void *stream_adr, uint32_t device_flags, uint8_t v3opHilCrcOk, uint8_t v3opDcdcCcOk)
+{
+    globalVarsInit();
+    memcpy((HAL_INFOS*)&hal_infos_in_ram_,&hal_infos_, sizeof(hal_infos_));
+    // save address of stream funcs, located in core
+     _stream_Funcs=(struct stream_funcs *)stream_adr;
+    _init_Hal();
+    hal_infos_in_ram_.swCmp_0 = (VERSION_MAJOR_CMP - 1) << 14 | (VERSION_MINOR_CMP << 8) | VERSION_PATCH_CMP;
+    hal_infos_in_ram_.swCmp_1 = VERSION_BUILD_CMP;
+
+    {
+       // check if we have a valid hil layer programmed into our tool
+        if(hil_signature_ == 0xF00DF00D && hil_Start_UP_ != 0xFFFF && v3opHilCrcOk)
+        {
+            // INIT HIL layer
+            HilInitGetEdtCommenFunc hilEdtCom = NULL;
+            // set pointer to edt commen functions
+            hilEdtCom = (HilInitGetEdtCommenFunc)0x18A0;
+            hilEdtCom(&_edt_Common_Methods);
+            hal_infos_in_ram_.hil_version = hil_version_;
+            hal_infos_in_ram_.hil_versionCmp = hil_versionCmp_;
+#ifdef eZ_FET
+            if(v3opDcdcCcOk)
+            {
+                _edt_Common_Methods.SwitchVccFET(LDO_ON);
+            }
+#endif
+
+
+#ifdef MSP_FET
+            // Force to not update for Beta1
+            hal_infos_in_ram_.fpga_version = _edt_Common_Methods.getFpgaVersion();
+            // power up VCC as FET power supply
+            if(v3opDcdcCcOk)
+            {
+                _edt_Common_Methods.SetVcc(3300);
+                _edt_Common_Methods.SwitchVccFET(1);
+            }
+#else
+            hal_infos_in_ram_.fpga_version = 0;
+#endif
+        }
+        else
+        {
+            // if hil layer is not valid or no startup address was found
+            hal_infos_in_ram_.hil_version = 0;
+            hal_infos_in_ram_.fpga_version = 0;
+
+            _edt_Common_Methods.Init =              _dummy_Init;
+            _edt_Common_Methods.SetVcc =            _dummy_SetVcc;
+            _edt_Common_Methods.GetVcc =            _dummy_GetVcc;
+            _edt_Common_Methods.SetProtocol =       _dummy_SetProtocol;
+            _edt_Common_Methods.SetPsaTCLK =        _dummy_SetPsaTCLK;
+            _edt_Common_Methods.Open =              _dummy_Open;
+            _edt_Common_Methods.Close =             _dummy_Close;
+            _edt_Common_Methods.Delay_1us =         _dummy;
+            _edt_Common_Methods.Delay_1ms =         _dummy;
+            _edt_Common_Methods.Loop =              _dummy_IccMonitor_Process;
+            _edt_Common_Methods.EntrySequences =    _dummy_EntrySequences;
+            _edt_Common_Methods.SetReset =          _dummy_SetReset;
+            _edt_Common_Methods.SetTest =           _dummy_SetTest;
+            _edt_Common_Methods.SetTMS =            _dummy_SetTMS;
+            _edt_Common_Methods.SetTDI =            _dummy_SetTDI;
+            _edt_Common_Methods.SetTCK =            _dummy_SetTCK;
+            _edt_Common_Methods.SetJtagSpeed =      _dummy_SetJtagSpeed;
+            _edt_Common_Methods.ConfigureSetPc =    _dummy_ConfigureSetPc;
+            _edt_Common_Methods.initDelayTimer =    _dummy_initDelayTimer;
+            _edt_Common_Methods.regulateVcc =       _dummy_regulateVcc;
+            _edt_Common_Methods.getFpgaVersion =    _dummy_getFpgaVersion;
+            _edt_Common_Methods.BSL_EntrySequence = _dummy_BSL_EntrySequence;
+            _edt_Common_Methods.SwitchVccFET      = _dummy_SwitchVccFET;
+            _edt_Common_Methods.setFpgaTimeOut    = _dummy_setFpgaTimeOut;
+            _edt_Common_Methods.regulateVcc       = _dummy_regulateVcc;
+            _edt_Common_Methods.ReadADC12         = _dummy_ReadADC12;
+            _edt_Common_Methods.ConfigFpgaIoMode  = _dummy_ConfigFpgaIoMode;
+
+            _edt_Distinct_Methods.TapReset =            _dummy_TapReset_Dma;
+            _edt_Distinct_Methods.CheckJtagFuse =       _dummy_CheckJtagFuse_Dma;
+            _edt_Distinct_Methods.Instr =               _dummy_Instr_Dma;
+            _edt_Distinct_Methods.SetReg_XBits08 =      _dummy_SetReg_XBits08_Dma;
+            _edt_Distinct_Methods.SetReg_XBits16 =      _dummy_SetReg_XBits16_Dma;
+            _edt_Distinct_Methods.SetReg_XBits20 =      _dummy_SetReg_XBits20_Dma;
+            _edt_Distinct_Methods.SetReg_XBits32 =      _dummy_SetReg_XBits32_Dma;
+            _edt_Distinct_Methods.SetReg_XBits64 =      _dummy_SetReg_XBits64_Dma;
+            _edt_Distinct_Methods.SetReg_XBits8_64 =    _dummy_SetReg_XBits8_64_Dma;
+            _edt_Distinct_Methods.Tclk =                _dummy_Tclk_Dma;
+            _edt_Distinct_Methods.StepPsa =             _dummy_StepPsaTclkHigh_Dma;
+            _edt_Distinct_Methods.BlowFuse =            _dummy_BlowFuse_Dma;
+            _edt_Distinct_Methods.GetPrevInstruction  = _dummy_GetPrevInstruction;
+            _edt_Distinct_Methods.SetReg_XBits =        _dummy_SetReg_XBits;
+            _edt_Distinct_Methods.Instr04 =             _dummy_Instr_4;
+            _edt_Distinct_Methods.write_read_Dp =       _dummy_write_read_Dp;
+            _edt_Distinct_Methods.write_read_Ap =       _dummy_write_read_Ap;
+            _edt_Distinct_Methods.write_read_mem_Ap =   _dummy_write_read_mem_Ap;
+        }
+    }
+
+    _hal_mclkCntrl0=0x040f;
+    hal_infos_in_ram_.hal_size = sizeof(hal_functions_)/sizeof(HalRec);
+    hal_infos_in_ram_.hal_list_ptr = hal_functions_;
+    return((void*)&hal_infos_in_ram_); // return software infos
+}
+
+uint16_t hal_GetHilVersion()
+{
+    return 0;
+}
+
+
+
+
+
 
 /**
 * \ingroup MODULMACROS
@@ -2761,18 +2978,11 @@ const uint16_t sizeLoopFll = (uint16_t)(sizeof(loopFll)/sizeof(*loopFll));
 //    }
 //#endif
 
-using ReadCounterRegsFuncType   = uint32_t (MSPProbeSim::*)();
-using WriteRegFuncType          = void (MSPProbeSim::*)(int16_t, uint32_t);
-using SetPCFuncType             = void (MSPProbeSim::*)(uint32_t);
-using WriteRamFuncType          = void (MSPProbeSim::*)(uint16_t, const uint16_t*, uint16_t);
-using ReadRamFuncType           = void (MSPProbeSim::*)(uint16_t, uint16_t*, uint16_t);
-
-ReadCounterRegsFuncType     ReadCounterRegsFunc     = nullptr;
-WriteRegFuncType            WriteRegFunc            = nullptr;
-SetPCFuncType               SetPCFunc               = nullptr;
-WriteRamFuncType            WriteRamFunc            = nullptr;
-ReadRamFuncType             ReadRamFunc             = nullptr;
-HalFuncInOut SyncFunc                               = nullptr;
+uint32_t (MSPProbeSim::*ReadCounterRegsFunc)() = nullptr;
+void (MSPProbeSim::*WriteRegFunc)(int16_t, uint32_t) = nullptr;
+void (MSPProbeSim::*SetPCFunc)(uint32_t) = nullptr;
+void (MSPProbeSim::*WriteRamFunc)(uint16_t, const uint16_t*, uint16_t) = nullptr;
+void (MSPProbeSim::*ReadRamFunc)(uint16_t, uint16_t*, uint16_t) = nullptr;
 
 void readFromRam(uint16_t address, uint16_t* buffer, uint16_t numWords)
 {
@@ -3930,7 +4140,7 @@ uint16_t magicPattern = 0;
     int16_t magicPatternJsbw2();
 #endif
 
-#pragma optimize = medium
+//#pragma optimize = medium
 HAL_FUNCTION(_hal_MagicPattern)
 {
     uint16_t id = 0;
@@ -4115,7 +4325,7 @@ int16_t magicPatternJsbw2()
 
 /// \brief Low-level write function with timeout
 /// \return 0 if timeout occured and non-zero if success
-#pragma inline=forced
+//#pragma inline=forced
 uint8_t writeLowLevel(uint8_t address, uint32_t dataIn)
 {
     uint8_t retry = MAX_RETRY;
@@ -4133,7 +4343,7 @@ uint8_t writeLowLevel(uint8_t address, uint32_t dataIn)
 
 /// \brief Low-level read function with timeout
 /// \return 0 if timeout occured and non-zero if success
-#pragma inline=forced
+//#pragma inline=forced
 uint8_t readLowLevel(uint8_t address, uint32_t *dataInOut)
 {
     uint8_t retry = MAX_RETRY;
@@ -4686,7 +4896,7 @@ typedef enum ETMode
 //uint32_t getTimeStamp();
 //uint32_t getIMeasure();
 
-#pragma inline=forced
+//#pragma inline=forced
 uint32_t getTimeStamp()
 {
     uint32_t TimeStamp = 0;
@@ -4707,7 +4917,7 @@ uint32_t getTimeStamp()
     return TimeStamp;
 }
 
-#pragma inline=forced
+//#pragma inline=forced
 uint32_t getIMeasure()
 {
     uint32_t IMeasure = 0;
@@ -4824,7 +5034,7 @@ HAL_FUNCTION(_hal_PollJStateRegEt8)
 #endif
 //-----------------------------------------------------------------------------
 
-#pragma inline=forced
+//#pragma inline=forced
 int16_t PollforBpHit(uint64_t JStateValue)
 {
     uint16_t* syncWithRunVarAddress = 0;
@@ -4847,7 +5057,7 @@ int16_t PollforBpHit(uint64_t JStateValue)
 
 uint64_t prevJState = 0x0000000000000000;
 
-#pragma inline=forced
+//#pragma inline=forced
 int16_t PollforLPMx5(uint64_t JStateValue, uint16_t forceSendState)
 {
     StreamSafe stream_tmp;

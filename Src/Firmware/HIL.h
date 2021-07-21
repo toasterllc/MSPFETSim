@@ -1,549 +1,516 @@
 #pragma once
-#include "Types.h"
-#include "MSPInterface.h"
-#include "RuntimeError.h"
 
-#define HIL_UNIMP           printf("### HIL: UNIMPLEMENTED: %s\n", __FUNCTION__)
-#define HIL_UNIMP_RET0      HIL_UNIMP; return 0
-
+//#define HIL_VERSION        0x000C
+#define HIL_SIGNATURE      0xF00DF00Dul
 #define EXTERNAL_VCC_ON    1
 #define EXTERNAL_VCC_OFF   0
 
 #define REGULATION_ON    1
 #define REGULATION_OFF   0
 
-#define RSTHIGH 0
-#define RSTLOW  1
+struct edt_common_methods
+{
+    int16_t (MSPProbeSim::*Init)(void);
+    int16_t (MSPProbeSim::*SetVcc)(uint16_t);
+    void  (MSPProbeSim::*SwitchVccFET)(uint16_t);
+    int16_t (MSPProbeSim::*GetVcc)(double*, double*);
+    int16_t (MSPProbeSim::*SetProtocol)(uint16_t);
+    void  (MSPProbeSim::*SetPsaTCLK)(uint16_t);
+    int16_t (MSPProbeSim::*Open)(uint8_t state);
+    int16_t (MSPProbeSim::*Close)(void);
+    void  (MSPProbeSim::*Delay_1us)(uint16_t);
+    void  (MSPProbeSim::*Delay_1ms)(uint16_t);
+    int16_t (MSPProbeSim::*Loop)(uint16_t);
+    void  (MSPProbeSim::*EntrySequences)(uint8_t);
+    void (MSPProbeSim::*SetReset)(uint8_t);      // Set the Reset pin to the specified value
+    void (MSPProbeSim::*SetTest)(uint8_t);       // Set the Test pin to the specified value
+    void (MSPProbeSim::*SetJtagSpeed)(uint16_t, uint16_t);
+    void (MSPProbeSim::*ConfigureSetPc)(uint16_t);
+    void (MSPProbeSim::*initDelayTimer)(void);
+    void (MSPProbeSim::*BSL_EntrySequence)(uint16_t switchBypassOff);
+    void (MSPProbeSim::*SetTMS)(uint8_t);      // Set the TMS pin to the specified value
+    void (MSPProbeSim::*SetTCK)(uint8_t);      // Set the TCK pin to the specified value
+    void (MSPProbeSim::*SetTDI)(uint8_t);      // Set the TDI pin to the specified value
+    int16_t (MSPProbeSim::*regulateVcc)(void);
+    void (MSPProbeSim::*setFpgaTimeOut)(uint16_t state);
+    uint16_t (MSPProbeSim::*getFpgaVersion)(void);
+    void (MSPProbeSim::*ReadADC12)(void);
+    void (MSPProbeSim::*ConfigFpgaIoMode)(uint16_t mode);
+    void (MSPProbeSim::*BSL_EntrySequence1xx_4xx)(void);
+    void (MSPProbeSim::*SetToolID)(uint16_t id);
+};
+typedef struct edt_common_methods edt_common_methods_t;
 
-uint16_t gprotocol_id = JTAG;
-uint16_t jtagReleased = 1;
-uint16_t hil_sbw2Speed_ = 0;
-uint16_t hil_jtagSpeed_ = 0;
-int16_t dtVccSenseState = 0;
+struct edt_distinct_methods
+{
+    int16_t (MSPProbeSim::*TapReset)(void);
+    int16_t (MSPProbeSim::*CheckJtagFuse)(void);
+    uint8_t (MSPProbeSim::*Instr)(uint8_t);
+    uint8_t (MSPProbeSim::*Instr04)(uint8_t);
+    uint8_t (MSPProbeSim::*SetReg_XBits08)(uint8_t);
+    uint16_t (MSPProbeSim::*SetReg_XBits16)(uint16_t);
+    uint32_t (MSPProbeSim::*SetReg_XBits20)(uint32_t);
+    uint32_t (MSPProbeSim::*SetReg_XBits32)(uint32_t);
+    uint64_t (MSPProbeSim::*SetReg_XBits35)(uint64_t *Data);
+    uint64_t (MSPProbeSim::*SetReg_XBits64)(uint64_t);
+    uint64_t (MSPProbeSim::*SetReg_XBits8_64)(uint64_t, uint16_t, uint16_t);
+    uint64_t (MSPProbeSim::*SetReg_XBits)(uint64_t *Data, uint16_t count);
+    void (MSPProbeSim::*Tclk)(uint8_t);
+    void (MSPProbeSim::*StepPsa)(uint32_t);
+    int16_t (MSPProbeSim::*BlowFuse)(uint8_t); // Blow the JTAG acces fuse
+    uint8_t (MSPProbeSim::*GetPrevInstruction)(void);
+    int16_t (MSPProbeSim::*write_read_Dp)(uint8_t address, uint32_t *data, uint16_t rnw);
+    int16_t (MSPProbeSim::*write_read_Ap)(uint32_t address, uint32_t *data, uint16_t rnw);
+    int16_t (MSPProbeSim::*write_read_mem_Ap)(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw);
+    uint32_t (MSPProbeSim::*GetJtagIdCode)();
+    uint8_t (MSPProbeSim::*SwdTransferData)(uint8_t regiser, uint32_t* data, uint8_t rnw);
+};
+typedef struct edt_distinct_methods edt_distinct_methods_t;
+
+//! \brief version of bios code
+const uint16_t hil_version_ = MSP_FET_HIL_VERSION;
+//#pragma required=hil_version_
+
+const uint16_t hil_versionCmp_ = MSP_FET_HIL_VERSION_CMP;
+//#pragma required=hil_versionCmp_
+
+const uint32_t hil_signature_ = HIL_SIGNATURE;
+//#pragma required=hil_signature_
+
+
+
+
 uint16_t gTclkHighWhilePsa = 0;
 uint16_t setValueVcc = 0;
 uint16_t externalVccOn = 0;
 uint16_t regulationOn = 0;
-uint16_t prevInstruction = 0;
-bool TCLK_saved = 1;
 
-void _sbwio(bool tms, bool tdi) {
-    // With no `tclk` specified, use the value for TMS, so that the line stays constant
-    // between registering the TMS value and outputting the TDI value
-    _msp.sbwIO(tms, tms, tdi, false);
+uint16_t jtagReleased = 0;
+uint16_t setPCclockBeforeCapture = 0;
+
+//// function prototypes for map initialization
+//// common HIL configuration methods
+//int16_t _hil_Init( void );
+//int16_t _hil_SetVcc(uint16_t Vcc);
+//int16_t _hil_GetVcc(double* Vcc, double* ExtVcc);
+//int16_t _hil_SetProtocol(uint16_t protocol_id);
+//void  _hil_SetPsaSetup(uint16_t enhanced);
+//void  _hil_SetPsaTCLK(uint16_t tclkValue);
+//
+//int16_t _hil_Open( uint8_t state );
+//int16_t _hil_Close( void );
+//int16_t IccMonitor_Process(uint16_t flags); // flags: to be compatible with HIL calls
+//void  _hil_EntrySequences(uint8_t states);
+//
+//void _hil_SetReset(uint8_t value);
+//void _hil_SetTest(uint8_t value);
+//void _hil_SetTMS(uint8_t value);
+//void _hil_SetTDI(uint8_t value);
+//void _hil_SetTCK(uint8_t value);
+//
+//void _hil_SetJtagSpeed(uint16_t jtagSpeed, uint16_t sbwSpeed);
+//void _hil_ConfigureSetPc (uint16_t PCclockBeforeCapture);
+//
+//void _hil_setDacValues(uint16_t dac0, uint16_t dac1);
+//int16_t _hil_regulateVcc(void);
+//void _hil_switchVccFET(uint16_t switchVccFET);
+//int16_t _hil_SetVcc(uint16_t Vcc);
+//
+//uint32_t hil_Jtag_read_idcode();
+//uint32_t hil_swd_read_idcode();
+//
+//// SBW4
+//extern int16_t _hil_4w_TapReset(void);
+//extern int16_t _hil_4w_CheckJtagFuse(void);
+//extern void  _hil_4w_StepPsa(uint32_t length);
+//extern void  _hil_4w_StepPsaTclkHigh(uint32_t length);
+//extern int16_t _hil_4w_BlowFuse(uint8_t targetHasTestVpp);
+//extern uint8_t _hil_4w_Instr(uint8_t Instruction);
+//
+//// SBW2 DMA
+//extern int16_t _hil_2w_TapReset_Dma(void);
+//extern int16_t _hil_2w_CheckJtagFuse_Dma(void);
+//extern uint8_t _hil_2w_Instr_Dma(uint8_t Instruction);
+//extern uint8_t _hil_2w_SetReg_XBits08_Dma(uint8_t Data);
+//extern uint16_t _hil_2w_SetReg_XBits16_Dma(uint16_t Data);
+//extern uint32_t _hil_2w_SetReg_XBits20_Dma(uint32_t Data);
+//extern uint32_t _hil_2w_SetReg_XBits32_Dma(uint32_t Data);
+//extern uint64_t _hil_2w_SetReg_XBits64_Dma(uint64_t Data);
+//extern uint64_t _hil_2w_SetReg_XBits8_64_Dma(uint64_t Data, uint16_t loopCount, uint16_t PG);
+//extern void _hil_2w_Tclk_Dma(uint8_t state);
+//extern void _hil_2w_StepPsa_Dma(uint32_t length);
+//extern void _hil_2w_StepPsa_Dma_Xv2(uint32_t length);
+//extern void _hil_2w_StepPsaTclkHigh_Dma(uint32_t length);
+//extern int16_t _hil_2w_BlowFuse_Dma(uint8_t targetHasTestVpp);
+//extern void _hil_2w_ConfigureSpeed_Dma(uint16_t speed);
+//extern uint8_t _hil_2w_GetPrevInstruction_Dma();
+//extern uint8_t DMA_TMSL_TDIL[];
+//extern void setProtocolSbw2Dma(uint16_t id);
+
+void _hil_Delay_1ms(uint16_t ms)
+{
+    printf("### IMPLEMENT %s\n", __FUNCTION__);
 }
 
-void _sbwio_r(bool tms, bool tdi) {
-    // With no `tclk` specified, use the value for TMS, so that the line stays constant
-    // between registering the TMS value and outputting the TDI value
-    _msp.sbwIO(tms, tms, tdi, true);
+void _hil_Delay_1us(uint16_t  us)
+{
+    printf("### IMPLEMENT %s\n", __FUNCTION__);
 }
 
-void _sbwioTclk(bool tms, bool tclk) {
-    _msp.sbwIO(tms, TCLK_saved, tclk, false);
-    TCLK_saved = tclk;
-}
 
-uint64_t _read(uint8_t w) {
-    uint8_t b[8];
-    _msp.sbwRead(&b, w/8+(w%8?1:0));
-    
-    if (w == 8) {
-        return b[0]<<0;
-    } else if (w == 16) {
-        return b[0]<<8 | b[1]<<0;
-    } else if (w == 20) {
-        return b[0]<<12 | b[1]<<4 | ((b[2]<<0)&0x0F);
-    } else if (w == 32) {
-        return b[0]<<24 | b[1]<<16 | b[2]<<8 | b[3]<<0;
-    } else {
-        abort();
-    }
-}
+int16_t _hil_dummy_TapReset(void) {return 0;}
+int16_t _hil_dummy_CheckJtagFuse(void){return 0;}
+uint8_t _hil_dummy_Instr(uint8_t Instruction){return 0;}
+uint8_t _hil_dummy_SetReg_XBits08(uint8_t Data){return 0;}
+uint8_t _hil_dummy_Instr_4(uint8_t Data){return 0;}
 
-#pragma push_macro("static")
-#undef static
-template <class...> static constexpr std::false_type _AlwaysFalse = {};
-#pragma pop_macro("static")
+uint16_t _hil_dummy_SetReg_XBits16(uint16_t Data){return 0;}
+uint32_t _hil_dummy_SetReg_XBits20(uint32_t Data){return 0;}
+uint32_t _hil_dummy_SetReg_XBits32(uint32_t Data){return 0;}
+uint64_t _hil_dummy_SetReg_XBits64(uint64_t Data){return 0;}
+uint64_t _hil_dummy_SetReg_XBits8_64(uint64_t Data, uint16_t loopCount, uint16_t JStateVersion){return 0;}
+uint64_t _hil_dummy_SetReg_XBits(uint64_t *data, uint16_t count){return 0;}
+uint64_t _hil_dummy_SetReg_XBits35(uint64_t *data){return 0;}
 
-template <typename T, size_t W=sizeof(T)*8>
-class SBWShiftProxy {
-public:
-    // Default constructor returns a nop object that just returns 0
-    SBWShiftProxy() {}
-    SBWShiftProxy(MSPProbeSim* self, uint64_t data) : _self(self), _data(data) {}
-    // Copy constructor: not allowed
-    SBWShiftProxy(const SBWShiftProxy& x) = delete;
-    // Move constructor: not allowed
-    SBWShiftProxy(SBWShiftProxy&& x) = delete;
-    
-    ~SBWShiftProxy() {
-        if (!_self) return; // Short-circuit if we're a nop object
-        if (!_read) {
-            // Perform non-read shift
-                 if constexpr (W ==  8) _self->sbw_Shift(_data, F_BYTE);
-            else if constexpr (W == 16) _self->sbw_Shift(_data, F_WORD);
-            else if constexpr (W == 20) _self->sbw_Shift(_data, F_ADDR);
-            else if constexpr (W == 32) _self->sbw_Shift(_data, F_LONG);
-            else if constexpr (W == 64) _self->sbw_Shift(_data, F_LONG_LONG);
-            else                        static_assert(_AlwaysFalse<T>);
-        }
-    }
-    
-    operator T() {
-        if (!_self) return 0; // Short-circuit if we're a nop object
-        
-        // Perform read shift and return result
-        _read = true;
-             if constexpr (W ==  8) return _self->sbw_Shift_R(_data, F_BYTE);
-        else if constexpr (W == 16) return _self->sbw_Shift_R(_data, F_WORD);
-        else if constexpr (W == 20) return _self->sbw_Shift_R(_data, F_ADDR);
-        else if constexpr (W == 32) return _self->sbw_Shift_R(_data, F_LONG);
-        else if constexpr (W == 64) return _self->sbw_Shift_R(_data, F_LONG_LONG);
-        else                        static_assert(_AlwaysFalse<T>);
-    }
-    
-private:
-    MSPProbeSim* _self = nullptr;
-    uint64_t _data = 0;
-    bool _read = false;
+void _hil_dummy_Tclk(uint8_t state){return;}
+void _hil_dummy_StepPsa(uint32_t length){return;}
+int16_t _hil_dummy_BlowFuse(uint8_t targetHasTestVpp){return 0;}
+uint8_t _hil_dummy_GetPrevInstruction(){return 0;}
+
+int16_t _hil_dummy_Write_Read_Ap(uint32_t address ,uint32_t *data, uint16_t rnw){return -1;};
+int16_t _hil_dummy_Write_Read_Dp(uint8_t address ,uint32_t *data, uint16_t rnw){return -1;};
+int16_t _hil_dummy_Write_Read_Mem_Ap(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw){return -1;};
+uint32_t _hil_read_idcodeDummy(){return -1;}
+uint8_t _hil_dummy_TransferData(uint8_t regiser, uint32_t* data, uint8_t rnw){return -1;};
+void _hil_dummy_SetToolID(uint16_t id) {return;}
+
+//// FPGA generic 430
+//extern void initGeneric();
+//extern uint8_t _hil_generic_Instr(uint8_t Instruction);
+//
+//extern uint8_t _hil_generic_SetReg_XBits08(uint8_t Data);
+//extern uint16_t _hil_generic_SetReg_XBits16(uint16_t Data);
+//extern uint32_t _hil_generic_SetReg_XBits20(uint32_t Data);
+//extern uint32_t _hil_generic_SetReg_XBits32(uint32_t Data);
+//extern uint64_t _hil_generic_SetReg_XBits64(uint64_t Data);
+//extern uint64_t _hil_generic_XBits8_64(uint64_t Data, uint16_t loopCount, uint16_t PG);
+//extern void  _hil_generic_Tclk(uint8_t state);
+//extern void  _hil_generic_ConfigureSpeed(uint16_t speed);
+//extern uint8_t _hil_generic_GetPrevInstruction();
+//
+//// FPGA generic 432
+//extern uint8_t _hil_generic432_Instr_4(uint8_t Data);
+////extern uint64_t _hil_generic432_SetReg_XBits(uint64_t *data, uint16_t count);
+//extern uint8_t _hil_generic432_SetReg_XBits08(uint8_t Data);
+//extern uint16_t _hil_generic432_SetReg_XBits16(uint16_t Data);
+//extern uint32_t _hil_generic432_SetReg_XBits32(uint32_t Data);
+//extern uint64_t _hil_generic432_SetReg_XBits64(uint64_t Data);
+//extern uint64_t _hil_generic432_SetReg_XBits35(uint64_t *data);
+//
+//extern void hil_4w_432_Seq(uint16_t length, uint8_t *sequence);
+//
+//// FPGA generic
+//extern uint16_t hil_fpga_get_version(void);
+//extern void _hil_FpgaAccess_setTimeOut(uint16_t state);
+//
+//// protocol specific methods
+//// must be implemeted in SWD mode
+//extern void hil_Swd_InitJtag(struct jtag tmp);
+//extern void hil_Swd_Seq(uint16_t length, uint8_t *sequence);
+//extern uint8_t Swd_TransferData(uint8_t regiser, uint32_t* data, uint8_t rnw);
+//
+//extern void SWDTCKset1();
+//extern void SWDTCKset0();
+//
+//void SWD_Entry();
+//void JTAG_Entry();
+//
+//int16_t _hil_Write_Read_Ap_Jtag(uint32_t address ,uint32_t *data, uint16_t rnw);
+//int16_t _hil_Write_Read_Dp_Jtag(uint8_t address ,uint32_t *data, uint16_t rnw);
+//int16_t _hil_Write_Read_Mem_Ap_Jtag(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw);
+//
+//int16_t _hil_Write_Read_Dp_Swd(uint8_t address ,uint32_t *data, uint16_t rnw);
+//int16_t _hil_Write_Read_Ap_Swd(uint32_t address, uint32_t *data, uint16_t rnw);
+//int16_t _hil_Write_Read_Mem_Ap_Swd(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw);
+//
+//void _hil_Release(void);
+//void  hil_initTimerA2(void);
+//void _hil_BSL_EntrySequence(uint16_t);
+//void _hil_BSL_EntrySequence1xx_4xx();
+//void _hil_ReadADC12(void);
+//void _hil_ConfigFpgaIoMode(uint16_t mode);
+//
+//static void _hil_Connect(uint8_t state);
+//
+//extern void initJtagSbw2Dma(struct jtag tmp);
+//extern void initJtagSbw4(struct jtag tmp);
+
+edt_common_methods_t   _Common_Methods;
+edt_distinct_methods_t _Distinct_Methods;
+
+struct jtag _Jtag =
+{
+  0,  // TCK, P4.4 (out) (high)
+  0,  // TMS, P4.5 (out) (high)
+  0,  // TDI, P4.6 (out) (high)
+  0,  // TDO, P4.7 (in)
+  0,
+  0,
+  0, //RST
+  0, //TST
+  0
 };
 
-void TMSL_TDIL() { _sbwio(0,0); }
-void TMSH_TDIL() { _sbwio(1,0); }
-void TMSL_TDIH() { _sbwio(0,1); }
-void TMSH_TDIH() { _sbwio(1,1); }
-
-void TMSL_TDIL_TDOrd() { _sbwio_r(0,0); }
-void TMSH_TDIL_TDOrd() { _sbwio_r(1,0); }
-void TMSL_TDIH_TDOrd() { _sbwio_r(0,1); }
-void TMSH_TDIH_TDOrd() { _sbwio_r(1,1); }
-
-void sbw_Shift(uint64_t Data, int16_t Bits)
+// fuse blow control
+struct vfuse_ctrl _VFuse =
 {
-    uint64_t MSB = 0x0000000000000000;
+  0,    // VF2TEST
+  0,    // VF2TDI
+  0,    // TDIOFF
+  0,    // VF control register
+  0,    // PWM_SETVF
+  0,    // VF PWM control register
+};
 
-    switch(Bits)
-    {
-        case F_BYTE: MSB = 0x00000080;
-            break;
-        case F_WORD: MSB = 0x00008000;
-            break;
-        case F_ADDR: MSB = 0x00080000;
-            break;
-        case F_LONG: MSB = 0x80000000;
-            break;
-        case F_LONG_LONG: MSB = 0x8000000000000000;
-            break;
-        default: // this is an unsupported format
-            abort();
-    }
-    do
-    {
-        if ((MSB & 1) == 1)                       // Last bit requires TMS=1
-        {
-            if(Data & MSB)
-            {
-                TMSH_TDIH();
-            }
-            else
-            {
-                TMSH_TDIL();
-            }
-        }
-        else
-        {
-            if(Data & MSB)
-            {
-                TMSL_TDIH();
-            }
-            else
-            {
-                TMSL_TDIL();
-            }
-        }
-    }
-    while(MSB >>= 1);
+uint16_t gprotocol_id = 0;
+uint16_t hil_sbw2Speed_ = 0;
+uint16_t hil_jtagSpeed_ = 0;
+int16_t dtVccSenseState = 0;
 
-    if (TCLK_saved)
-    {
-        TMSH_TDIH();
-        TMSL_TDIH();
-    }
-    else
-    {
-        TMSH_TDIL();
-        TMSL_TDIL();
-    }
-}
+volatile uint8_t useTDI = 0;
 
-uint64_t sbw_Shift_R(uint64_t Data, int16_t Bits)
-{
-    uint64_t MSB = 0x0000000000000000;
-
-    switch(Bits)
-    {
-        case F_BYTE: MSB = 0x00000080;
-            break;
-        case F_WORD: MSB = 0x00008000;
-            break;
-        case F_ADDR: MSB = 0x00080000;
-            break;
-        case F_LONG: MSB = 0x80000000;
-            break;
-        case F_LONG_LONG: MSB = 0x8000000000000000;
-            break;
-        default: // this is an unsupported format
-            abort();
-    }
-    do
-    {
-        if ((MSB & 1) == 1)                       // Last bit requires TMS=1
-        {
-            if(Data & MSB)
-            {
-                TMSH_TDIH_TDOrd();
-            }
-            else
-            {
-                TMSH_TDIL_TDOrd();
-            }
-        }
-        else
-        {
-            if(Data & MSB)
-            {
-                TMSL_TDIH_TDOrd();
-            }
-            else
-            {
-                TMSL_TDIL_TDOrd();
-            }
-        }
-    }
-    while(MSB >>= 1);
-
-    if (TCLK_saved)
-    {
-        TMSH_TDIH();
-        TMSL_TDIH();
-    }
-    else
-    {
-        TMSH_TDIL();
-        TMSL_TDIL();
-    }
-    uint64_t TDOvalue = _read(Bits);
-    // de-scramble upper 4 bits if it was a 20bit shift
-    if(Bits == F_ADDR)
-    {
-        TDOvalue = ((TDOvalue >> 4) | (TDOvalue << 16)) & 0x000FFFFF;
-    }
-    return(TDOvalue);
-}
-
-void _hil_Delay_1us(uint16_t us) {
-    IHIL_Delay_1us(us);
-}
-
-void _hil_Delay_1ms(uint16_t ms) {
-    IHIL_Delay_1ms(ms);
-}
-
+//#pragma inline=forced
 void RSTset1()
 {
-    _msp.sbwRstSet(1);
+    { (*_Jtag.Out) |= _Jtag.RST; }
     _hil_Delay_1ms(5);
 }
-
+//#pragma inline=forced
 void RSTset0()
 {
-    _msp.sbwRstSet(0);
+    { (*_Jtag.Out) &= ~_Jtag.RST; }
+     _hil_Delay_1ms(5);
+}
+
+//#pragma inline=forced
+void TMSset1()
+{
+    { (*_Jtag.Out) |= _Jtag.TMS; }
     _hil_Delay_1ms(5);
 }
-
-void TSTset1()
+//#pragma inline=forced
+void TMSset0()
 {
-    _msp.sbwTestSet(1);
-    _hil_Delay_1ms(5);
+    { (*_Jtag.Out) &= ~_Jtag.TMS; }
+     _hil_Delay_1ms(5);
 }
 
-void TSTset0()
-{
-    _msp.sbwTestSet(0);
-    _hil_Delay_1ms(5);
-}
-
-void TSTset1NoDelay()
-{
-    _msp.sbwTestSet(1);
-}
-
-void TSTset0NoDelay()
-{
-    _msp.sbwTestSet(0);
-}
-
-void TCLKset1()
-{
-    IHIL_Tclk(1);
-}
-
-void TCLKset0()
-{
-    IHIL_Tclk(0);
-}
-
+//#pragma inline=forced
 void TCKset1()
 {
-    // In SBW mode, TCK is pin 0, which is the same assignment TST.
-    // See _SBW_Back definition.
-    TSTset1();
+    { (*_Jtag.Out) |= _Jtag.TCK; }
+    _hil_Delay_1ms(5);
 }
+//#pragma inline=forced
 void TCKset0()
 {
-    // In SBW mode, TCK is pin 0, which is the same assignment TST.
-    // See _SBW_Back definition.
-    TSTset0();
+    { (*_Jtag.Out) &= ~_Jtag.TCK; }
+     _hil_Delay_1ms(5);
 }
 
+//#pragma inline=forced
 void TCKset1NoDelay()
 {
-    // In SBW mode, TCK is pin 0, which is the same assignment TST.
-    // See _SBW_Back definition.
-    TSTset1NoDelay();
+    { (*_Jtag.Out) |= _Jtag.TCK; }
 }
 
+//#pragma inline=forced
 void TCKset0NoDelay()
 {
-    // In SBW mode, TCK is pin 0, which is the same assignment TST.
-    // See _SBW_Back definition.
-    TSTset0NoDelay();
+    { (*_Jtag.Out) &= ~_Jtag.TCK; }
 }
 
+//#pragma inline=forced
+void TDIset1()
+{
+    { (*_Jtag.Out) |= _Jtag.TDI; }
+    _hil_Delay_1ms(5);
+}
+//#pragma inline=forced
+void TDIset0()
+{
+    { (*_Jtag.Out) &= ~_Jtag.TDI; }
+     _hil_Delay_1ms(5);
+}
+
+//#pragma inline=forced
+void TSTset1()
+{
+    { (*_Jtag.Out) |= _Jtag.TST;}
+    _hil_Delay_1ms(5);
+}
+//#pragma inline=forced
+void TSTset0()
+{
+    {(*_Jtag.Out) &= ~_Jtag.TST; }
+    _hil_Delay_1ms(5);
+}
+//#pragma inline=forced
+void TSTset1NoDelay()
+{
+    { (*_Jtag.Out) |= _Jtag.TST;}
+}
+//#pragma inline=forced
+void TSTset0NoDelay()
+{
+    {(*_Jtag.Out) &= ~_Jtag.TST; }
+}
+
+////#pragma inline=forced
+void TCLKset1()
+{
+    CALL_MEMBER_FN_PTR(_Distinct_Methods.Tclk)(1);
+}
+
+////#pragma inline=forced
+void TCLKset0()
+{
+   CALL_MEMBER_FN_PTR(_Distinct_Methods.Tclk)(0);
+}
+//#pragma inline=forced
 void TCLK()
 {
     TCLKset0();
     TCLKset1();
 }
 
-void hil_fpga_enable_bypass() {
+void _hil_initEdtCommenMethods()
+{
+    _Common_Methods.Init                     = MEMBER_FN_PTR(_hil_Init);
+    _Common_Methods.SetVcc                   = MEMBER_FN_PTR(_hil_SetVcc);
+    _Common_Methods.SwitchVccFET             = MEMBER_FN_PTR(_hil_switchVccFET);
+    _Common_Methods.GetVcc                   = MEMBER_FN_PTR(_hil_GetVcc);
+    _Common_Methods.SetProtocol              = MEMBER_FN_PTR(_hil_SetProtocol);
+    _Common_Methods.SetPsaTCLK               = MEMBER_FN_PTR(_hil_SetPsaTCLK);
+    _Common_Methods.Open                     = MEMBER_FN_PTR(_hil_Open);
+    _Common_Methods.Close                    = MEMBER_FN_PTR(_hil_Close);
+    _Common_Methods.Delay_1us                = MEMBER_FN_PTR(_hil_Delay_1us);
+    _Common_Methods.Delay_1ms                = MEMBER_FN_PTR(_hil_Delay_1ms);
+    _Common_Methods.Loop                     = nullptr;
+    _Common_Methods.EntrySequences           = MEMBER_FN_PTR(_hil_EntrySequences);
+    _Common_Methods.SetReset                 = MEMBER_FN_PTR(_hil_SetReset);
+    _Common_Methods.SetTest                  = MEMBER_FN_PTR(_hil_SetTest);
+    _Common_Methods.SetTMS                   = MEMBER_FN_PTR(_hil_SetTMS);
+    _Common_Methods.SetTCK                   = MEMBER_FN_PTR(_hil_SetTCK);
+    _Common_Methods.SetTDI                   = MEMBER_FN_PTR(_hil_SetTDI);
+    _Common_Methods.SetJtagSpeed             = MEMBER_FN_PTR(_hil_SetJtagSpeed);
+    _Common_Methods.ConfigureSetPc           = MEMBER_FN_PTR(_hil_ConfigureSetPc);
+    _Common_Methods.initDelayTimer           = MEMBER_FN_PTR(hil_initTimerA2);
+    _Common_Methods.BSL_EntrySequence        = MEMBER_FN_PTR(_hil_BSL_EntrySequence);
+    _Common_Methods.BSL_EntrySequence1xx_4xx = MEMBER_FN_PTR(_hil_BSL_EntrySequence1xx_4xx);
+    _Common_Methods.SetToolID                = MEMBER_FN_PTR(_hil_dummy_SetToolID);
+    _Common_Methods.regulateVcc              = MEMBER_FN_PTR(_hil_regulateVcc);
+    _Common_Methods.setFpgaTimeOut           = MEMBER_FN_PTR(_hil_FpgaAccess_setTimeOut);
+    _Common_Methods.getFpgaVersion           = MEMBER_FN_PTR(hil_fpga_get_version);
+    _Common_Methods.ReadADC12                = MEMBER_FN_PTR(_hil_ReadADC12);
+    _Common_Methods.ConfigFpgaIoMode         = MEMBER_FN_PTR(_hil_ConfigFpgaIoMode);
 }
 
-void hil_fpga_disable_bypass() {
+//void _hil_getEdtDistinct(edt_distinct_methods_t* edt_distinct);
+//void _hil_getEdtCommen(edt_common_methods_t* edt_commen);
+//void _hil_switchVccFET(uint16_t switchVccFET);
+
+//#pragma required=_hil_getEdtDistinct
+//#pragma required=_hil_getEdtCommen
+
+void _hil_startUp()
+{
+    _hil_initEdtCommenMethods();
+    CALL_MEMBER_FN_PTR(_Common_Methods.Init)();
+    
+    // DMA4 workaround
+//    DMACTL4 |= DMARMWDIS;
+    
+    return;
 }
-
-void _flush() {
-    _msp.sbwRead(nullptr, 0);
-}
-
-// HIL common methods (common = identical implementations for JTAG/SBW )
-int16_t IHIL_Init() {
-    // From msp_fet:_hil_Init()
-    
-    // default config
-    externalVccOn = EXTERNAL_VCC_OFF;
-    regulationOn = REGULATION_OFF;
-    dtVccSenseState = 0;
-    
-    // set default to TCLK low when doing PSA
-    gTclkHighWhilePsa = 0;
-    // initialize function pointers to distinct functions
-    
-    // set default debug protocol to JTAG
-    gprotocol_id = SPYBIWIREJTAG;
-    // set default to TCLK low when doing PSA
-    gTclkHighWhilePsa = 0;
-    // initialize function pointers to distinct functions
-    IHIL_SetProtocol(SPYBIWIRE);
-    jtagReleased = 1;
-    
-    return 0;
-};
-
-int16_t IHIL_RegulateVcc() {
-    return 0;
-};
-
-int16_t IHIL_SetVcc(uint16_t vcc) {
-    return 0;
-}
-
-void IHIL_SwitchVccFET(uint16_t switchVccFET) {
-}
-
-int16_t IHIL_GetVcc(double* Vcc, double* ExtVcc) {
-    // From msp_fet:_hil_GetVcc()
-    float vccSupply = 3300, externalVcc = 0;
-
-//    externalVcc = hil_AdcControlGetExternalVcc();
-//    vccSupply = hil_AdcControlGetSupplyVcc();
-//
-//    if(externalVcc >= 1650 && externalVcc < 3800)
-//    {
-//        setValueVcc = (uint16_t)externalVcc;
-//        externalVccOn = EXTERNAL_VCC_ON;
-//        regulationOn = REGULATION_ON;
-//
-//        if(gprotocol_id != SWD_432)
-//        {
-//            hil_fpga_enable_bypass();
-//        }
-//
-//        P8DIR |= (BIT0);
-//        P8OUT |= (BIT0);
-//
-//        _hil_Delay_1ms(10);
-//        if(gprotocol_id != SWD_432)
-//        {
-//            hil_fpga_disable_bypass();
-//        }
-//    }
-//    else
-//    {
-//        externalVccOn = EXTERNAL_VCC_OFF;
-//    }
-    *Vcc = vccSupply;
-    *ExtVcc = externalVcc;
-    return 0;
-};
-
-int16_t IHIL_SetProtocol(uint16_t protocol_id) {
-    // From msp_fet:_hil_SetProtocol()
-    int16_t ret_value = 0;
-    
-    gprotocol_id = protocol_id;
-    initGeneric();
-    
-    if (gprotocol_id == JTAG) {
-//        _Distinct_Methods.TapReset = _hil_4w_TapReset;
-//        _Distinct_Methods.CheckJtagFuse = _hil_4w_CheckJtagFuse;
-//        _Distinct_Methods.Instr = _hil_generic_Instr;
-//        _Distinct_Methods.SetReg_XBits08 = _hil_generic_SetReg_XBits08;
-//        _Distinct_Methods.SetReg_XBits16 = _hil_generic_SetReg_XBits16;
-//        _Distinct_Methods.SetReg_XBits20 = _hil_generic_SetReg_XBits20;
-//        _Distinct_Methods.SetReg_XBits32 = _hil_generic_SetReg_XBits32;
-//        _Distinct_Methods.SetReg_XBits64 = _hil_generic_SetReg_XBits64;
-//        _Distinct_Methods.SetReg_XBits8_64 =  _hil_generic_XBits8_64;
-//        _Distinct_Methods.GetPrevInstruction = _hil_generic_GetPrevInstruction;
-//        _Distinct_Methods.Tclk = _hil_generic_Tclk;
-//
-//        // load dummies for 432
-//        _Distinct_Methods.Instr04 = _hil_dummy_Instr_4;
-//        _Distinct_Methods.write_read_Dp = _hil_dummy_Write_Read_Dp;
-//        _Distinct_Methods.write_read_Ap = _hil_dummy_Write_Read_Ap;
-//        _Distinct_Methods.write_read_mem_Ap = _hil_dummy_Write_Read_Mem_Ap;
-//        _Distinct_Methods.SetReg_XBits  = _hil_dummy_SetReg_XBits;
-//        _Distinct_Methods.SetReg_XBits35 = _hil_dummy_SetReg_XBits35;
-//        _Distinct_Methods.SwdTransferData = _hil_dummy_TransferData;
-//
-//        if(gTclkHighWhilePsa == 0 || gTclkHighWhilePsa == 2)
-//        {
-//            _Distinct_Methods.StepPsa = _hil_4w_StepPsa;
-//        }
-//        else
-//        {
-//            _Distinct_Methods.StepPsa = _hil_4w_StepPsaTclkHigh;
-//        }
-//        _Distinct_Methods.BlowFuse = _hil_4w_BlowFuse;
-    
-    } else if (gprotocol_id == SPYBIWIRE) {
-//        // Functionality executed in FPGA bypass mode by Sub-MCU
-//        _Distinct_Methods.TapReset =            _hil_2w_TapReset_Dma;
-//        _Distinct_Methods.CheckJtagFuse =       _hil_2w_CheckJtagFuse_Dma;
-//
-//        _Distinct_Methods.Instr =               _hil_generic_Instr;
-//        _Distinct_Methods.SetReg_XBits08 =      _hil_generic_SetReg_XBits08;
-//        _Distinct_Methods.SetReg_XBits16 =      _hil_generic_SetReg_XBits16;
-//        _Distinct_Methods.SetReg_XBits20 =      _hil_generic_SetReg_XBits20;
-//        _Distinct_Methods.SetReg_XBits32 =      _hil_generic_SetReg_XBits32;
-//        _Distinct_Methods.SetReg_XBits64 =      _hil_generic_SetReg_XBits64;
-//        _Distinct_Methods.SetReg_XBits8_64 =    _hil_generic_XBits8_64;
-//        _Distinct_Methods.GetPrevInstruction =  _hil_generic_GetPrevInstruction;
-//        _Distinct_Methods.Tclk =                _hil_generic_Tclk;
-//        _Distinct_Methods.SetReg_XBits  =       _hil_dummy_SetReg_XBits;
-//        _Distinct_Methods.Instr04       =       _hil_dummy_Instr_4;
-//        _Distinct_Methods.write_read_Dp =       _hil_dummy_Write_Read_Dp;
-//        _Distinct_Methods.write_read_Ap =       _hil_dummy_Write_Read_Ap;
-//        _Distinct_Methods.write_read_mem_Ap =   _hil_dummy_Write_Read_Mem_Ap;
-//        _Distinct_Methods.SetReg_XBits35 =      _hil_dummy_SetReg_XBits35;
-//        _Distinct_Methods.SwdTransferData =     _hil_dummy_TransferData;
-//        
-//        if(gTclkHighWhilePsa == 1)
-//        {
-//            _Distinct_Methods.StepPsa = _hil_2w_StepPsaTclkHigh_Dma;
-//        }
-//        else if(gTclkHighWhilePsa == 2)
-//        {
-//            _Distinct_Methods.StepPsa = _hil_2w_StepPsa_Dma_Xv2;
-//        }
-//        else
-//        {
-//            _Distinct_Methods.StepPsa = _hil_2w_StepPsa_Dma;
-//        }
-//        _Distinct_Methods.BlowFuse = _hil_2w_BlowFuse_Dma;
-    
-    } else {
-        printf("### Unsupported protocol: %d\n", gprotocol_id);
-//        throw RuntimeError("invalid protocol: %d", protocol_id);
+//#pragma location="INFO_C_DISTINCT"
+void _hil_getEdtDistinct(edt_distinct_methods_t* edt_distinct)
+{
+    if(edt_distinct == 0)
+    {
+      return;
     }
     
-    jtagReleased = 0;
-    return(ret_value);
-};
+    *edt_distinct = _Distinct_Methods;
+}
 
-void IHIL_SetPsaTCLK(uint16_t tclkValue) {
-    gTclkHighWhilePsa = tclkValue;
-    if (gprotocol_id == JTAG) {
-        // TODO: account for gTclkHighWhilePsa when StepPsa is invoked, instead of updating a function pointer here
-//        if (gTclkHighWhilePsa == 1) {
-//            _Distinct_Methods.StepPsa = _hil_4w_StepPsaTclkHigh;
-//        } else {
-//            _Distinct_Methods.StepPsa = _hil_4w_StepPsa;
-//        }
-    
-    } else if (gprotocol_id == SPYBIWIRE) {
-//        if (gTclkHighWhilePsa == 1) {
-//            _Distinct_Methods.StepPsa = _hil_2w_StepPsaTclkHigh_Dma;
-//        } else if (gTclkHighWhilePsa == 2) {
-//            _Distinct_Methods.StepPsa = _hil_2w_StepPsa_Dma_Xv2;
-//        } else {
-//            _Distinct_Methods.StepPsa = _hil_2w_StepPsa_Dma;
-//        }
-    
-    } else {
-        printf("### Unsupported protocol: %d\n", gprotocol_id);
+//#pragma location="INFO_C_COMMEN"
+void _hil_getEdtCommen(edt_common_methods_t* edt_commen)
+{
+    if(edt_commen == 0)
+    {
+      return;
     }
+    
+    *edt_commen = _Common_Methods;
 }
 
-int16_t IHIL_Open(uint8_t state) {
-    _hil_Connect(state);
-    return 0;
+void hil_initFuseBlow(struct vfuse_ctrl tmp)
+{
+    _VFuse = tmp;
 }
 
-int16_t IHIL_Close() {
-    // From msp_fet:_hil_Close()
-    externalVccOn = EXTERNAL_VCC_OFF;
-    _hil_Release();
-    return 0;
+void hil_initTimerB0(void)
+{
+    UNIMP_FN();
 }
 
-void IHIL_Delay_1us(uint16_t usecs) {
-    _flush();
-    usleep(usecs);
-};
+// -----------------------------------------------------------------------------
+void hil_initTimerA0(void)
+{
+    UNIMP_FN();
+}
 
-void IHIL_Delay_1ms(uint16_t msecs) {
-    _flush();
-    usleep(msecs*1000);
-};
+// -----------------------------------------------------------------------------
+void hil_initTimerA2(void)
+{
+    UNIMP_FN();
+}
 
-int16_t IHIL_IccMonitor_Process(uint16_t flags)                 { HIL_UNIMP_RET0;   };
-void IHIL_EntrySequences(uint8_t states)                        { HIL_UNIMP;        };
-void IHIL_BSL_EntrySequence(uint16_t switchBypassOff)           { HIL_UNIMP;        };
+//#pragma inline=forced
+void qDriveJTAG(void)
+{
+    (*_Jtag.Out) |= (_Jtag.TCK + _Jtag.TMS + _Jtag.TDI + _Jtag.RST );
+    (*_Jtag.Out) &= (~_Jtag.TST);
+    (*_Jtag.DIRECTION) |= (_Jtag.TCK + _Jtag.TMS + _Jtag.TDI);
+    (*_Jtag.DIRECTION) |= (_Jtag.TST + _Jtag.RST);
+    (*_Jtag.DIRECTION) &= (~_Jtag.TDO);
+}
 
-void IHIL_BSL_EntrySequence1xx_4xx() {
-    // From msp_fet:_hil_BSL_EntrySequence1xx_4xx()
+//#pragma inline=forced
+void qDriveSbw(void)
+{
+    (*_Jtag.Out) |= _Jtag.RST;
+    (*_Jtag.Out) &= ~_Jtag.TST;
+    (*_Jtag.DIRECTION) |= ( _Jtag.TST +  _Jtag.RST);
+}
+
+//#pragma inline=forced
+void qDriveSwd(void)
+{
+   (*_Jtag.Out) |= _Jtag.TCK;
+   (*_Jtag.Out) &= ~_Jtag.TMS;
+   (*_Jtag.DIRECTION) |= ( _Jtag.TCK + _Jtag.TMS);
+}
+
+void _hil_ConfigFpgaIoMode(uint16_t mode)
+{
+    hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_TARGET_IO_CONFIGURATION, mode);
+}
+
+
+void _hil_BSL_EntrySequence1xx_4xx()
+{
     hil_fpga_enable_bypass();
 
     if(gprotocol_id == SPYBIWIRE)
@@ -588,1050 +555,2118 @@ void IHIL_BSL_EntrySequence1xx_4xx() {
     hil_fpga_disable_bypass();
 }
 
-void IHIL_SetReset(uint8_t value)                               { HIL_UNIMP;        };
-void IHIL_SetTest(uint8_t value)                                { HIL_UNIMP;        };
-void IHIL_SetTMS(uint8_t value)                                 { HIL_UNIMP;        };
-void IHIL_SetTCK(uint8_t value)                                 { HIL_UNIMP;        };
-void IHIL_SetTDI(uint8_t value)                                 { HIL_UNIMP;        };
-void IHIL_InitDelayTimer()                                      { HIL_UNIMP;        };
 
-void IHIL_SetJtagSpeed(uint16_t jtagSpeed, uint16_t sbwSpeed) {
-}
-
-void IHIL_ConfigureSetPc(uint16_t PCclockBeforeCapture)         { HIL_UNIMP;        };
-
-// HIL distinct methods (distinct = different implementations for JTAG/SBW )
-int16_t IHIL_TapReset() {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
-    
-    } else {
-        // From msp_fet:_hil_2w_TapReset()
-        uint16_t i;
-        
-        // Reset JTAG FSM
-        for (i = 6; i > 0; i--)      // 6 is nominal
-        {
-            TMSH_TDIH();
-        }
-        // JTAG FSM is now in Test-Logic-Reset
-        TMSL_TDIH();                 // now in Run/Test Idle
-        return 0;
-    }
-}
-
-int16_t IHIL_CheckJtagFuse() {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
-    
-    } else {
-        // From _hil_2w_CheckJtagFuse()
-        TMSL_TDIH();
-        TMSH_TDIH();
-        _hil_Delay_1ms(1);
-        
-        TMSL_TDIH();
-        TMSH_TDIH();
-        _hil_Delay_1ms(1);
-        
-        TMSL_TDIH();
-        TMSH_TDIH();
-        _hil_Delay_1ms(1);
-        // In every TDI slot a TCK for the JTAG machine is generated.
-        // Thus we need to get TAP in Run/Test Idle state back again.
-        TMSH_TDIH();
-        TMSL_TDIH();
-        return 0;
-    }
-}
-
-void IHIL_Tclk(uint8_t tclk) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-    
-    } else {
-        _sbwioTclk(0, tclk);
-    }
-}
-
-SBWShiftProxy<uint8_t> IHIL_Instr(uint8_t Instruction) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-        return {};
-    
-    } else {
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSH_TDIH();
-        // JTAG FSM state = Select IR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-IR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-IR, Shiftin TDI (8 bit)
-        return SBWShiftProxy<uint8_t>(this, Instruction);
-    }
-}
-
-int8_t IHIL_Instr4(uint8_t ir) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
-    } else {
-        HIL_UNIMP_RET0;
-    }
-}
-
-void IHIL_StepPsa(uint32_t length) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-    } else {
-        HIL_UNIMP;
-    }
-}
-
-int16_t IHIL_BlowFuse(uint8_t targetHasTestVpp) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
-    } else {
-        HIL_UNIMP_RET0;
-    }
-}
-
-uint8_t IHIL_GetPrevInstruction() {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP_RET0;
-    } else {
-        HIL_UNIMP_RET0;
-    }
-}
-
-void IHIL_TCLK() {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-    
-    } else {
-        IHIL_Tclk(0);
-        IHIL_Tclk(1);
-    }
-}
-
-void SetReg_XBits(uint64_t *Data, uint16_t count) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-    } else {
-        HIL_UNIMP;
-    }
-}
-
-SBWShiftProxy<uint8_t> SetReg_8Bits(uint8_t Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-        return {};
-    } else {
-        // From msp_fet:_hil_2w_SetReg_XBits08()
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-DR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return SBWShiftProxy<uint8_t>(this, Data);
-        // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-SBWShiftProxy<uint16_t> SetReg_16Bits(uint16_t Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-        return {};
-    
-    } else {
-        // From msp_fet:_hil_2w_SetReg_XBits16()
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-DR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return SBWShiftProxy<uint16_t>(this, Data);
-        // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-SBWShiftProxy<uint32_t,20> SetReg_20Bits(uint32_t Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-        return {};
-    
-    } else {
-        // From msp_fet:_hil_2w_SetReg_XBits20()
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-DR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return SBWShiftProxy<uint32_t,20>(this, Data);
-        // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-SBWShiftProxy<uint32_t> SetReg_32Bits(uint32_t Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-        return {};
-    
-    } else {
-        // From msp_fet:_hil_2w_SetReg_XBits32()
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-DR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return SBWShiftProxy<uint32_t>(this, Data);
-        // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-SBWShiftProxy<uint64_t> SetReg_35Bits(uint64_t *Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-        return {};
-    } else {
-        HIL_UNIMP;
-        return {};
-    }
-}
-
-SBWShiftProxy<uint64_t> SetReg_64Bits(uint64_t Data) {
-    if (gprotocol_id == JTAG) {
-        HIL_UNIMP;
-        return {};
-    } else {
-        // From msp_fet:_hil_2w_SetReg_XBits64()
-        // JTAG FSM state = Run-Test/Idle
-        if (TCLK_saved) //PrepTCLK
-        {
-            TMSH_TDIH();
-        }
-        else
-        {
-            TMSH_TDIL();
-        }
-        // JTAG FSM state = Select DR-Scan
-        TMSL_TDIH();
-        // JTAG FSM state = Capture-DR
-        TMSL_TDIH();
-        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
-        return SBWShiftProxy<uint64_t>(this, Data);
-        // JTAG FSM state = Run-Test/Idle
-    }
-}
-
-// ARM interface functions
-int16_t IHIL_Write_Read_Dp(uint8_t address, uint32_t *data, uint16_t rnw)   { HIL_UNIMP_RET0; }
-int16_t IHIL_Write_Read_Ap(uint32_t address, uint32_t *data, uint16_t rnw)  { HIL_UNIMP_RET0; }
-int16_t IHIL_Write_Read_Mem_Ap(uint16_t ap_sel, uint32_t address,
-    uint32_t *data, uint16_t rnw)                                           { HIL_UNIMP_RET0; }
-uint8_t IHIL_SwdTransferData(uint8_t regiser, uint32_t* data, uint8_t rnw)  { HIL_UNIMP_RET0; }
-uint64_t SetReg8_64Bits(uint64_t data, uint16_t loopCount, uint16_t PG)     { HIL_UNIMP_RET0; }
-
-// JTAG instruction register access
-void cntrl_sig_low_byte()                   { IHIL_Instr(IR_CNTRL_SIG_LOW_BYTE); }
-SBWShiftProxy<uint8_t> cntrl_sig_capture()  { return IHIL_Instr(IR_CNTRL_SIG_CAPTURE); }
-void cntrl_sig_high_byte()                  { IHIL_Instr(IR_CNTRL_SIG_HIGH_BYTE); }
-void cntrl_sig_16bit()                      { IHIL_Instr(IR_CNTRL_SIG_16BIT); }
-void cntrl_sig_release()                    { IHIL_Instr(IR_CNTRL_SIG_RELEASE); }
-void addr_16bit()                           { IHIL_Instr(IR_ADDR_16BIT); }
-void addr_capture()                         { IHIL_Instr(IR_ADDR_CAPTURE); }
-void data_16bit()                           { IHIL_Instr(IR_DATA_16BIT); }
-void data_capture()                         { IHIL_Instr(IR_DATA_CAPTURE); }
-void data_to_addr()                         { IHIL_Instr(IR_DATA_TO_ADDR); }
-void data_quick()                           { IHIL_Instr(IR_DATA_QUICK); }
-void config_fuses()                         { IHIL_Instr(IR_CONFIG_FUSES); }
-void eem_data_exchange()                    { IHIL_Instr(IR_EMEX_DATA_EXCHANGE); }
-void eem_data_exchange32()                  { IHIL_Instr(IR_EMEX_DATA_EXCHANGE32); }
-void eem_read_control()                     { IHIL_Instr(IR_EMEX_READ_CONTROL); }
-void eem_write_control()                    { IHIL_Instr(IR_EMEX_WRITE_CONTROL); }
-void eem_read_trigger()                     { IHIL_Instr(IR_EMEX_READ_TRIGGER); }
-void data_psa()                             { IHIL_Instr(IR_DATA_PSA); }
-void shift_out_psa()                        { IHIL_Instr(IR_SHIFT_OUT_PSA); }
-void flash_16bit_update()                   { IHIL_Instr(IR_FLASH_16BIT_UPDATE); }
-void jmb_exchange()                         { IHIL_Instr(IR_JMB_EXCHANGE); }
-void device_ip_pointer()                    { IHIL_Instr(IR_DEVICE_ID); }
-void core_ip_pointer()                      { IHIL_Instr(IR_COREIP_ID); }
-void jstate_read()                          { IHIL_Instr(IR_JSTATE_ID); }
-void test_reg()                             { IHIL_Instr(IR_TEST_REG); }
-void test_reg_3V()                          { IHIL_Instr(IR_TEST_3V_REG); }
-void prepare_blow()                         { IHIL_Instr(IR_PREPARE_BLOW); }
-void ex_blow()                              { IHIL_Instr(IR_EX_BLOW); }
-
-#define OUT1RDY 0x0008
-#define OUT0RDY 0x0004
-#define IN1RDY  0x0002
-#define IN0RDY  0x0001
-
-#define JMB32B  0x0010
-#define OUTREQ  0x0004
-#define INREQ   0x0001
-
-// JTAG logic functions
-int16_t isInstrLoad()
+void _hil_BSL_EntrySequence(uint16_t switchBypassOff)
 {
-    cntrl_sig_capture();
-    if((SetReg_16Bits(0) & (CNTRL_SIG_INSTRLOAD | CNTRL_SIG_READ)) != (CNTRL_SIG_INSTRLOAD | CNTRL_SIG_READ))
+    hil_fpga_enable_bypass();
+
+    if(gprotocol_id == SPYBIWIRE)
     {
-        return -1;
+        qDriveSbw();
     }
+    else
+    {
+        qDriveJTAG();
+    }
+
+    RSTset0();    // set RST 0
+    // INIT phase
+    TSTset0();
+    _hil_Delay_1ms(100);
+
+    TSTset1();    // set test to 1
+    _hil_Delay_1ms(100);
+
+    //this is the first pulse keep it low for less than 15us for 5xx
+    TSTset0NoDelay();
+    if(!switchBypassOff)
+    {
+        TCKset0NoDelay();
+        _hil_Delay_1us(5);
+    }
+    else
+    {
+        _hil_Delay_1us(10);
+    }
+
+    if(!switchBypassOff)
+    {
+        TCKset1NoDelay();
+        _hil_Delay_1us(5);
+    }
+    TSTset1();     // set test 1;
+
+    _hil_Delay_1ms(50);
+    if(!switchBypassOff)
+    {
+        TCKset0();
+    }
+    RSTset1();     // set RST 1;
+    _hil_Delay_1ms(50);
+    if(!switchBypassOff)
+    {
+        TCKset1();
+    }
+    TSTset0();     // set test 0;
+    _hil_Delay_1ms(50);
+
+    if(switchBypassOff)
+    {
+        hil_fpga_disable_bypass();
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+
+int16_t _hil_Init( void )
+{
+    hil_initTimerA0();              // TimeStamp
+    hil_initTimerA2();              // Current pulse counter
+    hil_initTimerB0();              // Delay loop timer
+
+    hil_DacControlInitDAC0();
+    hil_DacControlInitDAC1();
+    hil_AdcControlInitADC();
+
+//    DMACTL2 = 0;
+//    DMACTL1 = 0;
+
+    // default config
+    externalVccOn = EXTERNAL_VCC_OFF;
+    regulationOn = REGULATION_OFF;
+    dtVccSenseState = 0;
+
+   // set default to TCLK low when doing PSA
+    gTclkHighWhilePsa = 0;
+    // initialize function pointers to distinct functions
+
+    // initialize FPGA
+    hil_fpga_init();
+    // set default debug protocol to JTAG
+    gprotocol_id = SPYBIWIREJTAG;
+    // set default to TCLK low when doing PSA
+    gTclkHighWhilePsa = 0;
+    // initialize function pointers to distinct functions
+    _hil_SetProtocol(SPYBIWIREJTAG);
+    jtagReleased = 1;
+
+    // initialize fuse blow control
+    hil_initFuseBlow(_Msp_Fet);
+
+    // Default SBW2 speed --> 60MHz/(98+2) = 600 kHz
+    hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_TEST_CLK_FREQUENCY, 35);
+    hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_TCLK_CLK_FREQUENCY, 35);
+    // set Io config to IO_CONFIG_HIGH_Z_UART
+    _hil_ConfigFpgaIoMode(0x0);
     return 0;
 }
 
-int16_t instrLoad()
+
+int16_t _hil_regulateVcc(void)
 {
-    uint16_t i = 0;
+    UNIMP_FN();
+    return 0;
+}
 
-    cntrl_sig_low_byte();
-    SetReg_8Bits(CNTRL_SIG_READ);
-    IHIL_Tclk(1);
+void _hil_setDacValues(uint16_t dac0, uint16_t dac1)
+{
+    hil_DacControlSetDAC1(dac1);
+    hil_DacControlSetDAC0(dac0);
+}
 
-    for(i = 0; i < 10; i++)
+void _hil_ReadADC12(void)
+{
+    hil_AdcControlRead();
+}
+
+void _hil_switchVccFET(uint16_t switchVccFET)
+{
+    UNIMP_FN();
+}
+
+savedDacValues_t _savedDacValues;
+
+//#pragma optimize = low
+int16_t _hil_SetVccSupplyDt(uint16_t Vcc)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+//#pragma optimize = low
+int16_t _hil_SetVccSupply(uint16_t Vcc)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+//#pragma optimize = low
+// -----------------------------------------------------------------------------
+int16_t _hil_SetVcc(uint16_t Vcc)
+{
+    UNIMP_FN();
+    return 0;
+}
+// -----------------------------------------------------------------------------
+
+int16_t _hil_GetVcc(double* Vcc, double* ExtVcc)
+{
+    UNIMP_FN();
+    *Vcc = 3300;
+    *ExtVcc = 0;
+    return 0;
+}
+
+//#pragma optimize = low
+// -----------------------------------------------------------------------------
+int16_t _hil_SetProtocol(uint16_t protocol_id)
+{
+    int16_t ret_value = 0;
+
+    if( protocol_id == SPYBIWIRE )
     {
-        if(isInstrLoad() == 0)
+        gprotocol_id = SPYBIWIRE;
+        _Jtag = _SBW_Back;
+        initJtagSbw2Dma(_Jtag);
+        initJtagBypass(_Jtag);
+        initGeneric();
+        _hil_2w_ConfigureSpeed_Dma(SBW100KHz);
+    }
+    else if( protocol_id == SPYBIWIREJTAG || protocol_id == JTAG || protocol_id == JTAG_432)
+    {
+        gprotocol_id = protocol_id;
+        _Jtag = _Jtag_Target;
+        initJtagSbw4(_Jtag);
+        initJtagBypass(_Jtag);
+        initGeneric();
+    }
+    else if(protocol_id == SWD_432)
+    {
+        gprotocol_id = protocol_id;
+        _Jtag = _Jtag_Target;
+        hil_Swd_InitJtag(_Jtag);
+        initJtagBypass(_Jtag);
+        initGeneric();
+    }
+    else if( protocol_id == SPYBIWIRE_SUBMCU )
+    {
+        _Jtag = _Jtag_SubMcu;
+        initJtagSbw2Dma(_Jtag);
+        gprotocol_id = SPYBIWIRE_SUBMCU;
+        setProtocolSbw2Dma(SPYBIWIRE_SUBMCU);
+        _hil_2w_ConfigureSpeed_Dma(SBW600KHz);
+    }
+    else if( protocol_id == SPYBIWIRE_MSP_FET)
+    {
+        gprotocol_id = protocol_id;
+        _Jtag = _Jtag_Target;
+        initJtagSbw2Dma(_Jtag);
+        initJtagBypass(_Jtag);
+        initGeneric();
+        _hil_2w_ConfigureSpeed_Dma(SBW100KHz);
+    }
+    else
+    {
+        ret_value = -1;
+    }
+
+    if( protocol_id == SPYBIWIRE || protocol_id == SPYBIWIRE_SUBMCU || protocol_id == SPYBIWIRE_MSP_FET)
+    {
+//        // load DMA1 with size just default
+//        DMA1CTL = ( DMADT0 | DMASRCINCR1 | DMASRCINCR0 | DMASRCBYTE | DMADSTBYTE);
+//        DMA1DA =  (_Jtag.Out); //JTAGOUT;       // set destination address
+//        DMA2CTL = ( DMADT0 | DMASRCINCR1 | DMASRCINCR0 | DMASRCBYTE | DMADSTBYTE);
+//        DMA2DA =  (_Jtag.Out); //JTAGOUT;       // set destination address
+
+        // Functionality executed in FPGA bypass mode by Sub-MCU
+        _Distinct_Methods.TapReset              = MEMBER_FN_PTR(_hil_2w_TapReset_Dma);
+        _Distinct_Methods.CheckJtagFuse         = MEMBER_FN_PTR(_hil_2w_CheckJtagFuse_Dma);
+
+        // SBW communication with Sub-MCU is executed in Bit-Banging mode
+        if ( protocol_id == SPYBIWIRE_SUBMCU )
         {
-           return 0;
+            _Distinct_Methods.Instr              = MEMBER_FN_PTR(_hil_2w_Instr_Dma);
+            _Distinct_Methods.SetReg_XBits08     = MEMBER_FN_PTR(_hil_2w_SetReg_XBits08_Dma);
+            _Distinct_Methods.SetReg_XBits16     = MEMBER_FN_PTR(_hil_2w_SetReg_XBits16_Dma);
+            _Distinct_Methods.SetReg_XBits20     = MEMBER_FN_PTR(_hil_2w_SetReg_XBits20_Dma);
+            _Distinct_Methods.SetReg_XBits32     = MEMBER_FN_PTR(_hil_2w_SetReg_XBits32_Dma);
+            _Distinct_Methods.SetReg_XBits64     = MEMBER_FN_PTR(_hil_2w_SetReg_XBits64_Dma);
+            _Distinct_Methods.SetReg_XBits8_64   = MEMBER_FN_PTR(_hil_2w_SetReg_XBits8_64_Dma);
+            _Distinct_Methods.Tclk               = MEMBER_FN_PTR(_hil_2w_Tclk_Dma);
+            _Distinct_Methods.GetPrevInstruction = MEMBER_FN_PTR(_hil_2w_GetPrevInstruction_Dma);
+            _Distinct_Methods.SetReg_XBits       = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits);
+            _Distinct_Methods.Instr04            = MEMBER_FN_PTR(_hil_dummy_Instr_4);
+            _Distinct_Methods.write_read_Dp      = MEMBER_FN_PTR(_hil_dummy_Write_Read_Dp);
+            _Distinct_Methods.write_read_Ap      = MEMBER_FN_PTR(_hil_dummy_Write_Read_Ap);
+            _Distinct_Methods.write_read_mem_Ap  = MEMBER_FN_PTR(_hil_dummy_Write_Read_Mem_Ap);
+            _Distinct_Methods.SetReg_XBits35     = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits35);
+            _Distinct_Methods.SwdTransferData    = MEMBER_FN_PTR(_hil_dummy_TransferData);
         }
-        IHIL_TCLK();
+        // SBW communication with Target-MCU is executed in FPGA mode
+        else if( protocol_id == SPYBIWIRE || protocol_id == SPYBIWIRE_MSP_FET)
+        {
+            _Distinct_Methods.Instr              = MEMBER_FN_PTR(_hil_generic_Instr);
+            _Distinct_Methods.SetReg_XBits08     = MEMBER_FN_PTR(_hil_generic_SetReg_XBits08);
+            _Distinct_Methods.SetReg_XBits16     = MEMBER_FN_PTR(_hil_generic_SetReg_XBits16);
+            _Distinct_Methods.SetReg_XBits20     = MEMBER_FN_PTR(_hil_generic_SetReg_XBits20);
+            _Distinct_Methods.SetReg_XBits32     = MEMBER_FN_PTR(_hil_generic_SetReg_XBits32);
+            _Distinct_Methods.SetReg_XBits64     = MEMBER_FN_PTR(_hil_generic_SetReg_XBits64);
+            _Distinct_Methods.SetReg_XBits8_64   = MEMBER_FN_PTR(_hil_generic_XBits8_64);
+            _Distinct_Methods.GetPrevInstruction = MEMBER_FN_PTR(_hil_generic_GetPrevInstruction);
+            _Distinct_Methods.Tclk               = MEMBER_FN_PTR(_hil_generic_Tclk);
+            _Distinct_Methods.SetReg_XBits       = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits);
+            _Distinct_Methods.Instr04            = MEMBER_FN_PTR(_hil_dummy_Instr_4);
+            _Distinct_Methods.write_read_Dp      = MEMBER_FN_PTR(_hil_dummy_Write_Read_Dp);
+            _Distinct_Methods.write_read_Ap      = MEMBER_FN_PTR(_hil_dummy_Write_Read_Ap);
+            _Distinct_Methods.write_read_mem_Ap  = MEMBER_FN_PTR(_hil_dummy_Write_Read_Mem_Ap);
+            _Distinct_Methods.SetReg_XBits35     = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits35);
+            _Distinct_Methods.SwdTransferData    = MEMBER_FN_PTR(_hil_dummy_TransferData);
+        }
+        if(gTclkHighWhilePsa == 1)
+        {
+            _Distinct_Methods.StepPsa            = MEMBER_FN_PTR(_hil_2w_StepPsaTclkHigh_Dma);
+        }
+        else if(gTclkHighWhilePsa == 2)
+        {
+            _Distinct_Methods.StepPsa            = MEMBER_FN_PTR(_hil_2w_StepPsa_Dma_Xv2);
+        }
+        else
+        {
+            _Distinct_Methods.StepPsa            = MEMBER_FN_PTR(_hil_2w_StepPsa_Dma);
+        }
+        _Distinct_Methods.BlowFuse               = MEMBER_FN_PTR(_hil_2w_BlowFuse_Dma);
+
+//        DMA2SA                                 = (uint8_t*)DMA_TMSL_TDIL);
+    }
+    else if ( protocol_id == SPYBIWIREJTAG  || protocol_id == JTAG)
+    {
+        _Distinct_Methods.TapReset               = MEMBER_FN_PTR(_hil_4w_TapReset);
+        _Distinct_Methods.CheckJtagFuse          = MEMBER_FN_PTR(_hil_4w_CheckJtagFuse);
+        _Distinct_Methods.Instr                  = MEMBER_FN_PTR(_hil_generic_Instr);
+        _Distinct_Methods.SetReg_XBits08         = MEMBER_FN_PTR(_hil_generic_SetReg_XBits08);
+        _Distinct_Methods.SetReg_XBits16         = MEMBER_FN_PTR(_hil_generic_SetReg_XBits16);
+        _Distinct_Methods.SetReg_XBits20         = MEMBER_FN_PTR(_hil_generic_SetReg_XBits20);
+        _Distinct_Methods.SetReg_XBits32         = MEMBER_FN_PTR(_hil_generic_SetReg_XBits32);
+        _Distinct_Methods.SetReg_XBits64         = MEMBER_FN_PTR(_hil_generic_SetReg_XBits64);
+        _Distinct_Methods.SetReg_XBits8_64       = MEMBER_FN_PTR(_hil_generic_XBits8_64);
+        _Distinct_Methods.GetPrevInstruction     = MEMBER_FN_PTR(_hil_generic_GetPrevInstruction);
+        _Distinct_Methods.Tclk                   = MEMBER_FN_PTR(_hil_generic_Tclk);
+
+        // load dummies for 432
+        _Distinct_Methods.Instr04                = MEMBER_FN_PTR(_hil_dummy_Instr_4);
+        _Distinct_Methods.write_read_Dp          = MEMBER_FN_PTR(_hil_dummy_Write_Read_Dp);
+        _Distinct_Methods.write_read_Ap          = MEMBER_FN_PTR(_hil_dummy_Write_Read_Ap);
+        _Distinct_Methods.write_read_mem_Ap      = MEMBER_FN_PTR(_hil_dummy_Write_Read_Mem_Ap);
+        _Distinct_Methods.SetReg_XBits           = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits);
+        _Distinct_Methods.SetReg_XBits35         = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits35);
+        _Distinct_Methods.SwdTransferData        = MEMBER_FN_PTR(_hil_dummy_TransferData);
+
+        if(gTclkHighWhilePsa == 0 || gTclkHighWhilePsa == 2)
+        {
+            _Distinct_Methods.StepPsa            = MEMBER_FN_PTR(_hil_4w_StepPsa);
+        }
+        else
+        {
+            _Distinct_Methods.StepPsa            = MEMBER_FN_PTR(_hil_4w_StepPsaTclkHigh);
+        }
+        _Distinct_Methods.BlowFuse               = MEMBER_FN_PTR(_hil_4w_BlowFuse);
+    }
+    else if (protocol_id == JTAG_432)
+    {
+        // load dummies for 430
+        _Distinct_Methods.CheckJtagFuse          = MEMBER_FN_PTR(_hil_dummy_CheckJtagFuse);
+        _Distinct_Methods.Instr                  = MEMBER_FN_PTR(_hil_dummy_Instr);
+        _Distinct_Methods.SetReg_XBits20         = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits20);
+        _Distinct_Methods.GetPrevInstruction     = MEMBER_FN_PTR(_hil_dummy_GetPrevInstruction);
+        _Distinct_Methods.Tclk                   = MEMBER_FN_PTR(_hil_dummy_Tclk);
+        _Distinct_Methods.SetReg_XBits8_64       = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits8_64);
+        _Distinct_Methods.StepPsa                = MEMBER_FN_PTR(_hil_dummy_StepPsa);
+        _Distinct_Methods.BlowFuse               = MEMBER_FN_PTR(_hil_dummy_BlowFuse);
+
+        _Distinct_Methods.TapReset               = MEMBER_FN_PTR(_hil_4w_TapReset);
+        _Distinct_Methods.SetReg_XBits08         = MEMBER_FN_PTR(_hil_generic432_SetReg_XBits08);
+        _Distinct_Methods.SetReg_XBits16         = MEMBER_FN_PTR(_hil_generic432_SetReg_XBits16);
+        _Distinct_Methods.SetReg_XBits32         = MEMBER_FN_PTR(_hil_generic432_SetReg_XBits32);
+        _Distinct_Methods.SetReg_XBits64         = MEMBER_FN_PTR(_hil_generic432_SetReg_XBits64);
+        _Distinct_Methods.Instr04                = MEMBER_FN_PTR(_hil_generic432_Instr_4);
+        _Distinct_Methods.write_read_Dp          = MEMBER_FN_PTR(_hil_Write_Read_Dp_Jtag);
+        _Distinct_Methods.write_read_Ap          = MEMBER_FN_PTR(_hil_Write_Read_Ap_Jtag);
+        _Distinct_Methods.write_read_mem_Ap      = MEMBER_FN_PTR(_hil_Write_Read_Mem_Ap_Jtag);
+        _Distinct_Methods.GetJtagIdCode          = MEMBER_FN_PTR(hil_Jtag_read_idcode);
+        _Distinct_Methods.SetReg_XBits35         = MEMBER_FN_PTR(_hil_generic432_SetReg_XBits35);
+        _Distinct_Methods.SetReg_XBits           = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits);
+        _Distinct_Methods.SetReg_XBits20         = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits20);
+        _Distinct_Methods.SwdTransferData        = MEMBER_FN_PTR(_hil_dummy_TransferData);
+    }
+    else if (protocol_id == SWD_432)
+    {
+        // load dummies for 430
+        _Distinct_Methods.CheckJtagFuse          = MEMBER_FN_PTR(_hil_dummy_CheckJtagFuse);
+        _Distinct_Methods.Instr                  = MEMBER_FN_PTR(_hil_dummy_Instr);
+        _Distinct_Methods.SetReg_XBits20         = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits20);
+        _Distinct_Methods.GetPrevInstruction     = MEMBER_FN_PTR(_hil_dummy_GetPrevInstruction);
+        _Distinct_Methods.Tclk                   = MEMBER_FN_PTR(_hil_dummy_Tclk);
+        _Distinct_Methods.SetReg_XBits8_64       = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits8_64);
+        _Distinct_Methods.StepPsa                = MEMBER_FN_PTR(_hil_dummy_StepPsa);
+        _Distinct_Methods.BlowFuse               = MEMBER_FN_PTR(_hil_dummy_BlowFuse);
+        _Distinct_Methods.TapReset               = MEMBER_FN_PTR(_hil_dummy_TapReset);
+        _Distinct_Methods.SetReg_XBits08         = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits08);
+        _Distinct_Methods.SetReg_XBits16         = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits16);
+        _Distinct_Methods.SetReg_XBits20         = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits20);
+        _Distinct_Methods.SetReg_XBits32         = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits32);
+        _Distinct_Methods.SetReg_XBits64         = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits64);
+        _Distinct_Methods.Instr04                = MEMBER_FN_PTR(_hil_dummy_Instr_4);
+        _Distinct_Methods.write_read_Dp          = MEMBER_FN_PTR(_hil_Write_Read_Dp_Swd);
+        _Distinct_Methods.write_read_Ap          = MEMBER_FN_PTR(_hil_Write_Read_Ap_Swd);
+        _Distinct_Methods.write_read_mem_Ap      = MEMBER_FN_PTR(_hil_Write_Read_Mem_Ap_Swd);
+        _Distinct_Methods.GetJtagIdCode          = MEMBER_FN_PTR(hil_swd_read_idcode);
+        _Distinct_Methods.SetReg_XBits35         = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits35);
+        _Distinct_Methods.SetReg_XBits           = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits);
+        _Distinct_Methods.SwdTransferData        = MEMBER_FN_PTR(Swd_TransferData);
+    }
+    jtagReleased = 0;
+    return(ret_value);
+}
+
+void _hil_SetPsaTCLK(uint16_t tclkValue)
+{
+    gTclkHighWhilePsa = tclkValue;
+    if(gprotocol_id == SPYBIWIRE || gprotocol_id == SPYBIWIRE_SUBMCU || gprotocol_id == SPYBIWIRE_MSP_FET)
+    {
+        if(gTclkHighWhilePsa == 1)
+        {
+            _Distinct_Methods.StepPsa           = MEMBER_FN_PTR(_hil_2w_StepPsaTclkHigh_Dma);
+        }
+        else if(gTclkHighWhilePsa == 2)
+        {
+            _Distinct_Methods.StepPsa           = MEMBER_FN_PTR(_hil_2w_StepPsa_Dma_Xv2);
+        }
+        else
+        {
+            _Distinct_Methods.StepPsa           = MEMBER_FN_PTR(_hil_2w_StepPsa_Dma);
+        }
+    }
+    if(gprotocol_id == SPYBIWIREJTAG  || gprotocol_id == JTAG)
+    {
+        if(gTclkHighWhilePsa == 1)
+        {
+            _Distinct_Methods.StepPsa           = MEMBER_FN_PTR(_hil_4w_StepPsaTclkHigh);
+        }
+        else
+        {
+            _Distinct_Methods.StepPsa           = MEMBER_FN_PTR(_hil_4w_StepPsa);
+        }
+    }
+}
+//extern uint8_t lastTestState;
+
+void _hil_Release(void)
+{
+    if(gprotocol_id == SPYBIWIRE)
+    {
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, TRI_STATE_FPGA_SBW);
+    }
+    else if(gprotocol_id == SWD_432)
+    {
+            hil_fpga_disable_bypass();
+            hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, TRI_STATE_FPGA_JTAG);
+    }
+    else
+    {
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, TRI_STATE_FPGA_JTAG);
+    }
+    hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_JTAG_4_WIRE_FPGA_432, 0);
+
+    lastTestState = 0;
+
+    _Distinct_Methods.TapReset                  = MEMBER_FN_PTR(_hil_dummy_TapReset);
+    _Distinct_Methods.CheckJtagFuse             = MEMBER_FN_PTR(_hil_dummy_CheckJtagFuse);
+    _Distinct_Methods.Instr                     = MEMBER_FN_PTR(_hil_dummy_Instr);
+    _Distinct_Methods.SetReg_XBits08            = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits08);
+    _Distinct_Methods.SetReg_XBits16            = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits16);
+    _Distinct_Methods.SetReg_XBits20            = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits20);
+    _Distinct_Methods.SetReg_XBits32            = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits32);
+    _Distinct_Methods.SetReg_XBits64            = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits64);
+    _Distinct_Methods.SetReg_XBits8_64          = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits8_64);
+    _Distinct_Methods.Tclk                      = MEMBER_FN_PTR(_hil_dummy_Tclk);
+    _Distinct_Methods.GetPrevInstruction        = MEMBER_FN_PTR(_hil_dummy_GetPrevInstruction);
+    _Distinct_Methods.StepPsa                   = MEMBER_FN_PTR(_hil_dummy_StepPsa);
+    _Distinct_Methods.BlowFuse                  = MEMBER_FN_PTR(_hil_dummy_BlowFuse);
+    _Distinct_Methods.SetReg_XBits              = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits);
+    _Distinct_Methods.Instr04                   = MEMBER_FN_PTR(_hil_dummy_Instr_4);
+    _Distinct_Methods.write_read_Dp             = MEMBER_FN_PTR(_hil_dummy_Write_Read_Dp);
+    _Distinct_Methods.write_read_Ap             = MEMBER_FN_PTR(_hil_dummy_Write_Read_Ap);
+    _Distinct_Methods.write_read_mem_Ap         = MEMBER_FN_PTR(_hil_dummy_Write_Read_Mem_Ap);
+    _Distinct_Methods.GetJtagIdCode             = MEMBER_FN_PTR(_hil_read_idcodeDummy);
+    _Distinct_Methods.SetReg_XBits35            = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits35);
+    _Distinct_Methods.SetReg_XBits              = MEMBER_FN_PTR(_hil_dummy_SetReg_XBits);
+    _Distinct_Methods.SwdTransferData           = MEMBER_FN_PTR(_hil_dummy_TransferData);
+
+    jtagReleased = 1;
+}
+
+/*-------------RstLow_JTAG----------------
+            ________           __________
+Test ______|        |_________|
+                          _______________
+Rst_____________________|
+----------------------------------------*/
+
+INLINE(forced)
+void _hil_EntrySequences_RstLow_JTAG()
+{
+    _DINT_FET();
+    TSTset0();                    //1
+    _hil_Delay_1ms(4);           //reset TEST logic
+
+    RSTset0();                    //2
+
+    //TSTset1();                    //3
+    (*_Jtag.Out) |= _Jtag.TST;
+    _hil_Delay_1ms(50);         //activate TEST logic
+
+    //RSTset0();                    //4
+    (*_Jtag.Out) &= ~_Jtag.RST;
+    _hil_Delay_1us(40);
+
+     // for 4-wire JTAG clear Test pin Test(0)
+    //TSTset0();   //5
+    (*_Jtag.Out) &= ~_Jtag.TST;
+    _hil_Delay_1us(2);
+
+    // for 4-wire JTAG -dry  Reset(1)
+    //(*_Jtag.Out) |= _Jtag.RST;
+    (*_Jtag.Out) &= ~_Jtag.RST;  // This actually starts the BSL
+    _hil_Delay_1us(2);
+
+    // 4-wire JTAG - Test (1)
+    //TSTset1();  //7
+    (*_Jtag.Out) |= _Jtag.TST;
+    _hil_Delay_1ms(5);
+    _EINT_FET();
+}
+
+/*-------------RstHigh_JTAG--------------
+            ________           __________
+Test ______|        |_________|
+         _______                   ______
+Rst____|       |_________________|
+----------------------------------------*/
+
+INLINE(forced)
+void _hil_EntrySequences_RstHigh_JTAG()
+{
+    TSTset0();                    //1
+    _hil_Delay_1ms(1);           //reset TEST logic
+
+    RSTset1();                    //2
+
+    TSTset1();                    //3
+    _hil_Delay_1ms(100);         //activate TEST logic
+
+    RSTset0();                    //4
+    _hil_Delay_1us(40);
+
+    // for 4-wire JTAG clear Test pin Test(0)
+    (*_Jtag.Out) &= ~_Jtag.TST;   //5
+    _hil_Delay_1us(1);
+
+    // for 4-wire JTAG - Test (1)
+    (*_Jtag.Out) |= _Jtag.TST;  //7
+    _hil_Delay_1us(40);
+
+    // phase 5 Reset(1)
+    RSTset1();
+    _hil_Delay_1ms(5);
+}
+
+/*-------------RstHigh_SBW---------------
+            ________           __________
+Test ______|        |_________|
+        _________________________________
+Rst____|
+----------------------------------------*/
+INLINE(forced)
+void _hil_EntrySequences_RstHigh_SBW()
+{
+    TSTset0();                //1
+    _hil_Delay_1ms(1);       // reset TEST logic
+
+    RSTset1();                //2
+
+    TSTset1();                //3
+    _hil_Delay_1ms(100);     // activate TEST logic
+
+    // phase 1
+    RSTset1();                //4
+    _hil_Delay_1us(40);
+
+    // phase 2 -> TEST pin to 0, no change on RST pin
+    // for Spy-Bi-Wire
+    _DINT_FET();
+    (*_Jtag.Out) &= ~_Jtag.TST;     //5
+    _hil_Delay_1us(1);
+
+    // phase 4 -> TEST pin to 1, no change on RST pin
+    // for Spy-Bi-Wire
+    (*_Jtag.Out) |= _Jtag.TST;      //7
+    _EINT_FET();
+    _hil_Delay_1us(40);
+
+    _hil_Delay_1ms(5);
+}
+
+/*-------------RstLow_SBW----------------
+            ________           __________
+Test ______|        |_________|
+               __________________________
+Rst__________|
+----------------------------------------*/
+INLINE(forced)
+void _hil_EntrySequences_RstLow_SBW()
+{
+    TSTset0();                //1
+    _hil_Delay_1ms(1);       // reset TEST logic
+
+    RSTset0();                //2
+
+    TSTset1();                //3
+    _hil_Delay_1ms(100);     // activate TEST logic
+
+    // phase 1
+    RSTset1();                //4
+    _hil_Delay_1us(40);
+
+    // phase 2 -> TEST pin to 0, no change on RST pin
+    // for Spy-Bi-Wire
+    _DINT_FET();
+    (*_Jtag.Out) &= ~_Jtag.TST;     //5
+    _hil_Delay_1us(1);
+
+    // phase 4 -> TEST pin to 1, no change on RST pin
+    // for Spy-Bi-Wire
+    (*_Jtag.Out) |= _Jtag.TST;      //7
+    _EINT_FET();
+    _hil_Delay_1us(40);
+    _hil_Delay_1ms(5);
+}
+
+void _hil_EntrySequences(uint8_t states)
+{
+    uint16_t protocol = JTAG_4_WIRE_FPGA;
+
+    //This should probably never be called with SPYBIWIRE_SUBMCU anyway
+    if(gprotocol_id == SPYBIWIRE_SUBMCU)
+    {
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, TRI_STATE_FPGA_JTAG);
+        gprotocol_id = SPYBIWIRE;
+    }
+    hil_fpga_enable_bypass();
+
+    switch(gprotocol_id)
+    {
+    case SPYBIWIRE:
+    case SPYBIWIRE_MSP_FET:
+      {
+        if (states == RSTLOW)
+        {
+            _hil_EntrySequences_RstLow_SBW();
+        }
+        if (states == RSTHIGH)
+        {
+            _hil_EntrySequences_RstHigh_SBW();
+        }
+        protocol = (gprotocol_id == SPYBIWIRE) ? SBW_2_BACK_FPGA : SBW_2_MSP_FET_FPGA;
+        break;
+      }
+    case SPYBIWIREJTAG:
+      {
+        if (states == RSTLOW)
+        {
+            _hil_EntrySequences_RstLow_JTAG();
+        }
+        if (states == RSTHIGH)
+        {
+            _hil_EntrySequences_RstHigh_JTAG();
+        }
+        break;
+      }
+    case JTAG_432:
+        {
+            JTAG_Entry();
+            RSTset1();
+            break;
+        }
+    case SWD_432:
+        {
+            SWD_Entry();
+            SWDTCKset1();
+            break;
+        }
+    default:
+        if (states == RSTLOW)
+        {
+            RSTset0();
+            TSTset1();
+        }
+        if (states == RSTHIGH)
+        {
+            TSTset1();
+        }
+        break;
+    }
+    if(gprotocol_id != SWD_432)
+    {
+        hil_fpga_disable_bypass();
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, protocol);
+
+        if(gprotocol_id == JTAG_432)
+        {
+            hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_JTAG_4_WIRE_FPGA_432, 1);
+        }
+        else
+        {
+             hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_JTAG_4_WIRE_FPGA_432, 0);
+        }
+    }
+}
+
+//#pragma optimize = medium
+void _hil_Connect(uint8_t state)
+{
+    if(jtagReleased)
+    {
+        _hil_SetProtocol(gprotocol_id);
+    }
+
+    hil_fpga_enable_bypass();
+
+    if(state == RSTHIGH && gprotocol_id != JTAG_432 && gprotocol_id != SWD_432)
+    {
+        if(gprotocol_id == SPYBIWIRE || gprotocol_id == SPYBIWIRE_MSP_FET)
+        {
+            _hil_Delay_1ms(10);
+            qDriveSbw();
+            _hil_Delay_1ms(30);
+            _hil_EntrySequences_RstHigh_SBW();
+        }
+        else
+        {
+            _hil_Delay_1ms(10);
+            qDriveJTAG();
+            _hil_Delay_1ms(30);
+            if(gprotocol_id == SPYBIWIREJTAG)
+            {
+                _hil_EntrySequences_RstHigh_JTAG();
+            }
+            else
+            {
+                TSTset1();
+            }
+        }
+    }
+    else if(state == RSTLOW && gprotocol_id != JTAG_432 && gprotocol_id != SWD_432)
+    {
+        if(gprotocol_id == SPYBIWIRE || gprotocol_id == SPYBIWIRE_MSP_FET)
+        {
+            qDriveSbw();
+            _hil_Delay_1ms(1);
+            _hil_EntrySequences_RstLow_SBW();
+        }
+        else
+        {
+            qDriveJTAG();
+            _hil_Delay_1ms(1);
+            if(gprotocol_id == SPYBIWIREJTAG)
+            {
+                _hil_EntrySequences_RstLow_JTAG();
+            }
+            else
+            {
+                RSTset0();
+                TSTset1();
+            }
+        }
+    }
+    else if(gprotocol_id == JTAG_432)
+    {
+        _hil_Delay_1ms(10);
+        qDriveJTAG();
+        _hil_Delay_1ms(30);
+        JTAG_Entry();
+        RSTset1();
+    }
+    else if(gprotocol_id == SWD_432)
+    {
+        _hil_Delay_1ms(10);
+        qDriveSwd();
+        _hil_Delay_1ms(30);
+        SWD_Entry();
+        RSTset1();
+        hil_swd_read_idcode();
+    }
+
+    if(gprotocol_id != SWD_432)
+    {
+        hil_fpga_disable_bypass();
+    }
+
+    jtagReleased = 0;
+}
+
+// -----------------------------------------------------------------------------
+int16_t _hil_Open( uint8_t state)
+{
+    if(gprotocol_id == SPYBIWIRE_MSP_FET)
+    {
+        _hil_Connect(state);
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, SBW_2_MSP_FET_FPGA);
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_JTAG_4_WIRE_FPGA_432, 0);
+        _hil_generic_ConfigureSpeed(hil_sbw2Speed_);
+    }
+    else if(gprotocol_id == SPYBIWIRE)
+    {
+        _hil_Connect(state);
+         hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, SBW_2_BACK_FPGA);
+         hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_JTAG_4_WIRE_FPGA_432, 0);
+        _hil_generic_ConfigureSpeed(hil_sbw2Speed_);
+    }
+    else if(gprotocol_id == SPYBIWIREJTAG || gprotocol_id == JTAG)
+    {
+        _hil_Connect(state);
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, JTAG_4_WIRE_FPGA);
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_JTAG_4_WIRE_FPGA_432, 0);
+        _hil_generic_ConfigureSpeed(hil_jtagSpeed_);
+    }
+    else if(gprotocol_id == JTAG_432)
+    {
+        _hil_Connect(state);
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, JTAG_4_WIRE_FPGA);
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_JTAG_4_WIRE_FPGA_432, 1);
+        _hil_generic_ConfigureSpeed(hil_jtagSpeed_);
+    }
+    else if(gprotocol_id == SPYBIWIRE_SUBMCU)
+    {
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, TRI_STATE_FPGA_JTAG);
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_JTAG_4_WIRE_FPGA_432, 0);
+        gprotocol_id = SPYBIWIRE;
+        _hil_Connect(state);
+    }
+    else if(gprotocol_id == SWD_432)
+    {
+        gprotocol_id = SWD_432;
+        _hil_Connect(state);
+    }
+    return 0;
+}
+// -----------------------------------------------------------------------------
+int16_t _hil_Close( void )
+{
+    externalVccOn = EXTERNAL_VCC_OFF;
+    _hil_Release();
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+
+void _hil_SetJtagSpeed(uint16_t jtagSpeed, uint16_t sbwSpeed)
+{
+    if( sbwSpeed )
+    {
+        hil_sbw2Speed_ =  sbwSpeed;
+    }
+    if ( jtagSpeed )
+    {
+        hil_jtagSpeed_ =  jtagSpeed;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void _hil_ConfigureSetPc (uint16_t PCclockBeforeCapture)
+{
+    setPCclockBeforeCapture = PCclockBeforeCapture;
+}
+
+// -----------------------------------------------------------------------------
+void SetVFuse(void)
+{
+    UNIMP_FN();
+}
+
+uint8_t prevP4value = 0;
+// -----------------------------------------------------------------------------
+void setVpp(int32_t voltage)
+{
+    UNIMP_FN();
+}
+
+// -----------------------------------------------------------------------------
+void testVpp(uint8_t mode)
+{
+    if(mode)
+    {
+        // Fuse blow via TST
+        // Switch back to JTAG protocol
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, JTAG_4_WIRE_FPGA);
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_JTAG_4_WIRE_FPGA_432, 0);
+
+    }
+    else
+    {
+        // Fuse blow via TDI
+        // Switch to JTAG fuse blow protocol, TDI is mapped to TDO
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_PROTOCOL, TDI_TO_TDO_FPGA);
+        hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_JTAG_4_WIRE_FPGA_432, 0);
+    }
+
+    useTDI = !mode;
+}
+
+
+// -----------------------------------------------------------------------------
+void _hil_SetReset(uint8_t value)
+{
+
+    hil_fpga_enable_bypass();
+    if(value)
+    {
+        RSTset1();
+    }
+    else
+    {
+        RSTset0();
+    }
+    hil_fpga_disable_bypass();
+}
+
+// -----------------------------------------------------------------------------
+void _hil_SetTest(uint8_t value)
+{
+    hil_fpga_enable_bypass();
+
+    if(value)
+    {
+        TSTset1();
+    }
+    else
+    {
+        TSTset0();
+    }
+    hil_fpga_disable_bypass();
+}
+
+// -----------------------------------------------------------------------------
+void _hil_SetTMS(uint8_t value)
+{
+    hil_fpga_enable_bypass();
+
+    if(value)
+    {
+        TMSset1();
+    }
+    else
+    {
+        TMSset0();
+    }
+    hil_fpga_disable_bypass();
+}
+
+// -----------------------------------------------------------------------------
+void _hil_SetTDI(uint8_t value)
+{
+    hil_fpga_enable_bypass();
+
+    if(value)
+    {
+        TDIset1();
+    }
+    else
+    {
+        TDIset0();
+    }
+    hil_fpga_disable_bypass();
+}
+
+// -----------------------------------------------------------------------------
+void _hil_SetTCK(uint8_t value)
+{
+    hil_fpga_enable_bypass();
+
+    if(value)
+    {
+        TCKset1();
+    }
+    else
+    {
+        TCKset0();
+    }
+    hil_fpga_disable_bypass();
+}
+// --------------------------------------------ARM defines end------------------
+
+void SWD_Entry()
+{
+    uint8_t sequence[8];
+    uint8_t i = 0;
+    uint16_t entry = 0xE79E;
+    for (i = 0; i < 8; i++)
+    {
+        sequence[i] = 0xff;
+    }
+    hil_Swd_Seq(56, sequence);
+
+    sequence[0] = entry & 0xff;
+    sequence[1] = (entry >> 8) & 0xff;
+    hil_Swd_Seq(16, sequence);
+
+    for (i = 0; i < 8; i++)
+    {
+        sequence[i] = 0xff;
+    }
+    hil_Swd_Seq(56, sequence);
+}
+
+ void JTAG_Entry()
+{
+    uint8_t sequence[8];
+    uint8_t i = 0;
+    uint16_t entry = 0xE73C;
+    for (i = 0; i < 8; i++)
+    {
+        sequence[i] = 0xff;
+    }
+    hil_4w_432_Seq(51, sequence);
+
+    sequence[0] = entry & 0xff;
+    sequence[1] = (entry >> 8) & 0xff;
+    hil_4w_432_Seq(16, sequence);
+
+    for (i = 0; i < 1; i++)
+    {
+        sequence[i] = 0xff;
+    }
+    hil_4w_432_Seq(8, sequence);
+}
+
+uint32_t hil_swd_read_idcode()
+{
+    uint8_t sequence[1] = {0};
+    uint32_t id = 0;
+    hil_Swd_Seq(8, sequence);
+
+    if (CALL_MEMBER_FN_PTR(_Distinct_Methods.write_read_Dp)(0, &id, READ) != SWD_ACK)
+    {
+        return 0xFFFF;
+    }
+    return id;
+}
+
+
+uint32_t hil_Jtag_read_idcode()
+{
+    uint32_t JtagId = 0;
+
+    JtagId = CALL_MEMBER_FN_PTR(_Distinct_Methods.Instr04)(IR4_IDCODE);
+
+    if (JtagId == 0x1)
+    {
+        JtagId = CALL_MEMBER_FN_PTR(_Distinct_Methods.SetReg_XBits32)(0);
+    }
+    return JtagId;
+}
+
+
+int16_t _hil_Write_Read_Dp_Swd(uint8_t address ,uint32_t *data, uint16_t rnw)
+{
+    uint8_t retVal = 0;
+    uint8_t i = 0;
+
+    uint8_t regiser = SWD_DP | rnw<<1 | (address & 0x0c);
+
+    for (i = 0; i < MAX_RETRY; i++)
+    {
+        retVal = Swd_TransferData(regiser, data, rnw);
+        // if not wait for answer
+        if (retVal != 0x2)
+        {
+            return SWD_ACK;
+        }
+    }
+    if(i == MAX_RETRY || retVal != 0x1)
+    {
+        return -1;
+    }
+    return SWD_ACK;
+}
+
+////#pragma optimize = none
+int16_t _hil_Write_Read_Ap_Swd(uint32_t address, uint32_t *data, uint16_t rnw)
+{
+    uint64_t retVal;
+    uint8_t i = 0;
+    uint32_t dummydata = 0;
+
+    uint32_t apsel_bank_sel = address & DP_SELECT_APSEL_MASK;
+    apsel_bank_sel |= address & DP_SELECT_APBANKSEL_MASK;
+
+    if (_hil_Write_Read_Dp_Swd(DP_SELECT, &apsel_bank_sel, WRITE) != SWD_ACK)
+    {
+        return -1;
+    }
+    uint8_t regiser = SWD_AP | rnw<<1 | (address & 0x0c);
+    do
+    {
+        retVal = Swd_TransferData(regiser, data, rnw);
+    }
+    while(i++ < MAX_RETRY && retVal != 0x1);
+
+    if(i == MAX_RETRY)
+    {
+        return -1;
+    }
+
+    if(rnw == WRITE)
+    {
+        uint8_t regiser = SWD_DP | READ<<1 | (DP_RDBUFF & 0x0c);
+        do
+        {
+             retVal = Swd_TransferData(regiser, &dummydata, READ);
+        }
+        while(i++ < MAX_RETRY && retVal != 0x1);
+
+        if(i == MAX_RETRY)
+        {
+            return -1;
+        }
+    }
+    else
+    {
+        do
+        {
+            Swd_TransferData(regiser, data, rnw);
+        }
+        while(i++ == MAX_RETRY && retVal != 0x1);
+
+        if(i == MAX_RETRY)
+        {
+            return -1;
+        }
+    }
+    return SWD_ACK;
+}
+
+int16_t _hil_Write_Read_Mem_Ap_Swd(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw)
+{
+    // First Read current CSW value
+    uint32_t tmp = 0;
+    uint32_t apsel = ((uint32_t)ap_sel);
+    if (_hil_Write_Read_Ap_Swd(AP_CSW | apsel, &tmp, READ) != SWD_ACK)
+    {
+        return -1;
+    }
+
+    // Configure the transfer
+     tmp = (tmp & ~(AP_CSW_SIZE_MASK | AP_CSW_ADDRINC_MASK)) | AP_CSW_ADDRINC_OFF | AP_CSW_SIZE_32BIT;
+    if (_hil_Write_Read_Ap_Swd(AP_CSW | apsel, &tmp, WRITE) != SWD_ACK)
+    {
+        return -1;
+    }
+
+    // Write the address
+    tmp = address;
+    if (_hil_Write_Read_Ap_Swd(AP_TAR | apsel, &tmp, WRITE) != SWD_ACK)
+    {
+        return -1;
+    }
+    // Write/Read data
+    return _hil_Write_Read_Ap_Swd(AP_DRW | apsel, data, rnw);
+}
+
+// -----------------------------------------------------------------------------
+int16_t _hil_Write_Read_Dp_Jtag(uint8_t address ,uint32_t *data, uint16_t rnw)
+{
+    uint64_t retVal;
+    uint8_t i = 0;
+    uint64_t dataAlig = 0ull;
+    dataAlig = ((uint64_t)*data) << 3;
+
+    dataAlig |= (((address & 0xC) >> 1) + (rnw & 0x1));
+
+    if(CALL_MEMBER_FN_PTR(_Distinct_Methods.Instr04)(DPACC) != 0x1)
+    {
+        return -1;
+    }
+
+    for (i = 0; i < MAX_RETRY; i++)
+    {
+        retVal = CALL_MEMBER_FN_PTR(_Distinct_Methods.SetReg_XBits35)(&dataAlig);
+        // if ack == ACK
+        if ((retVal & 0x3) == ACK)
+        {
+            *data = retVal >> 3;
+            return ACK;
+        }
     }
     return -1;
 }
 
-void halt_cpu()
+// -----------------------------------------------------------------------------
+int16_t _hil_Write_Read_Ap_Jtag(uint32_t address, uint32_t *data, uint16_t rnw)
 {
-    data_16bit();
-    SetReg_16Bits(0x3FFF);
-    IHIL_Tclk(0);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x2409);
-    IHIL_Tclk(1);
-}
+    uint64_t retVal;
+    uint8_t i = 0;
+    uint64_t dataAlig = 0ull;
 
-void release_cpu()
-{
-    IHIL_Tclk(0);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x2401);
-    addr_capture();
-    IHIL_Tclk(1);
-}
+    dataAlig = ((uint64_t)*data) << 3;
 
-uint16_t ReadMemWord(uint16_t address)
-{
-    uint16_t data = 0;
-    halt_cpu();
-    IHIL_Tclk(0);
-    addr_16bit();
-    SetReg_16Bits(address);
-    data_to_addr();
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    data = SetReg_16Bits(0);
-    release_cpu();
-    return data;
-}
+    uint32_t apsel_bank_sel = address & DP_SELECT_APSEL_MASK;
+    apsel_bank_sel |= address & DP_SELECT_APBANKSEL_MASK;
 
-uint16_t ReadMemWordX(uint32_t address)
-{
-    uint16_t data = 0;
-    halt_cpu();
-    IHIL_Tclk(0);
-    addr_16bit();
-    SetReg_20Bits(address & 0xFFFFF);
-    data_to_addr();
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    data = SetReg_16Bits(0);
-    release_cpu();
-    return data;
-}
-
-uint16_t ReadMemWordXv2(uint32_t address)
-{
-    uint16_t data = 0;
-    IHIL_Tclk(0);
-    addr_16bit();
-    SetReg_20Bits(address & 0xFFFFF);
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    data_capture();
-    data = SetReg_16Bits(0);
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-    return data;
-}
-
-void WriteMemWord(uint16_t address, uint16_t data)
-{
-    halt_cpu();
-    IHIL_Tclk(0);
-    cntrl_sig_low_byte();
-    SetReg_8Bits(0x08);
-    addr_16bit();
-    SetReg_16Bits(address);
-    data_to_addr();
-    SetReg_16Bits(data);
-    IHIL_Tclk(1);
-    release_cpu();
-}
-
-void WriteMemWordX(uint32_t address, uint16_t data)
-{
-    halt_cpu();
-    IHIL_Tclk(0);
-    cntrl_sig_low_byte();
-    SetReg_8Bits(0x08);
-    addr_16bit();
-    SetReg_20Bits(address & 0xFFFFF);
-    data_to_addr();
-    SetReg_16Bits(data);
-    IHIL_Tclk(1);
-    release_cpu();
-}
-
-void WriteMemWordXv2(uint32_t address, uint16_t data)
-{
-    IHIL_Tclk(0);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x0500);
-    addr_16bit();
-    SetReg_20Bits(address);
-    IHIL_Tclk(1);
-    data_to_addr();
-    SetReg_16Bits(data);
-    IHIL_Tclk(0);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x0501);
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-}
-
-void WriteMemByte(uint32_t address, uint16_t data)
-{
-    halt_cpu();
-    IHIL_Tclk(0);
-    addr_16bit();
-    SetReg_16Bits(address);
-    data_to_addr();
-    SetReg_8Bits(data);
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    release_cpu();
-}
-
-uint16_t ReadCpuReg_uint16_t(uint16_t reg)
-{
-    int16_t op = 0;
-    uint16_t data = 0;
-
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x3401);
-    data_16bit();
-    op = ((reg << 8) & 0x0F00) | 0x4082;
-    SetReg_16Bits(op);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    data_16bit();
-    SetReg_16Bits(0x00fe);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-    SetReg_16Bits(0);
-    data = SetReg_16Bits(0);
-    IHIL_Tclk(0);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x2401);
-    IHIL_Tclk(1);
-    return data;
-}
-
-uint16_t ReadCpuReg(uint16_t reg)
-{
-    int16_t op = 0;
-    uint16_t data = 0;
-
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x3401);
-    data_16bit();
-    op = ((reg << 8) & 0x0F00) | 0x4082;
-    SetReg_16Bits(op);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    data_16bit();
-    SetReg_16Bits(0x00fe);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-    data = SetReg_16Bits(0);
-    IHIL_Tclk(0);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x2401);
-    IHIL_Tclk(1);
-    return data;
-}
-
-uint32_t ReadCpuRegX(uint16_t reg)
-{
-    int16_t op = 0;
-    uint16_t Rx_l = 0;
-    uint16_t Rx_h = 0;
-
-    cntrl_sig_high_byte();
-    SetReg_16Bits(0x34);
-    op = ((reg << 8) & 0x0F00) | 0x60;
-    data_16bit();
-    IHIL_Tclk(1);
-    SetReg_16Bits(op);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    data_16bit();
-    IHIL_Tclk(1);
-    SetReg_16Bits(0x00fc);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    Rx_l = SetReg_16Bits(0);
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-    Rx_h = SetReg_16Bits(0);
-    IHIL_Tclk(0);
-    cntrl_sig_high_byte();
-    SetReg_8Bits(0x24);
-    IHIL_Tclk(1);
-    return ((uint32_t)Rx_h<<16) + Rx_l;
-}
-
-uint32_t ReadCpuRegXv2(uint16_t reg)
-{
-    uint16_t Rx_l = 0;
-    uint16_t Rx_h = 0;
-    const uint16_t jtagId = cntrl_sig_capture();
-    const uint16_t jmbAddr = (jtagId == 0x98) ? 0x14c : 0x18c;
-
-    IHIL_Tclk(0);
-    data_16bit();
-    IHIL_Tclk(1);
-    SetReg_16Bits(reg);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x1401);
-    data_16bit();
-    IHIL_TCLK();
-    if (altRomAddressForCpuRead)
+    if (_hil_Write_Read_Dp_Jtag(DP_SELECT, &apsel_bank_sel, WRITE) != ACK)
     {
-        SetReg_16Bits(0x0ff6);
+        return -1;
+    }
+
+    dataAlig |= (((address & 0xC) >> 1) + (rnw & 0x1));
+
+    if(CALL_MEMBER_FN_PTR(_Distinct_Methods.Instr04)(APACC) != 0x1)
+    {
+        return -1;
+    }
+
+    do
+    {
+        retVal = CALL_MEMBER_FN_PTR(_Distinct_Methods.SetReg_XBits35)(&dataAlig);
+    } while(((retVal & 0x3) != ACK) && (++i < MAX_RETRY));
+
+    if(i == MAX_RETRY)
+    {
+        return -1;
     }
     else
     {
-        SetReg_16Bits(jmbAddr);
-    }
-    IHIL_TCLK();
-    SetReg_16Bits(0x3ffd);
-    IHIL_Tclk(0);
-    if (altRomAddressForCpuRead)
-    {
-        cntrl_sig_16bit();
-        SetReg_16Bits(0x0501);
-    }
-    data_capture();
-    IHIL_Tclk(1);
-    Rx_l = SetReg_16Bits(0);
-    IHIL_TCLK();
-    Rx_h = SetReg_16Bits(0);
-    IHIL_TCLK();
-    IHIL_TCLK();
-    IHIL_TCLK();
-    if (!altRomAddressForCpuRead)
-    {
-        cntrl_sig_16bit();
-        SetReg_16Bits(0x0501);
-    }
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    return((uint32_t)Rx_h<<16) + Rx_l;
-}
-
-void WriteCpuReg(uint16_t reg, uint16_t data)
-{
-    uint16_t op = 0;
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x3401);
-    data_16bit();
-    op = (0x4030 | reg);
-    SetReg_16Bits(op);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    data_16bit();
-    SetReg_16Bits(data);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    data_16bit();
-    SetReg_16Bits(0x3ffd);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x2401);
-    IHIL_Tclk(1);
-}
-
-void WriteCpuRegX(uint16_t mova, uint32_t data)
-{
-    uint16_t op = 0x0080 | mova | ((data >> 8) & 0x0F00);
-    cntrl_sig_high_byte();
-    SetReg_8Bits(0x34);
-    data_16bit();
-    IHIL_Tclk(1);
-    SetReg_16Bits(op);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    data_16bit();
-    IHIL_Tclk(1);
-    SetReg_16Bits(data & 0xFFFF);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    data_16bit();
-    IHIL_Tclk(1);
-    SetReg_16Bits(0x3ffd);
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    cntrl_sig_high_byte();
-    SetReg_8Bits(0x24);
-    IHIL_Tclk(1);
-}
-
-// BUGFIX BTT1722 added
-void WriteCpuRegXv2(uint16_t mova, uint16_t data)
-{
-    IHIL_Tclk(0);
-    data_16bit();
-    IHIL_Tclk(1);
-    SetReg_16Bits(mova);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x1401);
-    data_16bit();
-    IHIL_TCLK();
-    SetReg_16Bits(data);
-    IHIL_TCLK();
-    SetReg_16Bits(0x3ffd);
-    IHIL_TCLK();
-    IHIL_Tclk(0);
-    addr_capture();
-    SetReg_20Bits(0x00000);
-    IHIL_Tclk(1);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x0501);
-    IHIL_TCLK();
-    IHIL_Tclk(0);
-    data_capture();
-    IHIL_Tclk(1);
-}
-
-void SetPc(uint16_t pc)
-{
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x3401);
-    data_16bit();
-    SetReg_16Bits(0x4030);
-    IHIL_TCLK();
-    SetReg_16Bits(pc);
-    IHIL_TCLK();
-    addr_capture();
-    IHIL_Tclk(0);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x2401);
-    IHIL_Tclk(1);
-}
-
-void SetPcJtagBug(uint16_t pc)
-{
-    data_16bit();
-    SetReg_16Bits(0x4030);
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    SetReg_16Bits(pc);
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-}
-
-void SetPcX(uint32_t pc)
-{
-    uint16_t pc_high = (uint16_t)(0x80 | (((pc)>>8) & 0x0F00));
-    uint16_t pc_low  = (uint16_t)((pc) & 0xFFFF);
-    cntrl_sig_high_byte();
-    SetReg_8Bits(0x34);
-    data_16bit();
-    SetReg_16Bits(pc_high);
-    IHIL_TCLK();
-    SetReg_16Bits(pc_low);
-    IHIL_TCLK();
-    addr_capture();
-    IHIL_Tclk(0);
-    cntrl_sig_high_byte();
-    SetReg_8Bits(0x24);
-    IHIL_Tclk(1);
-}
-
-void SetPcXv2(uint16_t Mova, uint16_t pc)
-{
-    cntrl_sig_capture();
-    SetReg_16Bits(0x0000);
-    IHIL_Tclk(0);
-    data_16bit();
-    IHIL_Tclk(1);
-    SetReg_16Bits(Mova);
-    IHIL_Tclk(0);
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x1400);
-    data_16bit();
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-    SetReg_16Bits(pc);
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-    SetReg_16Bits(0x4303);
-    IHIL_Tclk(0);
-    addr_capture();
-    SetReg_20Bits(0x00000);
-}
-
-uint16_t SyncJtag()
-{
-    uint16_t lOut = 0, i = 50;
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x2401);
-    cntrl_sig_capture();
-    do
-    {
-        lOut = SetReg_16Bits(0x0000);
-        i--;
-    }
-    while(((lOut == 0xFFFF) || !(lOut & 0x0200)) && i);
-    if(!i)
-    {
-        return 0;
-    }
-    return lOut;
-}
-
-void SyncJtagX()
-{
-    uint16_t lOut = 0, i = 50;
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x2401);
-    cntrl_sig_capture();
-    SetReg_16Bits(0x0000);
-    IHIL_Tclk(1);
-    if (!(lOut & 0x0200))
-    {
-        cntrl_sig_high_byte();
-        SetReg_8Bits(0x34);
-        eem_data_exchange32();
-        SetReg_32Bits(0x89);
-        SetReg_32Bits(0);
-        eem_data_exchange32();
-        SetReg_32Bits(0x88);
-        SetReg_32Bits(lOut|0x40);
-        eem_data_exchange32();
-        SetReg_32Bits(0x88);
-        SetReg_32Bits(lOut);
-    }
-    cntrl_sig_capture();
-    do
-    {
-        lOut = SetReg_16Bits(0x0000);
-        i--;
-    }
-    while(((lOut == 0xFFFF) || !(lOut & 0x0200)) && i);
-}
-
-void SyncJtagXv2()
-{
-    uint16_t i = 50, lOut = 0 ;
-    cntrl_sig_16bit();
-    SetReg_16Bits(0x1501);
-    cntrl_sig_capture();
-    do
-    {
-        lOut = SetReg_16Bits(0x0000);
-        i--;
-    }
-    while(((lOut == 0xFFFF) || !(lOut & 0x0200)) && i);
-}
-
-uint16_t wait_for_synch()
-{
-    uint16_t i = 0;
-    cntrl_sig_capture();
-
-    while(!(SetReg_16Bits(0) & 0x0200) && i++ < 50);
-    if(i >= 50)
-    {
-        return 0;
-    }
-    return 1;
-}
-
-void RestoreTestRegs()
-{
-    if(devicePowerSettings.powerTestReg3VMask)
-    {
-        test_reg_3V();
-        SetReg_16Bits(devicePowerSettings.powerTestReg3VDefault);
-        IHIL_Delay_1ms(20);
-    }
-    if(devicePowerSettings.powerTestRegMask)
-    {
-        test_reg();
-        SetReg_32Bits(devicePowerSettings.powerTestRegDefault);
-        IHIL_Delay_1ms(20);
-    }
-}
-
-void EnableLpmx5()
-{
-    if(devicePowerSettings.powerTestReg3VMask)
-    {
-        uint16_t reg_3V = 0;
-        test_reg_3V();
-        reg_3V = SetReg_16Bits(devicePowerSettings.powerTestReg3VDefault);
-
-        SetReg_16Bits((reg_3V & ~devicePowerSettings.powerTestReg3VMask)|
-                       devicePowerSettings.enableLpmx5TestReg3V);
-
-        IHIL_Delay_1ms(20);
-    }
-
-    if(devicePowerSettings.powerTestRegMask)
-    {
-        uint32_t reg_test = 0;
-        test_reg();
-        reg_test = SetReg_32Bits(devicePowerSettings.powerTestRegDefault);
-
-        SetReg_32Bits((reg_test & ~devicePowerSettings.powerTestRegMask)|
-        devicePowerSettings.enableLpmx5TestReg);
-
-        IHIL_Delay_1ms(20);
-    }
-}
-
-void DisableLpmx5()
-{
-    if(devicePowerSettings.powerTestReg3VMask)
-    {
-        uint16_t reg_3V = 0;
-        test_reg_3V();
-        reg_3V = SetReg_16Bits(devicePowerSettings.powerTestReg3VDefault);
-
-        SetReg_16Bits((reg_3V & ~devicePowerSettings.powerTestReg3VMask)|
-            devicePowerSettings.disableLpmx5TestReg3V);
-        IHIL_Delay_1ms(20);
-    }
-
-    if(devicePowerSettings.powerTestRegMask)
-    {
-        uint32_t reg_test = 0;
-        test_reg();
-        SetReg_32Bits(devicePowerSettings.powerTestRegDefault);
-
-        SetReg_32Bits((reg_test & ~devicePowerSettings.powerTestRegMask)|
-            devicePowerSettings.disableLpmx5TestReg);
-
-        IHIL_Delay_1ms(20);
-    }
-}
-
-
-
-// -----------------------------------------------------------------------------
-void JTAG_PsaSetup(uint32_t StartAddr)
-{
-    data_16bit();
-    IHIL_Tclk(1);
-    SetReg_16Bits(MOV_IMM_PC);
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-    SetReg_16Bits(StartAddr - 2);
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    IHIL_Tclk(1);
-    IHIL_Tclk(0);
-    addr_capture();
-    SetReg_16Bits(0x0000);
-}
-
-// -----------------------------------------------------------------------------
-void JTAG_EnhancedPsaSetup(uint32_t StartAddr)
-{
-    halt_cpu();
-    IHIL_Tclk(0);
-    data_16bit();
-    SetReg_16Bits(StartAddr - 2);
-}
-
-// -----------------------------------------------------------------------------
-void JTAG_PsaEnd()
-{
-    // Intentionally does nothing
-}
-
-// -----------------------------------------------------------------------------
-void JTAG_EnhancedPsaEnd()
-{
-    release_cpu();
-    isInstrLoad();
-}
-
-void _hil_Connect(uint8_t state) {
-    if (jtagReleased) {
-        IHIL_SetProtocol(gprotocol_id);
-    }
-    
-    if (state == RSTHIGH) {
-        if (gprotocol_id == JTAG) {
-            HIL_UNIMP;
-        
-        } else {
-            IHIL_Delay_1ms(10);
-            qDriveSbw();
-            IHIL_Delay_1ms(30);
-            _hil_EntrySequences_RstHigh_SBW();
+        if(rnw == READ)
+        {
+            return _hil_Write_Read_Dp_Jtag(DP_RDBUFF, data, READ);
         }
-    
-    } else if (state == RSTLOW) {
-        if (gprotocol_id == JTAG) {
-            HIL_UNIMP;
-        
-        } else {
-            qDriveSbw();
-            IHIL_Delay_1ms(1);
-            _hil_EntrySequences_RstLow_SBW();
+        else
+        {
+            return ACK;
         }
     }
-    jtagReleased = 0;
 }
 
-void _hil_Release() {
-    jtagReleased = 1;
+// -----------------------------------------------------------------------------
+// Currently only supports single 32-bit transfers
+int16_t _hil_Write_Read_Mem_Ap_Jtag(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw)
+{
+    // First Read current CSW value
+    uint32_t tmp = 0;
+    uint32_t apsel = (((uint32_t)ap_sel) << 24);
+    if (_hil_Write_Read_Ap_Jtag(AP_CSW | apsel, &tmp, READ) != ACK)
+    {
+        return -1;
+    }
+
+    // Configure the transfer
+    tmp = (tmp & ~(AP_CSW_SIZE_MASK | AP_CSW_ADDRINC_MASK)) | AP_CSW_ADDRINC_OFF | AP_CSW_SIZE_32BIT;
+    if (_hil_Write_Read_Ap_Jtag(AP_CSW | apsel, &tmp, WRITE) != ACK)
+    {
+        return -1;
+    }
+
+    // Write the address
+    tmp = address;
+    if (_hil_Write_Read_Ap_Jtag(AP_TAR | apsel, &tmp, WRITE) != ACK)
+    {
+        return -1;
+    }
+    // Write/Read data
+    return _hil_Write_Read_Ap_Jtag(AP_DRW | apsel, data, rnw);
 }
 
-void qDriveSbw(void) {
-    // TEST=0, RST=1
-    _msp.sbwTestSet(0);
-    _msp.sbwRstSet(1);
+
+
+
+
+
+
+
+
+
+
+
+uint8_t lastTestState  = 0;
+uint8_t lastResetState = 0;
+
+void hil_fpga_init(void)
+{
+    UNIMP_FN();
 }
 
-void qDriveJTAG(void) {
-    HIL_UNIMP;
+void startWdtTimeOutCounter(uint32_t timeout)
+{
+    UNIMP_FN();
 }
 
-void _hil_EntrySequences_RstHigh_SBW() {
-    // TEST=0, RST=0
-    _msp.sbwTestSet(0);
-    _msp.sbwRstSet(0);
-    IHIL_Delay_1ms(5);
-    
-    // RST=1
-    _msp.sbwRstSet(1);
-    IHIL_Delay_1ms(5);
-    
-    // TEST=1
-    _msp.sbwTestSet(1);
-    IHIL_Delay_1ms(100);
-    
-    // TEST pulse 1->0->1
-    // (Use a SBW IO cycle to pulse TEST)
-    _msp.sbwTestPulse();
-    IHIL_Delay_1ms(5);
+void stopWdtTimeOutCounter()
+{
+    UNIMP_FN();
 }
 
-void _hil_EntrySequences_RstLow_SBW() {
-    // TEST=0, RST=0
-    _msp.sbwTestSet(0);
-    _msp.sbwRstSet(0);
-    IHIL_Delay_1ms(5);
-    
-    // TEST=1
-    _msp.sbwTestSet(1);
-    IHIL_Delay_1ms(100);
-    
-    // RST=1
-    _msp.sbwRstSet(1);
-    IHIL_Delay_1ms(5);
-    
-    // TEST pulse 1->0->1
-    // (Use a SBW IO cycle to pulse TEST)
-    _msp.sbwTestPulse();
-    IHIL_Delay_1ms(5);
+void _hil_FpgaAccess_setTimeOut(uint16_t state)
+{
+    UNIMP_FN();
 }
 
-void initGeneric() {
-    prevInstruction = 0;
+void initJtagBypass(struct jtag tmp)
+{
+    UNIMP_FN();
+}
+
+//enable bypass
+void hil_fpga_enable_bypass()
+{
+    UNIMP_FN();
+}
+
+// Leave bypass
+void hil_fpga_disable_bypass(void)
+{
+    UNIMP_FN();
+}
+
+void hil_fpga_write_cmd_data0(uint8_t cmd, uint8_t data0)
+{
+    UNIMP_FN();
+}
+
+void hil_fpga_write_cmd_data0_432(uint8_t cmd, uint8_t data0)
+{
+    UNIMP_FN();
+}
+
+// Write CMD, DATA0 and DATA1 to FPGA
+void hil_fpga_write_cmd_data0_data1(uint8_t cmd, uint8_t data0, uint16_t data1)
+{
+    UNIMP_FN();
+}
+
+// Write CMD, DATA0 and DATA1 to FPGA
+void hil_fpga_write_cmd_data0_data1_count_432(uint8_t cmd, uint8_t data0, uint16_t data1Buf[], uint8_t count)
+{
+    UNIMP_FN();
+}
+
+// Read data from FPGA
+void hil_fpga_read_data_432(uint8_t count, uint16_t *buf)
+{
+    UNIMP_FN();
+}
+
+// Write CMD, DATA0 and DATA1 to FPGA
+void hil_fpga_write_cmd_data0_data1_count(uint8_t cmd, uint8_t data0, uint16_t data1Buf[], uint8_t count)
+{
+    UNIMP_FN();
+}
+
+// Read data from FPGA
+void hil_fpga_read_data1(uint8_t count, uint16_t *buf)
+{
+    UNIMP_FN();
+}
+
+// Hi-Z JTAG signals to target, except TEST and RST (actively drive 0)
+void hil_fpga_power_up_target(void)
+{
+    UNIMP_FN();
+}
+
+uint16_t hil_fpga_get_version(void)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+void hil_DacControlInitDAC0(void)
+{
+    UNIMP_FN();
+}
+
+void hil_DacControlSetDAC0(uint16_t dacVal)
+{
+    UNIMP_FN();
+}
+
+void hil_DacControlInitDAC1(void)
+{
+    UNIMP_FN();
+}
+
+void hil_DacControlSetDAC1(uint16_t dacVal)
+{
+    UNIMP_FN();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+uint16_t runningAverageBufferSpVcc[8] = {0,0,0,0,0,0,0,0};
+uint16_t runningBufferVCCDtSense = 0;
+uint16_t runningAverageBufferDtVcc[8] = {0,0,0,0,0,0,0,0};
+uint16_t runningAverageBufferExtVcc[8] = {0,0,0,0,0,0,0,0};
+uint16_t isVCC = 0, dtVCC = 0, iexVCC = 0;
+
+/*  In normal operation mode, the  read function is triggered by the ADC12
+    interrupt when a sample sequence has been completed.
+    During Hil module init (FET startup)  and Set VCC the ADC12 interrupts are
+    disabled and the readout is triggered manually by the calling function
+*/
+
+#define CAL_ADC_GAIN_FACTOR  *((uint16_t *)0x1A16)
+#define CAL_ADC_OFFSET  *((int16_t *)0x1A18)
+
+void hil_AdcControlRead()
+{
+    UNIMP_FN();
+}
+
+/* Init ADC, enable sequence conversion on A1, A3, A4 and A6 ñ Sequence is
+    triggered once during main loop execution, only when HIL module is loaded and
+    valid
+*/
+void hil_AdcControlInitADC()
+{
+    UNIMP_FN();
+}
+
+/*----------------------------------------------------------------------------
+   This function performs a single AD conversion on the selected pin.
+   Uses internal reference 2500mV (VR+ = VREF+).
+    Only used during Fuse Blow to measure VCC Fuse
+   Arguments: word pinmask (bit position of selected analog input Ax)
+   Result:    word (12 bit ADC conversion result)
+*/
+float ConvertAD(int16_t channel)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+/* Only used during Fuse Blow to measure VCC Fuse  */
+void hil_AdcControlInitADCvFuse()
+{
+    UNIMP_FN();
+}
+
+// Get 1 sample from A6
+uint16_t hil_AdcControlGetDtVccSense(void)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+// Get 1 sample from A3
+uint16_t hil_AdcControlGetExternalVcc(void)
+{
+    UNIMP_FN();
+    return 0;
+}
+// Get 1 sample from A1
+uint16_t hil_AdcControlGetSupplyVcc(void)
+{
+    UNIMP_FN();
+    return 0;
+}
+// Get 1 sample from A2
+uint16_t hil_AdcControlGetVFuse(void)
+{
+    UNIMP_FN();
+    return 0;
+}
+// Get 1 sample from A4
+uint16_t hil_AdcControlGetVccDt(void)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void TMSH_DMA()
+{
+    UNIMP_FN();
+}
+
+void TMSL_DMA()
+{
+    UNIMP_FN();
+}
+
+void TMSLDH_DMA()
+{
+    UNIMP_FN();
+}
+
+void TDIH_DMA()
+{
+    UNIMP_FN();
+}
+
+void TDIL_DMA()
+{
+    UNIMP_FN();
+}
+
+void TDOsbwDma()
+{
+    UNIMP_FN();
+}
+
+void TDOsbwFuse()
+{
+    UNIMP_FN();
+}
+
+void TDO_RD_FUSE()
+{
+    UNIMP_FN();
+}
+
+void TDO_RD_DMA()
+{
+    UNIMP_FN();
+}
+
+void initJtagSbw2Dma(struct jtag tmp)
+{
+    UNIMP_FN();
+}
+
+#ifdef MSP_FET
+void setProtocolSbw2Dma(uint16_t id)
+{
+    UNIMP_FN();
+}
+#endif
+
+uint8_t _hil_2w_GetPrevInstruction_Dma()
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint64_t sbw_ShiftDma(uint64_t Data, uint16_t Bits)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+int16_t _hil_2w_TapReset_Dma(void)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+int16_t _hil_2w_CheckJtagFuse_Dma(void)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint8_t _hil_2w_Instr_Dma(uint8_t Instruction)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+void hil_2w_SetReg_XBits8_64_Entry_DMA()
+{
+    UNIMP_FN();
+}
+
+void hil_2w_SetReg_XBits8_64_Exit_DMA()
+{
+    UNIMP_FN();
+}
+
+uint64_t hil_2w_SetReg_XBits8_64_Run_Dma(uint64_t Data, uint8_t * DataState, uint16_t JStateVersion)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint64_t _hil_2w_SetReg_XBits8_64_Dma(uint64_t Data, uint16_t loopCount, uint16_t JStateVersion)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint8_t _hil_2w_SetReg_XBits08_Dma(uint8_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint16_t _hil_2w_SetReg_XBits16_Dma(uint16_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint32_t _hil_2w_SetReg_XBits20_Dma(uint32_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint32_t _hil_2w_SetReg_XBits32_Dma(uint32_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint64_t _hil_2w_SetReg_XBits64_Dma(uint64_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+void _hil_2w_Tclk_Dma(uint8_t state)
+{
+    UNIMP_FN();
+}
+
+void _hil_2w_StepPsa_Dma_Xv2(uint32_t length)
+{
+    UNIMP_FN();
+}
+
+void _hil_2w_StepPsa_Dma(uint32_t length)
+{
+    UNIMP_FN();
+}
+
+void _hil_2w_StepPsaTclkHigh_Dma(uint32_t length)
+{
+    UNIMP_FN();
+}
+
+void _hil_2w_ConfigureSpeed_Dma(uint16_t speed)
+{
+    UNIMP_FN();
+}
+
+int16_t _hil_2w_BlowFuse_Dma(uint8_t targetHasTestVpp)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+uint16_t prevInstruction_hil_generic_ = 0;
+
+//#pragma optimize=low
+void _hil_generic_ConfigureSpeed(uint16_t speed)
+{
+    uint16_t tckFreq, tclkFreq;
+
+    switch(speed)
+        {
+            case SBW100KHz:
+                {
+                    tckFreq = 298;
+                    tclkFreq = 75;
+                    break;
+                }
+            case SBW200KHz:
+                {
+                    tckFreq = 350;
+                    tclkFreq = 75;
+                    break;
+                }
+            case SBW400KHz:
+                {
+                    tckFreq = 137;
+                    tclkFreq = 30;
+                    break;
+                }
+            case SBW600KHz:
+                {
+                    tckFreq = 88;
+                    tclkFreq = 21;
+                    break;
+                }
+            case SBW1200KHz:
+                {
+                    tckFreq = 48;
+                    tclkFreq = 12;
+                    break;
+                }
+            case JTAG250KHz:
+                {
+                    tckFreq = 238;
+                    tclkFreq = 238;
+                    break;
+                }
+            case JTAG500KHz:
+                {
+                    tckFreq = 118;
+                    tclkFreq = 28;
+                    break;
+                }
+             case JTAG750KHz:
+                {
+                    tckFreq = 88;
+                    tclkFreq = 21;
+                    break;
+                }
+            case JTAG1MHz:
+                {
+                    tckFreq = 58;
+                    tclkFreq = 14;
+                    break;
+                }
+            case JTAG2MHz:
+                {
+                    tckFreq = 28;
+                    tclkFreq = 7;
+                    break;
+                }
+            case JTAG4MHz:
+                {
+                    tckFreq = 13;
+                    tclkFreq = 4;
+                    break;
+                }
+            case JTAG8MHz:
+                {   // 7,5 MHz
+                    tckFreq = 5;
+                    tclkFreq = 2;
+                    break;
+                }
+            case JTAG15MHz:
+                {
+                    tckFreq = 3;
+                    tclkFreq = 3;
+                    break;
+                }
+            default:
+                {
+                    // 500 kHz, but this should never happen
+                    tckFreq = 118;
+                    tclkFreq = 118;
+                    break;
+                }
+        }
+    hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_TEST_CLK_FREQUENCY, tckFreq);
+    hil_fpga_write_cmd_data0_data1(FPGA_CMD_CFG, REG_TCLK_CLK_FREQUENCY, tclkFreq);
+}
+
+void initGeneric()
+{
+    prevInstruction_hil_generic_ = 0;
+}
+
+uint8_t _hil_generic_GetPrevInstruction()
+{
+    return prevInstruction_hil_generic_;
+}
+
+uint8_t _hil_generic_Instr(uint8_t instruction)
+{
+    uint16_t retVal;
+
+    hil_fpga_write_cmd_data0(FPGA_CMD_IR8_RD, instruction);
+    hil_fpga_read_data1(1, &retVal);
+    prevInstruction_hil_generic_ = instruction;
+
+    return ((uint8_t)retVal);
+}
+
+uint8_t _hil_generic_SetReg_XBits08(uint8_t data)
+{
+    uint16_t retVal;
+
+    hil_fpga_write_cmd_data0(FPGA_CMD_DR8_RD, data);
+    hil_fpga_read_data1(1, &retVal);
+
+    return ((uint8_t)retVal);
+}
+uint16_t _hil_generic_SetReg_XBits16(uint16_t data)
+{
+    uint16_t retVal;
+
+    hil_fpga_write_cmd_data0_data1(FPGA_CMD_DRX_RD, 16, data);
+    hil_fpga_read_data1(1, &retVal);
+
+    return retVal;
+}
+
+uint32_t _hil_generic_SetReg_XBits20(uint32_t data)
+{
+    uint32_t retVal;
+
+    hil_fpga_write_cmd_data0_data1_count(FPGA_CMD_DRX_RD, 20, (uint16_t*)&data, 2);
+    hil_fpga_read_data1(2, (uint16_t*)&retVal);
+
+    return (retVal >> 4) | ((retVal & 0xF) << 16);
+}
+
+// -----------------------------------------------------------------------------
+uint32_t _hil_generic_SetReg_XBits32(uint32_t data)
+{
+    uint32_t retVal;
+
+    hil_fpga_write_cmd_data0_data1_count(FPGA_CMD_DRX_RD, 32, (uint16_t*)&data, 2);
+    hil_fpga_read_data1(2, (uint16_t*)&retVal);
+    return retVal;
+}
+
+// -----------------------------------------------------------------------------
+uint64_t _hil_generic_SetReg_XBits64(uint64_t data)
+{
+    uint64_t retVal;
+
+    hil_fpga_write_cmd_data0_data1_count(FPGA_CMD_DRX_RD, 64, (uint16_t*)&data, 4);
+    hil_fpga_read_data1(4, (uint16_t*)&retVal);
+
+    return retVal;
+}
+
+//! \brief This function executes an SBW2 64BIT Data SHIFT (DR-SHIFT) in the case,
+//! that the first 8 bits show a valid data capture from the JSTATE register. In case
+//! of no valid capture the shift is ended after the first 8 bits. Timeout could be
+//! used to set the function run count.
+//! \param[in]  Data to be shifted into target device
+//! \return Value shifted out of target device JTAG module
+uint64_t _hil_generic_XBits8_64(uint64_t Data, uint16_t loopCount,uint16_t PG)
+{
+   uint64_t TDOvalue = 0x0;
+    uint16_t timeout = loopCount;
+    uint8_t DataState = 0;
+    uint16_t currentDeviceState = 0;
+    uint16_t syncBrokenCount = loopCount/2;
+
+    do
+    {
+        TDOvalue = (_hil_generic_SetReg_XBits64(Data));
+        // Mask out all not needed bits for device state detection
+        currentDeviceState = ((TDOvalue >> 56) & JSTATE_FLOW_CONTROL_BITS);
+
+        // check, if BIT[63, 62, 61, 60, 59  58, 57, 56, ] & 0x4 (BP_HIT) == TRUE
+        if(currentDeviceState & JSTATE_BP_HIT)
+        {
+            // reload Jstate IR
+            _hil_generic_Instr(IR_JSTATE_ID);
+            DataState = VALID_DATA;
+            return(TDOvalue);
+        }
+
+        // check, if BIT[63, 62, 61, 60, 59  58, 57, 56] (AM Sync. ongoing) == 0x83
+        else if(currentDeviceState  == JSTATE_SYNC_ONGOING)
+        {
+            DataState = SYNC_ONGOING;
+        }
+
+        //check, if BIT[63, 62, 61, 60, 59  58, 57, 56] & 0x40 (Locked State) == 0x40
+        else if((currentDeviceState & JSTATE_LOCKED_STATE) == JSTATE_LOCKED_STATE &&
+                (currentDeviceState & JSTATE_LPM_X_FIVE) != JSTATE_LPM_X_FIVE)
+        {
+            DataState = JTAG_LOCKED;
+            return(TDOvalue);
+        }
+
+        //check, if BIT[63, 62, 61, 60, 59  58, 57, 56] ( Invalid LPM) == 0x81)
+        else if(currentDeviceState == JSTATE_INVALID_STATE)
+        {
+            // reload Jstate IR
+            _hil_generic_Instr(IR_JSTATE_ID);
+            DataState = INVALID_DATA;
+        }
+        /*PG2.0 && PG2.1 frozen Sync detection*/
+       else if (((currentDeviceState & JSTATE_SYNC_BROKEN_MASK) ==  JSTATE_SYNC_BROKEN_MCLK)
+                    ||((currentDeviceState & JSTATE_SYNC_BROKEN_MASK) ==  JSTATE_SYNC_BROKEN_MCLK_PGACT)
+                    ||((currentDeviceState & JSTATE_SYNC_BROKEN_MASK) ==  JSTATE_SYNC_BROKEN_PGACT))
+        {
+           if(syncBrokenCount > 0 && PG >= 0x21)
+
+           { // Only working for PG2.1, do not harm if executed on PG2.0 ? but will not create any effect only consume time
+                uint32_t current3VtestReg = 0;
+
+                // read current 3VtestReg value
+                _hil_generic_Instr(IR_TEST_REG);
+                current3VtestReg = _hil_generic_SetReg_XBits32(0);
+                // set bit 25 high to rest sync
+                current3VtestReg |= 0x2000000;
+                _hil_generic_SetReg_XBits32(current3VtestReg);
+                // set bit 25 low reset sync done
+                current3VtestReg &= ~0x2000000;
+                _hil_generic_SetReg_XBits32(current3VtestReg);
+
+                _hil_generic_Instr(IR_JSTATE_ID);
+                syncBrokenCount --;
+                timeout = timeout + 5;
+            }
+            else
+            {
+                DataState = VALID_DATA;
+                return(TDOvalue);
+            }
+        }
+        // device is not in LPMx or AC read out mode just restart the shift but do not reload the JState IR
+        else if(currentDeviceState != JSTATE_VALID_CAPTURE
+                &&  currentDeviceState !=   JSTATE_LPM_ONE_TWO
+                &&  currentDeviceState !=   JSTATE_LPM_THREE_FOUR
+                && (currentDeviceState &    JSTATE_LPM_X_FIVE) != JSTATE_LPM_X_FIVE)
+        {
+            DataState = INVALID_DATA;
+        }
+        else
+        {
+            DataState = VALID_DATA;
+        }
+
+        if(!timeout)
+        {
+            return TDOvalue;
+        }
+        timeout--;
+    }
+    while(DataState == INVALID_DATA || DataState == SYNC_ONGOING);
+
+    if(      currentDeviceState == JSTATE_LPM_ONE_TWO
+        ||   currentDeviceState == JSTATE_LPM_THREE_FOUR
+        ||   currentDeviceState == 0x00
+        ||   currentDeviceState == 0x02)
+    {
+        // reload Jstate IR
+        _hil_generic_Instr(IR_JSTATE_ID);
+    }
+    return(TDOvalue);
+}
+
+
+// -----------------------------------------------------------------------------
+void _hil_generic_Tclk(uint8_t state)
+{
+    if(state)
+    {
+        hil_fpga_write_cmd_data0(FPGA_CMD_CFG, REG_TCLKset1);
+    }
+    else
+    {
+        hil_fpga_write_cmd_data0(FPGA_CMD_CFG, REG_TCLKset0);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+void initJtagSbw4(struct jtag tmp)
+{
+    UNIMP_FN();
+}
+
+// -----------------------------------------------------------------------------
+int16_t _hil_4w_CheckJtagFuse(void)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+int16_t _hil_4w_TapReset(void)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+void _hil_4w_StepPsa(uint32_t length)
+{
+    UNIMP_FN();
+}
+// -----------------------------------------------------------------------------
+void _hil_4w_StepPsaTclkHigh(uint32_t length)
+{
+    UNIMP_FN();
+}
+
+int16_t _hil_4w_BlowFuse(uint8_t targetHasTestVpp)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+void hil_4w_432_Seq(uint16_t length, uint8_t *sequence)
+{
+    UNIMP_FN();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+void SWDTCKset1()
+{
+    UNIMP_FN();
+}
+
+void SWDTCKset0()
+{
+    UNIMP_FN();
+}
+
+void SWDIOset1TckCycle()
+{
+    UNIMP_FN();
+}
+
+void SWDIOset0TckCycle()
+{
+    UNIMP_FN();
+}
+
+void SWDTckCycle()
+{
+    UNIMP_FN();
+}
+
+void SWDIOwriteBit(uint8_t bit)
+{
+    UNIMP_FN();
+}
+
+void hil_Swd_InitJtag(struct jtag tmp)
+{
+    UNIMP_FN();
+}
+
+uint8_t Swd_TransferData(uint8_t regiser, uint32_t* data, uint8_t rnw)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+void hil_Swd_Seq(uint16_t length, uint8_t *sequence)
+{
+    UNIMP_FN();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+uint8_t _hil_generic432_Instr_4(uint8_t instruction)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint8_t _hil_generic432_SetReg_XBits08(uint8_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint16_t _hil_generic432_SetReg_XBits16(uint16_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+uint32_t _hil_generic432_SetReg_XBits32(uint32_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+uint64_t _hil_generic432_SetReg_XBits64(uint64_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint64_t _hil_generic432_SetReg_XBits(uint64_t *data, uint16_t count)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+uint64_t _hil_generic432_SetReg_XBits35(uint64_t *data)
+{
+    UNIMP_FN();
+    return 0;
 }
