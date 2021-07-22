@@ -454,3 +454,9 @@ struct _HalRec_
 };
 typedef struct _HalRec_ HalRec;
 #endif
+
+
+#define RO_PLACEMENT_NO_INIT
+#define DIAG_DEFAULT(x)
+#define DIAG_SUPPRESS(x)
+#define _NOP()

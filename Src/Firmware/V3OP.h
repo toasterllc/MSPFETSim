@@ -63,14 +63,14 @@ typedef struct calibrationValues calibrationValues_t;
 
 struct DCDC_INFOS
 {
-    int16_t (*getSubMcuVersion)(void);
-    int16_t (*getLayerVersion)(void);
-    int16_t (*dcdcCalibrate)(uint16_t resistor[4], uint16_t resCount, uint16_t vcc);
-    int16_t (*dcdcPowerDown)(void);
-    int16_t (*dcdcSetVcc)(uint16_t vcc);
-    int16_t (*dcdcRestart)(uint16_t fetType_);
-    void  (*dcdc_getCalibrationValues)(uint16_t vcc, uint16_t resistor,  uint16_t resCount, uint32_t *ticks, uint32_t *time);
-    int16_t (*getLayerVersionCmp)(void);
+    int16_t (MSPProbeSim::*getSubMcuVersion)(void);
+    int16_t (MSPProbeSim::*getLayerVersion)(void);
+    int16_t (MSPProbeSim::*dcdcCalibrate)(uint16_t resistor[4], uint16_t resCount, uint16_t vcc);
+    int16_t (MSPProbeSim::*dcdcPowerDown)(void);
+    int16_t (MSPProbeSim::*dcdcSetVcc)(uint16_t vcc);
+    int16_t (MSPProbeSim::*dcdcRestart)(uint16_t fetType_);
+    void    (MSPProbeSim::*dcdc_getCalibrationValues)(uint16_t vcc, uint16_t resistor,  uint16_t resCount, uint32_t *ticks, uint32_t *time);
+    int16_t (MSPProbeSim::*getLayerVersionCmp)(void);
 };
 typedef struct DCDC_INFOS DCDC_INFOS_t;
 
@@ -255,25 +255,25 @@ void dcdc_getCalibrationValues(uint16_t vcc, uint16_t resistor, uint16_t resCoun
 //#define BSL_I2C_INVOKE_SEQUENCE4 400001ul
 //#define BSL_I2C_SEQUENCE1 100002ul
 //#define BSL_I2C_SEQUENCE2 400002ul
-//
-//struct COM_INFOS
-//{
-//    int16_t (*comGetLayerVersion)(void);
-//    int16_t (*comConfig)(uint32_t Baudrate, uint32_t MCLK_Frequency, uint16_t);
-//    int16_t (*comTransmit)(void);
-//    int16_t (*comReceive)(uint16_t character);
-//    void  (*comClose)(void);
-//    void  (*comSetHil)(edt_common_methods_t*);
-//    void  (*comSetDcdc)(DCDC_INFOS_t*);
-//    void  (*comSetUSB)(FET_USB_INFOS_t*);
-//    void  (*comLoop)(void);
-//    int16_t (*comConfigMode)(uint32_t Baudrate);
-//    int16_t (*comSetCts)(void);
-//    int16_t (*comClearCts)(void);
-//    void  (*comSetRts)(void);
-//    int16_t (*comGetLayerVersionCmp)(void);
-//};
-//typedef struct COM_INFOS COM_INFOS_t;
+
+struct COM_INFOS
+{
+    int16_t (MSPProbeSim::*comGetLayerVersion)(void);
+    int16_t (MSPProbeSim::*comConfig)(uint32_t Baudrate, uint32_t MCLK_Frequency, uint16_t);
+    int16_t (MSPProbeSim::*comTransmit)(void);
+    int16_t (MSPProbeSim::*comReceive)(uint16_t character);
+    void    (MSPProbeSim::*comClose)(void);
+    void    (MSPProbeSim::*comSetHil)(edt_common_methods_t*);
+    void    (MSPProbeSim::*comSetDcdc)(DCDC_INFOS_t*);
+//    void  (MSPProbeSim::*comSetUSB)(FET_USB_INFOS_t*);
+    void    (MSPProbeSim::*comLoop)(void);
+    int16_t (MSPProbeSim::*comConfigMode)(uint32_t Baudrate);
+    int16_t (MSPProbeSim::*comSetCts)(void);
+    int16_t (MSPProbeSim::*comClearCts)(void);
+    void    (MSPProbeSim::*comSetRts)(void);
+    int16_t (MSPProbeSim::*comGetLayerVersionCmp)(void);
+};
+typedef struct COM_INFOS COM_INFOS_t;
 //
 //int16_t COM_BASE_GetLayerVersion();
 //int16_t COM_BASE_GetLayerVersionCmp();
@@ -309,7 +309,7 @@ int16_t _dummy_int16_tOutVoidIn(void) {return 0;}
 void _dummy_voidOutVoidIn(void){};
 int16_t  _dummy_comConfig (uint32_t Baudrate, uint32_t MCLK_Frequency, uint16_t toolId){return 0;};
 int16_t _dummy_comTransmit(void){return 0;};
-int16_t _dummy_comReceive (uint8_t character){return 0;};
+int16_t _dummy_comReceive (uint16_t character){return 0;};
 uint8_t *_dummy_comGetBuffer (){return 0;};
 
 int16_t _dummy_dcdcCalibrate(uint16_t resistor[4], uint16_t resCount, uint16_t vcc){return 0;}
@@ -317,11 +317,11 @@ int16_t _dummy_dcdcSetVcc(uint16_t vcc ){return 0;}
 int16_t _dummy_dcdcRestart(uint16_t fetType_){return 0;};
 void _dummy_dcdc_getCalibrationValues(uint16_t vcc, uint16_t resistor, uint16_t resCount, uint32_t *ticks, uint32_t *time){return;}
 
-//void _dummy_comSetHil(edt_common_methods_t* dummy){};
-//void _dummy_comSetDcdc(DCDC_INFOS_t* dummy){};
+void _dummy_comSetHil(edt_common_methods_t* dummy){};
+void _dummy_comSetDcdc(DCDC_INFOS_t* dummy){};
 //void _dummy_comSetUSB(FET_USB_INFOS_t* dummy){};
-//void _dummy_comLoop(void){};
-//int16_t _dummy_comConfig2(uint32_t Baudrate){return 0;};
+void _dummy_comLoop(void){};
+int16_t _dummy_comConfig2(uint32_t Baudrate){return 0;};
 
 //int16_t _dummy_InitHil( void ){return 0;};
 //int16_t _dummy_SetVcc(uint16_t Vcc){return 0;};
@@ -332,22 +332,22 @@ void _dummy_dcdc_getCalibrationValues(uint16_t vcc, uint16_t resistor, uint16_t 
 
 uint8_t rx_queu_counter_public_;
 
-//COM_INFOS_t comInfos_ =
-//{
-//    _dummy_int16_tOutVoidIn,
-//    _dummy_comConfig,
-//    _dummy_comTransmit,
-//    _dummy_comReceive,
-//    _dummy_voidOutVoidIn,
-//    _dummy_comSetHil,
-//    _dummy_comSetDcdc,
-//    _dummy_comSetUSB,
-//    _dummy_comLoop,
-//    _dummy_comConfig2,
-//    _dummy_comTransmit,
-//    _dummy_comTransmit,
-//    _dummy_voidOutVoidIn
-//};
+COM_INFOS_t comInfos_ =
+{
+    MEMBER_FN_PTR(_dummy_int16_tOutVoidIn),
+    MEMBER_FN_PTR(_dummy_comConfig),
+    MEMBER_FN_PTR(_dummy_comTransmit),
+    MEMBER_FN_PTR(_dummy_comReceive),
+    MEMBER_FN_PTR(_dummy_voidOutVoidIn),
+    MEMBER_FN_PTR(_dummy_comSetHil),
+    MEMBER_FN_PTR(_dummy_comSetDcdc),
+//  MEMBER_FN_PTR(_dummy_comSetUSB),
+    MEMBER_FN_PTR(_dummy_comLoop),
+    MEMBER_FN_PTR(_dummy_comConfig2),
+    MEMBER_FN_PTR(_dummy_comTransmit),
+    MEMBER_FN_PTR(_dummy_comTransmit),
+    MEMBER_FN_PTR(_dummy_voidOutVoidIn)
+};
 //#pragma required=comInfos_
 //
 //FET_USB_INFOS_t fetUsbInfos_ =
@@ -417,7 +417,7 @@ int16_t HAL_Zero_V3OP(uint8_t *data)
 
             if(Bios_getDcdc_signature() == 0xABBAABBA && V3OP_DcdcCrcOk())
             {
-                STREAM_put_word(dcdcInfos_.getLayerVersion());
+                STREAM_put_word(CALL_MEMBER_FN_PTR(dcdcInfos_.getLayerVersion)());
             }
             else
             {
@@ -425,7 +425,7 @@ int16_t HAL_Zero_V3OP(uint8_t *data)
             }
             if(Bios_getDcdc_signature() == 0xABBAABBA && V3OP_DcdcCrcOk() && Bios_getTool_id() != eZ_FET_NO_DCDC)
             {
-                STREAM_put_word(dcdcInfos_.getSubMcuVersion());
+                STREAM_put_word(CALL_MEMBER_FN_PTR(dcdcInfos_.getSubMcuVersion)());
 
             }
             else
@@ -435,7 +435,7 @@ int16_t HAL_Zero_V3OP(uint8_t *data)
              // return dummy value for Uart version module
             if(Bios_getCom_signature() == 0xACDCACDC && V3OP_ComChannelCrcOk())
             {
-                STREAM_put_word(comInfos_.comGetLayerVersion());
+                STREAM_put_word(CALL_MEMBER_FN_PTR(comInfos_.comGetLayerVersion)());
             }
             else
             {
@@ -768,7 +768,7 @@ int16_t V3OP_Rx (uint8_t *str)
                 pCallAddr = (HalFuncInOut)(*hal_ptr_)[call_addr].function;
                 if(pCallAddr != NULL)
                 {
-                    ret_value = pCallAddr(v30p_stream_flags_);
+                    ret_value = CALL_MEMBER_FN_PTR(pCallAddr)(v30p_stream_flags_);
                     if(!ret_value)
                     {
                         STREAM_flush();
@@ -833,7 +833,7 @@ int16_t V3OP_Rx (uint8_t *str)
                 break;
             case CMDTYP_DCDC_RESTART:
                 // restart sub mcu
-                ret_value =  dcdcInfos_.dcdcRestart(*(uint16_t*)&str[4]);
+                ret_value =  CALL_MEMBER_FN_PTR(dcdcInfos_.dcdcRestart)(*(uint16_t*)&str[4]);
                 break;
             case CMDTYP_DCDC_CALIBRATE:
                 // Start DCDC mcu calibaration function
@@ -843,17 +843,17 @@ int16_t V3OP_Rx (uint8_t *str)
                 V3OP_DcdcInterfaceInit();
                 break;
             case CMDTYP_DCDC_SUB_MCU_VERSION:
-                ret_value = dcdcInfos_.getSubMcuVersion();
+                ret_value = CALL_MEMBER_FN_PTR(dcdcInfos_.getSubMcuVersion)();
                 break;
             case CMDTYP_DCDC_LAYER_VERSION:
-                ret_value = dcdcInfos_.getLayerVersion();
+                ret_value = CALL_MEMBER_FN_PTR(dcdcInfos_.getLayerVersion)();
                 break;
             case CMDTYP_DCDC_POWER_DOWN:
-                ret_value = dcdcInfos_.dcdcPowerDown();
+                ret_value = CALL_MEMBER_FN_PTR(dcdcInfos_.dcdcPowerDown)();
                 break;
             case CMDTYP_DCDC_SET_VCC:
                 STREAM_out_init(str[MESSAGE_MSG_ID_POS], RESPTYP_DATA);
-                ret_value = dcdcInfos_.dcdcSetVcc(*(uint16_t*)&str[6]);
+                ret_value = CALL_MEMBER_FN_PTR(dcdcInfos_.dcdcSetVcc)(*(uint16_t*)&str[6]);
                 break;
             case CMDTYP_OVER_CURRENT:
                 {
@@ -875,7 +875,7 @@ int16_t V3OP_Rx (uint8_t *str)
                     STREAM_out_init(str[MESSAGE_MSG_ID_POS], RESPTYP_DATA);
                     if(_edt_Common_Methods_V3OP.SetVcc)
                     {
-                        ret_value = _edt_Common_Methods_V3OP.SetVcc(*(uint16_t*)&str[6]);
+                        ret_value = CALL_MEMBER_FN_PTR(_edt_Common_Methods_V3OP.SetVcc)(*(uint16_t*)&str[6]);
                     }
                     break;
               }
@@ -885,7 +885,7 @@ int16_t V3OP_Rx (uint8_t *str)
                     double ext_vcc = 0;
                     if(_edt_Common_Methods_V3OP.GetVcc)
                     {
-                        ret_value = _edt_Common_Methods_V3OP.GetVcc(&vcc, &ext_vcc);
+                        ret_value = CALL_MEMBER_FN_PTR(_edt_Common_Methods_V3OP.GetVcc)(&vcc, &ext_vcc);
                     }
                     STREAM_out_init(str[MESSAGE_MSG_ID_POS], RESPTYP_DATA);
                     STREAM_put_word((uint16_t)vcc);
@@ -899,7 +899,7 @@ int16_t V3OP_Rx (uint8_t *str)
                     STREAM_out_init(str[MESSAGE_MSG_ID_POS], RESPTYP_DATA);
                     if(_edt_Common_Methods_V3OP.SwitchVccFET)
                     {
-                        _edt_Common_Methods_V3OP.SwitchVccFET(*(uint16_t*)&str[6]);
+                        CALL_MEMBER_FN_PTR(_edt_Common_Methods_V3OP.SwitchVccFET)(*(uint16_t*)&str[6]);
                     }
                     ret_value = 0;
                     break;
@@ -920,8 +920,8 @@ int16_t V3OP_Rx (uint8_t *str)
                         STREAM_put_word(0);
                         STREAM_put_word(0);
                     }
-                    STREAM_put_word((uint16_t) dcdcInfos_.getLayerVersionCmp());
-                    STREAM_put_word((uint16_t) comInfos_.comGetLayerVersionCmp());
+                    STREAM_put_word((uint16_t) CALL_MEMBER_FN_PTR(dcdcInfos_.getLayerVersionCmp)());
+                    STREAM_put_word((uint16_t) CALL_MEMBER_FN_PTR(comInfos_.comGetLayerVersionCmp)());
                     STREAM_flush();
 
                     ret_value = 0;
@@ -978,13 +978,13 @@ int16_t V3OP_Calibrate(uint8_t *str)
     }
     vcc = *(uint16_t*)&str[pos];
 
-    ret_value =  dcdcInfos_.dcdcCalibrate(res, countRes, vcc);
+    ret_value =  CALL_MEMBER_FN_PTR(dcdcInfos_.dcdcCalibrate)(res, countRes, vcc);
     if(!ret_value)
     {
         int16_t y = 0;
         for(y =0; y < countRes; y++)
         {
-            dcdcInfos_.dcdc_getCalibrationValues(vcc, res[y], countRes, &ticks, &time);
+            CALL_MEMBER_FN_PTR(dcdcInfos_.dcdc_getCalibrationValues)(vcc, res[y], countRes, &ticks, &time);
             STREAM_put_long(ticks);
             STREAM_put_long(time);
         }
@@ -1059,13 +1059,13 @@ int16_t V3OP_HalInterfaceInit(void)
      // if hil is not loaded - did not make sence to init hal
     if(Bios_getHil_signature() != 0xF00DF00D || Bios_getHil_intvec() == 0xFFFF || !V3OP_HilCrcOk())
     {
-         _edt_Common_Methods_V3OP.Init = _dummy_InitHil;
-         _edt_Common_Methods_V3OP.SetVcc = _dummy_SetVcc;
-         _edt_Common_Methods_V3OP.GetVcc = _dummy_GetVcc;
-         _edt_Common_Methods_V3OP.setFpgaTimeOut = _dummy_setFpgaTimeOut;
-         _edt_Common_Methods_V3OP.SwitchVccFET = _dummy_SwitchVccFET;
-         _edt_Common_Methods_V3OP.regulateVcc = _dummy_regulateVcc;
-         _edt_Common_Methods_V3OP.SetToolID = _dummy_SwitchVccFET;
+         _edt_Common_Methods_V3OP.Init           = MEMBER_FN_PTR(_dummy_Init);
+         _edt_Common_Methods_V3OP.SetVcc         = MEMBER_FN_PTR(_dummy_SetVcc);
+         _edt_Common_Methods_V3OP.GetVcc         = MEMBER_FN_PTR(_dummy_GetVcc);
+         _edt_Common_Methods_V3OP.setFpgaTimeOut = MEMBER_FN_PTR(_dummy_setFpgaTimeOut);
+         _edt_Common_Methods_V3OP.SwitchVccFET   = MEMBER_FN_PTR(_dummy_SwitchVccFET);
+         _edt_Common_Methods_V3OP.regulateVcc    = MEMBER_FN_PTR(_dummy_regulateVcc);
+         _edt_Common_Methods_V3OP.SetToolID      = MEMBER_FN_PTR(_dummy_SwitchVccFET);
           return -1;
     }
     hilInit = (HilInitFunc)Bios_getHil_intvec();
@@ -1080,14 +1080,14 @@ int16_t V3OP_HalInterfaceInit(void)
         return -1;
     }
 
-    _edt_Common_Methods_V3OP.SetToolID(Bios_getTool_id());
+    CALL_MEMBER_FN_PTR(_edt_Common_Methods_V3OP.SetToolID)(Bios_getTool_id());
 
     halStartUpCode = (HalMainFunc)Bios_getHal_intvec(); // calls the (modified) startup code of HAL
     hal_infos_V3OP_ = halStartUpCode((struct stream_funcs*)&_stream_Funcs, 0, V3OP_HilCrcOk(), V3OP_DcdcCrcOk()); // return HAL sw infos
     hal_ptr_ = (HAL_REC_ARRAY)(*hal_infos_V3OP_).hal_list_ptr;
 
     IccMonitor_setHilIterface(&_edt_Common_Methods_V3OP);
-    comInfos_.comSetHil(&_edt_Common_Methods_V3OP);
+    CALL_MEMBER_FN_PTR(comInfos_.comSetHil)(&_edt_Common_Methods_V3OP);
 
     if(hal_ptr_ != NULL)
     {
@@ -1111,16 +1111,16 @@ int16_t V3OP_HalInterfaceInit(void)
 
 void V3OP_DcdcInterfaceClear(void)
 {
-    dcdcInfos_.getSubMcuVersion = _dummy_int16_tOutVoidIn;
-    dcdcInfos_.getLayerVersion = _dummy_int16_tOutVoidIn;
-    dcdcInfos_.dcdcCalibrate =  _dummy_dcdcCalibrate;
-    dcdcInfos_.dcdcPowerDown = _dummy_int16_tOutVoidIn;
-    dcdcInfos_.dcdcSetVcc = _dummy_dcdcSetVcc;
-    dcdcInfos_.dcdcRestart = _dummy_dcdcRestart;
-    dcdcInfos_.dcdc_getCalibrationValues = _dummy_dcdc_getCalibrationValues;
-    dcdcInfos_.getLayerVersionCmp = _dummy_int16_tOutVoidIn;
-    //dcdcInfos_.getLayerVersion  = _dummy_int16_tOutVoidIn;
-    comInfos_.comSetDcdc(&dcdcInfos_);
+    dcdcInfos_.getSubMcuVersion          = MEMBER_FN_PTR(_dummy_int16_tOutVoidIn);
+    dcdcInfos_.getLayerVersion           = MEMBER_FN_PTR(_dummy_int16_tOutVoidIn);
+    dcdcInfos_.dcdcCalibrate             = MEMBER_FN_PTR(_dummy_dcdcCalibrate);
+    dcdcInfos_.dcdcPowerDown             = MEMBER_FN_PTR(_dummy_int16_tOutVoidIn);
+    dcdcInfos_.dcdcSetVcc                = MEMBER_FN_PTR(_dummy_dcdcSetVcc);
+    dcdcInfos_.dcdcRestart               = MEMBER_FN_PTR(_dummy_dcdcRestart);
+    dcdcInfos_.dcdc_getCalibrationValues = MEMBER_FN_PTR(_dummy_dcdc_getCalibrationValues);
+    dcdcInfos_.getLayerVersionCmp        = MEMBER_FN_PTR(_dummy_int16_tOutVoidIn);
+    //dcdcInfos_.getLayerVersion         = MEMBER_FN_PTR(_dummy_int16_tOutVoidIn);
+    CALL_MEMBER_FN_PTR(comInfos_.comSetDcdc)(&dcdcInfos_);
 
 }
 
@@ -1135,8 +1135,8 @@ int16_t V3OP_DcdcInterfaceInit(void)
     dcdc_Init_ = (DcdcInit)Bios_getDcdc_intvec(); // calls the (modified) startup code of HAL
     dcdc_Init_(&dcdcInfos_);
 
-    comInfos_.comSetDcdc(&dcdcInfos_);
-    dcdcInfos_.dcdcRestart(Bios_getTool_id());
+    CALL_MEMBER_FN_PTR(comInfos_.comSetDcdc)(&dcdcInfos_);
+    CALL_MEMBER_FN_PTR(dcdcInfos_.dcdcRestart)(Bios_getTool_id());
 
     return 0;
 }
@@ -1265,7 +1265,7 @@ int16_t V3OP_CoreFlashFunctionInit(uint8_t *payload)
     {
         // init communicaiton to DCDC sub mcu
         V3OP_DcdcInterfaceInit();
-        dcdcInfos_.dcdcRestart(Bios_getTool_id());
+        CALL_MEMBER_FN_PTR(dcdcInfos_.dcdcRestart)(Bios_getTool_id());
         // will init hil layer as well if valid
         V3OP_HalInterfaceInit();
         V3OP_ComInterfaceInit();
@@ -1280,7 +1280,7 @@ int16_t V3OP_CoreFlashFunctionInit(uint8_t *payload)
         V3OP_KillAllLoops();
         V3OP_HalInterfaceClear();
         STREAM_resetSharedVariables();
-        dcdcInfos_.dcdcPowerDown();
+        CALL_MEMBER_FN_PTR(dcdcInfos_.dcdcPowerDown)();
         V3OP_ComInterfaceClear();
         V3OP_DcdcInterfaceClear();
         BIOS_LedAlternate(30);
@@ -1290,7 +1290,7 @@ int16_t V3OP_CoreFlashFunctionInit(uint8_t *payload)
     {
         V3OP_KillAllLoops();
         STREAM_resetSharedVariables();
-        dcdcInfos_.dcdcPowerDown();
+        CALL_MEMBER_FN_PTR(dcdcInfos_.dcdcPowerDown)();
         V3OP_DcdcInterfaceClear();
         BIOS_LedAlternate(30);
         ret_value = 1;
@@ -1300,7 +1300,7 @@ int16_t V3OP_CoreFlashFunctionInit(uint8_t *payload)
         V3OP_KillAllLoops();
         V3OP_HalInterfaceClear();
         STREAM_resetSharedVariables();
-        dcdcInfos_.dcdcPowerDown();
+        CALL_MEMBER_FN_PTR(dcdcInfos_.dcdcPowerDown)();
         V3OP_ComInterfaceClear();
         V3OP_DcdcInterfaceClear();
         IccMonitor_StopDcdcOvercurrentDetection();
@@ -1344,3 +1344,510 @@ int16_t V3OP_CoreFlashFunctionInit(uint8_t *payload)
 //    _edt_Common_Methods_V3OP.setFpgaTimeOut(1);
 //}
 //#endif
+
+
+
+
+
+
+
+
+uint16_t calculateCrc(uint16_t sum, uint16_t *adress, uint32_t segmentLength)
+{
+  //Initialize CRC register
+  CRCINIRES = sum;
+
+  //Compute CRC over the given segment
+  while (segmentLength--)
+  {
+    CRCDIRB = *adress++;
+  }
+  //Return CRC result
+  return CRCINIRES;
+}
+
+uint16_t V3OP_GetHilCrc()
+{
+    uint16_t hilCrc = 0x0000;
+    uint32_t segmentLength = 0;
+    uint16_t *address  = 0;
+
+    //calculate CRC for HIL info segment 1 -------------------------------------
+    segmentLength = (CHECKSUM_HIL[0] - INFO_SEGMENTS_HIL[0])/2;
+    address = (uint16_t*)INFO_SEGMENTS_HIL[0];
+    hilCrc = calculateCrc(hilCrc, address, segmentLength);
+
+    //calculate CRC for HIL info segment 2
+    segmentLength = (INFO_SEGMENTS_HIL[1] - CHECKSUM_HIL[1])/2;
+    address = (uint16_t*)(CHECKSUM_HIL[1] + 1);
+    hilCrc = calculateCrc(hilCrc, address, segmentLength);
+
+    //calculate CRC for HIL main segment
+    segmentLength = (HIL_SEGMENTS[1] - HIL_SEGMENTS[0]+1)/2;
+    address = (uint16_t*)HIL_SEGMENTS[0];
+    hilCrc = calculateCrc(hilCrc, address, segmentLength);
+
+#ifdef MSP_FET
+    //calculate CRC for Hil main segment  2
+    segmentLength = (HIL_SEGMENTS[3] - HIL_SEGMENTS[2] + 1)/2;
+    address = (uint16_t*)HIL_SEGMENTS[2];
+    hilCrc = calculateCrc(hilCrc, address, segmentLength);
+#endif
+    //--------------------------------------------------------------------------
+
+    return hilCrc;
+}
+
+uint16_t V3OP_GetHalFpgaCrc()
+{
+    uint16_t halCrc = 0x0000;
+#ifdef MSP_FET
+    uint32_t segmentLength = 0;
+    uint16_t *address  = 0;
+
+     //calculate CRC for Hal info segment 1 --------------------------------------
+    segmentLength = (CHECKSUM_HAL[0] - INFO_SEGMENTS_HAL[0])/2;
+    address = (uint16_t*)INFO_SEGMENTS_HAL[0];
+    halCrc = calculateCrc(halCrc, address, segmentLength);
+    //calculate CRC for Hal info segment 2
+    segmentLength = (INFO_SEGMENTS_HAL[1] - CHECKSUM_HAL[1])/2;
+    address = (uint16_t*)(CHECKSUM_HAL[1] + 1);
+    halCrc = calculateCrc(halCrc, address, segmentLength);
+
+     //calculate CRC for Hal main segment  1
+    segmentLength = (HAL_FPGA_SEGMENTS[1] - HAL_FPGA_SEGMENTS[0] + 1)/2;
+    address = (uint16_t*)HAL_FPGA_SEGMENTS[0];
+    halCrc = calculateCrc(halCrc, address, segmentLength);
+    //--------------------------------------------------------------------------
+#endif
+    return halCrc;
+}
+
+uint16_t V3OP_GetHalCrc()
+{
+    uint16_t halCrc = 0x0000;
+    uint32_t segmentLength = 0;
+    uint16_t *address  = 0;
+
+     //calculate CRC for Hal info segment 1 --------------------------------------
+    segmentLength = (CHECKSUM_HAL[0] - INFO_SEGMENTS_HAL[0])/2;
+    address = (uint16_t*)INFO_SEGMENTS_HAL[0];
+    halCrc = calculateCrc(halCrc, address, segmentLength);
+    //calculate CRC for Hal info segment 2
+    segmentLength = (INFO_SEGMENTS_HAL[1] - CHECKSUM_HAL[1])/2;
+    address = (uint16_t*)(CHECKSUM_HAL[1] + 1);
+    halCrc = calculateCrc(halCrc, address, segmentLength);
+
+     //calculate CRC for Hal main segment  1
+    segmentLength = (HAL_SEGMENTS[1] - HAL_SEGMENTS[0] + 1)/2;
+    address = (uint16_t*)HAL_SEGMENTS[0];
+    halCrc = calculateCrc(halCrc, address, segmentLength);
+#ifdef eZ_FET
+    //calculate CRC for Hal main segment  2
+    segmentLength = (HAL_SEGMENTS[3] - HAL_SEGMENTS[2] + 1)/2;
+    address = (uint16_t*)HAL_SEGMENTS[2];
+    halCrc = calculateCrc(halCrc, address, segmentLength);
+#endif
+    //--------------------------------------------------------------------------
+
+    return halCrc;
+}
+
+uint16_t V3OP_GetCoreCrc()
+{
+    uint16_t coreCrc = 0x0000;
+    uint32_t segmentLength = 0;
+    uint16_t *address  = 0;
+
+    //calculate CRC for core info segment 1 ------------------------------------
+    segmentLength = (CHECKSUM_CORE[0] - CORE_SEGMENTS[0])/2;
+    address = (uint16_t*)CORE_SEGMENTS[0];
+    coreCrc = calculateCrc(coreCrc, address, segmentLength);
+
+    //calculate CRC for core main segment
+    segmentLength = (CORE_SEGMENTS[1] - CHECKSUM_CORE[1] + 1)/2;
+    address = (uint16_t*) (CHECKSUM_CORE[1] + 1);
+    coreCrc = calculateCrc(coreCrc, address, segmentLength);
+
+    //calculate CRC for reset vector segment
+    segmentLength = (CORE_SEGMENTS_RESET[1] - CORE_SEGMENTS_RESET[0] + 1)/2;
+    address = (uint16_t*)CORE_SEGMENTS_RESET[0];
+    coreCrc = calculateCrc(coreCrc, address, segmentLength);
+    //--------------------------------------------------------------------------
+
+    return coreCrc;
+}
+
+uint16_t V3OP_GetDcdcCrc()
+{
+    uint16_t dcdcCrc = 0x0000;
+    uint32_t segmentLength = 0;
+    uint16_t *address  = 0;
+
+    //calculate CRC for dcdc info segment 1 -------------------------------------
+    segmentLength = (CHECKSUM_DCDC[0] - INFO_SEGMENTS_DCDC[0])/2;
+    address = (uint16_t*)INFO_SEGMENTS_DCDC[0];
+    dcdcCrc = calculateCrc(dcdcCrc, address, segmentLength);
+
+    //calculate CRC for dcdc info segment 1
+    segmentLength = (INFO_SEGMENTS_DCDC[1] - CHECKSUM_DCDC[1])/2;
+    address = (uint16_t*)(CHECKSUM_DCDC[1] + 1);
+    dcdcCrc = calculateCrc(dcdcCrc, address, segmentLength);
+
+    //calculate CRC for dcdc main segment
+    segmentLength = (DCDC_SEGMENTS[1] - DCDC_SEGMENTS[0] + 1)/2;
+    address = (uint16_t*)DCDC_SEGMENTS[0];
+    dcdcCrc = calculateCrc(dcdcCrc, address, segmentLength);
+    //--------------------------------------------------------------------------
+
+    return dcdcCrc;
+}
+
+uint16_t V3OP_GetComChannelCrc()
+{
+    uint16_t comChannelCrc = 0x0000;
+    uint32_t segmentLength = 0;
+    uint16_t *address  = 0;
+
+    //calculate CRC for comchannel info segment 1 -------------------------------------
+    segmentLength = (CHECKSUM_COMCHANNEL[0] - INFO_SEGMENTS_COMCHANNEL[0])/2;
+    address = (uint16_t*)INFO_SEGMENTS_COMCHANNEL[0];
+    comChannelCrc = calculateCrc(comChannelCrc, address, segmentLength);
+
+    //calculate CRC for comchannel info segment 1
+    segmentLength = (INFO_SEGMENTS_COMCHANNEL[1] - CHECKSUM_COMCHANNEL[1])/2;
+    address = (uint16_t*)(CHECKSUM_COMCHANNEL[1] + 1);
+    comChannelCrc = calculateCrc(comChannelCrc, address, segmentLength);
+
+    //calculate CRC for comchannel main segment
+    segmentLength = (COMCHANNEL_SEGMENTS[1] - COMCHANNEL_SEGMENTS[0] + 1)/2;
+    address = (uint16_t*)COMCHANNEL_SEGMENTS[0];
+    comChannelCrc = calculateCrc(comChannelCrc, address, segmentLength);
+    //--------------------------------------------------------------------------
+
+  return comChannelCrc;
+}
+
+uint8_t V3OP_HilCrcOk()
+{
+  return(V3OP_GetHilCrc() == *((uint16_t*)CHECKSUM_HIL[0]));
+}
+
+uint8_t V3OP_HalCrcOk()
+{
+  return(V3OP_GetHalCrc() == *((uint16_t*)CHECKSUM_HAL[0]));
+}
+
+uint8_t V3OP_HalFpgaCrcOk()
+{
+  return(V3OP_GetHalFpgaCrc() == *((uint16_t*)CHECKSUM_HAL[0]));
+}
+
+uint8_t V3OP_coreCrcOk()
+{
+  return(V3OP_GetCoreCrc() == *((uint16_t*)CHECKSUM_CORE[0]));
+}
+
+uint8_t V3OP_DcdcCrcOk()
+{
+  return(V3OP_GetDcdcCrc() == *((uint16_t*)CHECKSUM_DCDC[0]));
+}
+
+uint8_t V3OP_ComChannelCrcOk()
+{
+  return(V3OP_GetComChannelCrc() == *((uint16_t*)CHECKSUM_COMCHANNEL[0]));
+}
+//! \brief test address on memory type
+//! \param[in] addr address to test
+//! \return 0 -> flash memory
+//! \return 1 -> info memory
+//! \return 2 -> RAM
+#pragma optimize = low
+uint32_t V3OP_GetSegmentType(uint32_t addr)
+{
+    uint16_t i = 0;
+    for(i = 0; i < (sizeof(INFO_SEGMENTS_HIL)/sizeof(uint32_t)); i+=2)
+    {
+        if((addr >= INFO_SEGMENTS_HIL[i]) && (addr <= INFO_SEGMENTS_HIL[i+1]))
+        {
+            return (INFO_SEGMENT_HIL);
+        }
+    }
+    for(i = 0; i < (sizeof(INFO_SEGMENTS_HAL)/sizeof(uint32_t)); i+=2)
+    {
+        if((addr >= INFO_SEGMENTS_HAL[i]) && (addr <= INFO_SEGMENTS_HAL[i+1]))
+        {
+            return (INFO_SEGMENT_HAL);
+        }
+    }
+    for(i = 0; i < (sizeof(HAL_SEGMENTS)/sizeof(uint32_t)); i+=2)
+    {
+        if((addr >= HAL_SEGMENTS[i]) && (addr <= HAL_SEGMENTS[i+1]))
+        {
+            return (HAL_SEGMENT);
+        }
+    }
+    #ifdef MSP_FET
+    for(i = 0; i < (sizeof(HAL_FPGA_SEGMENTS)/sizeof(uint32_t)); i+=2)
+    {
+        if((addr >= HAL_FPGA_SEGMENTS[i]) && (addr <= HAL_FPGA_SEGMENTS[i+1]))
+        {
+            return (HAL_SEGMENT_FPGA);
+        }
+    }
+    #endif
+    for(i = 0; i < (sizeof(HIL_SEGMENTS)/sizeof(uint32_t)); i+=2)
+    {
+        if((addr >= HIL_SEGMENTS[i]) && (addr <= HIL_SEGMENTS[i+1]))
+        {
+            return (HIL_SEGMENT);
+        }
+    }
+    // dcdc segments
+    for(i = 0; i < (sizeof(DCDC_SEGMENTS)/sizeof(uint32_t)); i+=2)
+    {
+        if((addr >= DCDC_SEGMENTS[i]) && (addr <= DCDC_SEGMENTS[i+1]))
+        {
+            return (DCDC_SEGMENT);
+        }
+    }
+    for(i = 0; i < (sizeof(INFO_SEGMENTS_DCDC)/sizeof(uint32_t)); i+=2)
+    {
+        if((addr >= INFO_SEGMENTS_DCDC[i]) && (addr <= INFO_SEGMENTS_DCDC[i+1]))
+        {
+            return (INFO_SEGMENT_DCDC);
+        }
+    }
+    // comchannel segments
+    for(i = 0; i < (sizeof(COMCHANNEL_SEGMENTS)/sizeof(uint32_t)); i+=2)
+    {
+        if((addr >= COMCHANNEL_SEGMENTS[i]) && (addr <= COMCHANNEL_SEGMENTS[i+1]))
+        {
+            return (COMCHANNEL_SEGMENT);
+        }
+    }
+    // INFO comchannel segments
+    for(i = 0; i < (sizeof(INFO_SEGMENTS_COMCHANNEL)/sizeof(uint32_t)); i+=2)
+    {
+        if((addr >= INFO_SEGMENTS_COMCHANNEL[i]) && (addr <= INFO_SEGMENTS_COMCHANNEL[i+1]))
+        {
+            return (INFO_SEGMENT_COMCHANNEL);
+        }
+    }
+    return 0;
+}
+
+//! \brief test address on write access
+//! \param[in] addr address to test
+//! \return 0 -> no write access
+//! \return 1 -> write allow
+uint8_t V3OP_WriteAllowed(uint16_t addr)
+{
+    return(0);
+}
+//! \brief test address on erase access
+//! \param[in] addr address to test
+//! \return 0 -> no erase access
+//! \return 1 -> erase allow
+uint8_t V3OP_EraseAllowed(uint16_t StartAddr)
+{
+    return(0);
+}
+
+//! \brief erase on UIF (HAL) all blocks which included in start address + size
+//! \param[in] *payload pointer to receive buffer
+//! \return 1 -> flash erase done
+//! \return <0 -> error
+#pragma optimize = low
+int16_t V3OP_CoreFlashFunctionErase(uint8_t *payload)
+{
+    uint32_t address_pointer;
+    uint32_t  start_addr = (*(uint32_t*)&payload[4] & 0xFFFFF);
+    uint32_t  end_addr   = start_addr + (*(uint32_t*)&payload[8] & 0xFFFFF)-2;
+    uint8_t  segment_type;
+    uint32_t segmentSize =0;
+
+    segment_type = V3OP_GetSegmentType(start_addr);
+
+    if(segment_type == NO_SEGMENT)
+    {
+        return -1;
+    }
+
+    // erase INFO mem
+    if(segment_type == HAL_SEGMENT || segment_type == INFO_SEGMENT_HAL)
+    {
+        segmentSize = SEGMENT_SIZE_HAL_HIL;
+        // First erase entry point into Hil Layer
+        // IF firmware update is interrupted HIL could not be started
+        Flash_SegmentErase((uint16_t*)INFO_SEGMENTS_HAL[1]);
+    }
+
+    if(segment_type == HIL_SEGMENT || segment_type == INFO_SEGMENT_HIL)
+    {
+        segmentSize = SEGMENT_SIZE_HAL_HIL;
+        // First erase entry point into HAL Layer
+        // IF firmware update is interrupted HAL could not be started
+        Flash_SegmentErase((uint16_t*)INFO_SEGMENTS_HIL[0]);
+    }
+
+    if(segment_type == INFO_SEGMENT_DCDC || segment_type == DCDC_SEGMENT)
+    {
+        segmentSize = SEGMENT_SIZE_HAL_HIL;
+        // First erase entry point into HAL Layer
+        // IF firmware update is interrupted HAL could not be started
+        Flash_SegmentErase((uint16_t*)INFO_SEGMENTS_DCDC[0]);
+    }
+
+    if(segment_type == COMCHANNEL_SEGMENT || segment_type == INFO_SEGMENT_COMCHANNEL)
+    {
+        segmentSize = SEGMENT_SIZE_HAL_HIL;
+        // First erase entry point into HAL Layer
+        // IF firmware update is interrupted HAL could not be started
+        UnlockInfoA();
+        Flash_SegmentErase((uint16_t*)INFO_SEGMENTS_COMCHANNEL[0]);
+    }
+
+    // Erase HIL/HAL/DCDC/COM
+    for(address_pointer = start_addr; address_pointer < end_addr; address_pointer += segmentSize)
+    {
+        if(V3OP_GetSegmentType(address_pointer) != NO_SEGMENT)
+        {
+            Flash_SegmentErase((uint16_t*)address_pointer);
+        }
+    }
+
+    // Do erase check of HIL/HAL/DCDC
+    for(address_pointer = start_addr; address_pointer < end_addr; address_pointer += segmentSize)
+    {
+        if(V3OP_GetSegmentType(address_pointer) != NO_SEGMENT)
+        {
+            Flash_EraseCheck((uint8_t*)address_pointer, (segmentSize+1)); // (uint32_t *Flash_ptr, uint32_t len)
+        }
+    }
+    LockInfoA();
+    return(1);
+}
+//! \brief write payload to UIF (HAL) flash memory, RAM is allowed, too
+//! \param[in] *payload pointer to receive buffer
+//! \details on first function call the:
+//! \li bytes 4 -7: the flash address
+//! \li bytes 8 -11: data length
+//! \li bytes 12 ... payload
+//! \details if data length is larger then message size the function returns after writing the message. Direct follow calls
+//! of this function continue writing.
+//! \return 1 -> flash write done
+//! \return <0 -> error
+//#pragma optimize = low
+
+struct {
+    uint32_t address_pointer = 0;
+    uint32_t start_addr = 0; //(*(uint32_t*)&payload[4] & 0xFFFFF);
+    uint32_t end_addr   = 0; //start_addr + (*(uint32_t*)&payload[8] & 0xFFFFF);
+    uint32_t segmentSize = 0;
+} V3OP_CoreFlashFunctionWrite_staticVars;
+
+int16_t V3OP_CoreFlashFunctionWrite(uint8_t *payload, uint16_t v30p_stream_flags_)
+{
+    #undef THISFN
+    #define THISFN V3OP_CoreFlashFunctionWrite
+    STATIC_VARS_START();
+    DECL_STATIC_VAR(address_pointer);
+    DECL_STATIC_VAR(start_addr);
+    DECL_STATIC_VAR(end_addr);
+    DECL_STATIC_VAR(segmentSize);
+    
+    uint8_t  segment_type;
+    uint16_t *data_ptr = NULL;
+    uint16_t *data_ptr_end = NULL;
+
+
+    if(v30p_stream_flags_ & MESSAGE_NEW_MSG)
+    {
+        start_addr = (*(uint32_t*)&payload[4] & 0xFFFFF);
+        end_addr   = start_addr + (*(uint32_t*)&payload[8] & 0xFFFFF);
+        data_ptr = (uint16_t*)&payload[12];
+        data_ptr_end = data_ptr + (payload[0] - 11) / sizeof(uint16_t); // write words /2
+        segment_type = V3OP_GetSegmentType(start_addr);
+
+        if(segment_type == NO_SEGMENT)
+        {
+            return -1;
+        }
+        // 2 bytes are written in one line
+        segmentSize = 2;
+        address_pointer = start_addr;
+        UnlockInfoA();
+    }
+    else
+    {
+        data_ptr = (uint16_t*)&payload[4];
+        data_ptr_end = data_ptr + (payload[0] - 3) / sizeof(uint16_t);
+        LockInfoA();
+    }
+    for(;(address_pointer < end_addr) && (data_ptr < (data_ptr_end)); address_pointer += segmentSize)
+    {
+        // check if wirte is going into info or HAL/Hil segment
+        // don't programm any core segment
+        if(V3OP_GetSegmentType(address_pointer) != NO_SEGMENT)
+        {
+            FlashWrite_16(data_ptr, (uint16_t*)address_pointer, 1);
+            data_ptr++;
+        }
+    }
+    return 0;
+}
+
+//! \brief reads UIF memory, inclusive BIOS area
+//! \param[in] *payload pointer to receive buffer
+//! \li bytes 4 -7: the flash address
+//! \li bytes 8 -11: data length
+//! \return 0
+int16_t V3OP_CoreFlashFunctionRead(uint8_t *payload)
+{
+    return(0);
+}
+
+void V3OP_UpCore(void)
+{
+    _DINT_FET(); // Ensure no application interrupts fire during stop
+    USB_disconnect();
+    FPGA_RESET_ASSERT
+    //~1.6 s delay
+    __delay_cycles(40000000);
+
+    USB_disable();
+    XT2_Stop();
+    //erase infoB
+    Flash_SegmentErase((uint16_t*)0x197F);
+    //erase infoC
+    Flash_SegmentErase((uint16_t*)0x18FF);
+    //erase infoD
+    Flash_SegmentErase((uint16_t*)0x187F);
+    // erase flash reset vector to invoke usb bsl by next startup
+    Flash_SegmentErase((uint16_t*)0xFFFE);
+
+    //~1.6 s delay
+    __delay_cycles(40000000);
+    PMMCTL0 = PMMPW | PMMSWBOR; // generate BOR for reseting device
+}
+
+uint16_t V3OP_SystemOk(void)
+{
+    if(!V3OP_coreCrcOk())
+    {
+        Flash_SegmentErase((uint16_t*)0xFFFE);
+        return 0;
+    }
+    return 1;
+}
+
+
+void IccMonitor_StartVoltageSupervision()
+{
+    UNIMP_FN();
+}
+void IccMonitor_StopVoltageSupervision()
+{
+    UNIMP_FN();
+}
