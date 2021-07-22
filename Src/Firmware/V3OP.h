@@ -544,7 +544,8 @@ void V3OP_KillAllLoops(void)
     {
         if(v3op_loop_array_[i].indata != NULL)
         {
-            free(v3op_loop_array_[i].indata);
+            // MSPProbeSim: shouldn't be free'd because it's not malloc'd (.indata is assigned to `tempInData`)
+//            free(v3op_loop_array_[i].indata);
         }
         v3op_loop_array_[i].indata = NULL;
         v3op_loop_array_[i].addr = 0xFFFF;
@@ -593,7 +594,8 @@ int16_t V3OP_KillLoop(uint8_t msg_id)
         {
             if(v3op_loop_array_[i].indata != NULL)
             {
-                free(v3op_loop_array_[i].indata);
+                // MSPProbeSim: shouldn't be free'd because it's not malloc'd (.indata is assigned to `tempInData`)
+//                free(v3op_loop_array_[i].indata);
             }
             v3op_loop_array_[i].indata = NULL;
             v3op_loop_array_[i].addr = 0xFFFF;
@@ -1057,8 +1059,11 @@ int16_t V3OP_HalInterfaceInit(void)
     hilInit = Bios_getHil_intvec();
     // call startup of HIL layer
     CALL_MEMBER_FN_PTR(hilInit)();
-    HilInitGetEdtCommenFunc hilEdtCom = (HilInitGetEdtCommenFunc)0x18A0;
-    hilEdtCom(&_edt_Common_Methods_V3OP);
+    
+    // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtCommen`
+//    HilInitGetEdtCommenFunc hilEdtCom = (HilInitGetEdtCommenFunc)0x18A0;
+//    hilEdtCom(&_edt_Common_Methods_V3OP);
+    _hil_getEdtCommen(&_edt_Common_Methods_V3OP);
 
     // check if rest vector is not FFFF and if a valid Hal/Programm signature was found
     if(!Bios_getHal_intvec() || Bios_getHal_signature() != 0xBEEFBEEF || !V3OP_HalCrcOk())
@@ -1192,7 +1197,13 @@ void V3OP_Scheduler(void)
                 {
                     if(STREAM_out_init(v3op_loop_array_[loop_array_counter].msg_id, v3op_loop_array_[loop_array_counter].msg_type) >= 0)
                     {
-                        STREAM_internal_stream(&v3op_loop_array_[loop_array_counter].indata[MESSAGE_EXECUTE_PAYLOAD_POS], v3op_loop_array_[loop_array_counter].indata[0]-3, (uint8_t*)0x0001, 0, &stream_tmp);
+                        // MSPProbeSim: we added a null check for `payload` here (before dereferencing
+                        // payload[0] to calculate `payloadLen`), since .indata can be null if there's
+                        // no payload. Guessing the real MSPFET is reading garbage in this case, but
+                        // not crashing because 0x0 is a valid address.
+                        uint8_t* payload = v3op_loop_array_[loop_array_counter].indata;
+                        const size_t payloadLen = payload ? payload[0]-3 : 0;
+                        STREAM_internal_stream(payload, payloadLen, (uint8_t*)0x0001, 0, &stream_tmp);
                         if(CALL_MEMBER_FN_PTR(pCallAddr)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG) == 1)
                         {
                             STREAM_flush();
@@ -1512,7 +1523,7 @@ void IccMonitor_SendOverCurrentEvent(uint16_t event)
 
 int16_t IccMonitor_Process(uint16_t flags)
 {
-    UNIMP_FN();
+//    UNIMP_FN();
     return 0;
 }
 

@@ -599,11 +599,12 @@ void *ResetFirmware(struct stream_funcs* stream_adr, uint32_t device_flags, uint
        // check if we have a valid hil layer programmed into our tool
         if(hil_signature_ == 0xF00DF00D && hil_Start_UP_ && v3opHilCrcOk)
         {
+            // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtCommen`
             // INIT HIL layer
-            HilInitGetEdtCommenFunc hilEdtCom = NULL;
-            // set pointer to edt commen functions
-            hilEdtCom = (HilInitGetEdtCommenFunc)0x18A0;
-            hilEdtCom(&_edt_Common_Methods_HAL);
+//            HilInitGetEdtCommenFunc hilEdtCom = NULL;
+//            // set pointer to edt commen functions
+//            hilEdtCom = (HilInitGetEdtCommenFunc)0x18A0;
+            _hil_getEdtCommen(&_edt_Common_Methods_HAL);
             hal_infos_in_ram_.hil_version = hil_version_;
             hal_infos_in_ram_.hil_versionCmp = hil_versionCmp_;
 #ifdef eZ_FET

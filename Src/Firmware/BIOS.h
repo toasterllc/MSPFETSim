@@ -115,7 +115,7 @@ typedef struct _BiosGlobalTimer_ BiosGlobalTimer;
 const uint16_t core_version_ = CORE_VERSION;
 //#pragma required=core_version_
 
-uint16_t tool_id_ = 0;
+uint16_t tool_id_ = TOOL_ID;
 //#pragma required=tool_id_
 
 //! \brief chars for flow control
@@ -302,7 +302,7 @@ void BIOS_InitSystem (void)
     // disalbe BSL protection
 //    SYSBSLC &= ~SYSBSLPE;
     // get tool id stored in BSL area
-    tool_id_ = *(uint16_t*)0x100e;
+//    tool_id_ = *(uint16_t*)0x100e;
 
     // enable BSL protection again
 //    SYSBSLC |= SYSBSLPE;
