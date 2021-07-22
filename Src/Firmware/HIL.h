@@ -2323,64 +2323,167 @@ uint8_t _hil_generic_GetPrevInstruction()
 
 SBWShiftProxy<uint8_t> _hil_generic_Instr(uint8_t instruction)
 {
-    uint16_t retVal;
-
-    hil_fpga_write_cmd_data0(FPGA_CMD_IR8_RD, instruction);
-    hil_fpga_read_data1(1, &retVal);
-    prevInstruction_hil_generic_ = instruction;
-
-    return ((uint8_t)retVal);
+    switch (gprotocol_id) {
+    case SPYBIWIRE:
+        // JTAG FSM state = Run-Test/Idle
+        if (TCLK_saved) //PrepTCLK
+        {
+            TMSH_TDIH();
+        }
+        else
+        {
+            TMSH_TDIL();
+        }
+        // JTAG FSM state = Select DR-Scan
+        TMSH_TDIH();
+        // JTAG FSM state = Select IR-Scan
+        TMSL_TDIH();
+        // JTAG FSM state = Capture-IR
+        TMSL_TDIH();
+        // JTAG FSM state = Shift-IR, Shiftin TDI (8 bit)
+        return SBWShiftProxy<uint8_t>(this, instruction);
+    
+    default:
+        BAD_PROTO(gprotocol_id);
+        return 0;
+    }
 }
 
 SBWShiftProxy<uint8_t> _hil_generic_SetReg_XBits08(uint8_t data)
 {
-    uint16_t retVal;
-
-    hil_fpga_write_cmd_data0(FPGA_CMD_DR8_RD, data);
-    hil_fpga_read_data1(1, &retVal);
-
-    return ((uint8_t)retVal);
+    switch (gprotocol_id) {
+    case SPYBIWIRE:
+        // From msp_fet:_hil_2w_SetReg_XBits08()
+        // JTAG FSM state = Run-Test/Idle
+        if (TCLK_saved) //PrepTCLK
+        {
+            TMSH_TDIH();
+        }
+        else
+        {
+            TMSH_TDIL();
+        }
+        // JTAG FSM state = Select DR-Scan
+        TMSL_TDIH();
+        // JTAG FSM state = Capture-DR
+        TMSL_TDIH();
+        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
+        return SBWShiftProxy<uint8_t>(this, data);
+        // JTAG FSM state = Run-Test/Idle
+    default:
+        BAD_PROTO(gprotocol_id);
+        return 0;
+    }
 }
 
 SBWShiftProxy<uint16_t> _hil_generic_SetReg_XBits16(uint16_t data)
 {
-    uint16_t retVal;
-
-    hil_fpga_write_cmd_data0_data1(FPGA_CMD_DRX_RD, 16, data);
-    hil_fpga_read_data1(1, &retVal);
-
-    return retVal;
+    switch (gprotocol_id) {
+    case SPYBIWIRE:
+        // From msp_fet:_hil_2w_SetReg_XBits16()
+        // JTAG FSM state = Run-Test/Idle
+        if (TCLK_saved) //PrepTCLK
+        {
+            TMSH_TDIH();
+        }
+        else
+        {
+            TMSH_TDIL();
+        }
+        // JTAG FSM state = Select DR-Scan
+        TMSL_TDIH();
+        // JTAG FSM state = Capture-DR
+        TMSL_TDIH();
+        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
+        return SBWShiftProxy<uint16_t>(this, data);
+        // JTAG FSM state = Run-Test/Idle
+    default:
+        BAD_PROTO(gprotocol_id);
+        return 0;
+    }
 }
 
 SBWShiftProxy<uint32_t,20> _hil_generic_SetReg_XBits20(uint32_t data)
 {
-    uint32_t retVal;
-
-    hil_fpga_write_cmd_data0_data1_count(FPGA_CMD_DRX_RD, 20, (uint16_t*)&data, 2);
-    hil_fpga_read_data1(2, (uint16_t*)&retVal);
-
-    return (retVal >> 4) | ((retVal & 0xF) << 16);
+    switch (gprotocol_id) {
+    case SPYBIWIRE:
+        // From msp_fet:_hil_2w_SetReg_XBits20()
+        // JTAG FSM state = Run-Test/Idle
+        if (TCLK_saved) //PrepTCLK
+        {
+            TMSH_TDIH();
+        }
+        else
+        {
+            TMSH_TDIL();
+        }
+        // JTAG FSM state = Select DR-Scan
+        TMSL_TDIH();
+        // JTAG FSM state = Capture-DR
+        TMSL_TDIH();
+        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
+        return SBWShiftProxy<uint32_t,20>(this, data);
+        // JTAG FSM state = Run-Test/Idle
+    default:
+        BAD_PROTO(gprotocol_id);
+        return 0;
+    }
 }
 
 // -----------------------------------------------------------------------------
 SBWShiftProxy<uint32_t> _hil_generic_SetReg_XBits32(uint32_t data)
 {
-    uint32_t retVal;
-
-    hil_fpga_write_cmd_data0_data1_count(FPGA_CMD_DRX_RD, 32, (uint16_t*)&data, 2);
-    hil_fpga_read_data1(2, (uint16_t*)&retVal);
-    return retVal;
+    switch (gprotocol_id) {
+    case SPYBIWIRE:
+        // From msp_fet:_hil_2w_SetReg_XBits32()
+        // JTAG FSM state = Run-Test/Idle
+        if (TCLK_saved) //PrepTCLK
+        {
+            TMSH_TDIH();
+        }
+        else
+        {
+            TMSH_TDIL();
+        }
+        // JTAG FSM state = Select DR-Scan
+        TMSL_TDIH();
+        // JTAG FSM state = Capture-DR
+        TMSL_TDIH();
+        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
+        return SBWShiftProxy<uint32_t>(this, data);
+        // JTAG FSM state = Run-Test/Idle
+    default:
+        BAD_PROTO(gprotocol_id);
+        return 0;
+    }
 }
 
 // -----------------------------------------------------------------------------
 SBWShiftProxy<uint64_t> _hil_generic_SetReg_XBits64(uint64_t data)
 {
-    uint64_t retVal;
-
-    hil_fpga_write_cmd_data0_data1_count(FPGA_CMD_DRX_RD, 64, (uint16_t*)&data, 4);
-    hil_fpga_read_data1(4, (uint16_t*)&retVal);
-
-    return retVal;
+    switch (gprotocol_id) {
+    case SPYBIWIRE:
+        // From msp_fet:_hil_2w_SetReg_XBits64()
+        // JTAG FSM state = Run-Test/Idle
+        if (TCLK_saved) //PrepTCLK
+        {
+            TMSH_TDIH();
+        }
+        else
+        {
+            TMSH_TDIL();
+        }
+        // JTAG FSM state = Select DR-Scan
+        TMSL_TDIH();
+        // JTAG FSM state = Capture-DR
+        TMSL_TDIH();
+        // JTAG FSM state = Shift-DR, Shiftin TDI (16 bit)
+        return SBWShiftProxy<uint64_t>(this, data);
+        // JTAG FSM state = Run-Test/Idle
+    default:
+        BAD_PROTO(gprotocol_id);
+        return 0;
+    }
 }
 
 //! \brief This function executes an SBW2 64BIT Data SHIFT (DR-SHIFT) in the case,

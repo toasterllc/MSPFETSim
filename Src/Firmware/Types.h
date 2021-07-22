@@ -488,7 +488,8 @@ struct stream_funcs
 
 
 
-#define UNIMP_FN()  printf("### UNIMPLEMENTED: %s\n", __FUNCTION__)
+#define UNIMP_FN()          printf("### [%s] UNIMPLEMENTED\n", __FUNCTION__)
+#define BAD_PROTO(proto)    printf("### [%s] UNIMPLEMENTED PROTOCOL: %u\n", __FUNCTION__, (proto))
 
 #define CONST_AT(x, y) const x
 
