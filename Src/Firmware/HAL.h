@@ -4,11 +4,6 @@
 #include "HIL.h"
 #include "EDT.h"
 
-#define _CONCAT2(x, y) x ## y
-#define _CONCAT(x, y) _CONCAT2(x, y)
-#define STATIC_VARS_START() auto& sv = _CONCAT(THISFN, _staticVars)
-#define DECL_STATIC_VAR(n) auto& n = sv.n
-
 #define setFuncletRegisters _CONCAT(setFuncletRegisters, THISFN)
 #define clkTclkAndCheckDTC  _CONCAT(clkTclkAndCheckDTC, THISFN)
 

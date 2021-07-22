@@ -498,3 +498,12 @@ struct DCDC_INFOS
 typedef struct DCDC_INFOS DCDC_INFOS_t;
 
 typedef void *(MSPProbeSim::*DcdcInit)(DCDC_INFOS_t* dcdcInfos_Pointer);
+
+
+#define _CONCAT2(x, y) x ## y
+#define _CONCAT(x, y) _CONCAT2(x, y)
+#define STATIC_VARS_START() auto& sv = _CONCAT(THISFN, _staticVars)
+#define DECL_STATIC_VAR(n) auto& n = sv.n
+
+
+#define PTR_FOR_CMP uintptr_t
