@@ -1157,6 +1157,8 @@ int16_t V3OP_HalFpgaUpdate(void)
     return retVal;
 }
 
+uint16_t serviceCount = 0;
+
 //******************************************
 void V3OP_Scheduler(void)
 {
@@ -1165,6 +1167,7 @@ void V3OP_Scheduler(void)
     uint8_t rx_queu_counter_tmp;
     StreamSafe stream_tmp;
     HalFuncInOut pCallAddr;
+    bool serviced = false;
 
     BIOS_ResetCts(); // release CTS line
     {
@@ -1182,6 +1185,8 @@ void V3OP_Scheduler(void)
             if((v3op_loop_array_[loop_array_counter].active) &&
                (v3op_loop_array_[loop_array_counter].addr <  (*hal_infos_V3OP_).hal_size))
             {
+                serviced = true;
+                
                 pCallAddr = (HalFuncInOut)(*hal_ptr_)[v3op_loop_array_[loop_array_counter].addr].function;
                 if(pCallAddr != NULL)
                 {
@@ -1208,6 +1213,8 @@ void V3OP_Scheduler(void)
         {
             if(bios_rx_record_.state[rx_queu_counter] & BIOS_RX_RDY)
             {
+                serviced = true;
+                
                 BIOS_LedFlash(BIOS_LED_MODE,20);
                 STREAM_in_init((BiosRxRecord*)&bios_rx_record_, rx_queu_counter);
                 rx_queu_counter_public_ = rx_queu_counter;
@@ -1223,6 +1230,14 @@ void V3OP_Scheduler(void)
             }
         }
         while(rx_queu_counter_tmp != rx_queu_counter);
+    }
+    
+    constexpr uint16_t MaxServiceCount = 100;
+    if (serviced && serviceCount<MaxServiceCount) {
+        serviceCount++;
+    } else {
+        _dequeueUSBRequest(serviced ? 1ms : 0ms);
+        serviceCount = 0;
     }
 }
 

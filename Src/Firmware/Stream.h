@@ -286,7 +286,9 @@ uint8_t _stream_out_change_msg_id(uint8_t msg_id)
 //! \return always 0
 int16_t _stream_out_init(uint8_t msg_id, uint8_t res_type)
 {
-    while((bios_tx_record_.state[bios_tx_record_.active] & (BIOS_TX_BUSY | BIOS_TX_TO_SEND | BIOS_TX_WAIT_ON_ACK)) && (bios_global_timer_[BIOS_TIMER_TX].count > 1));
+    while((bios_tx_record_.state[bios_tx_record_.active] & (BIOS_TX_BUSY | BIOS_TX_TO_SEND | BIOS_TX_WAIT_ON_ACK)) && (bios_global_timer_[BIOS_TIMER_TX].count > 1)) {
+        _dequeueUSBRequest();
+    }
 
     if ((bios_tx_record_.state[bios_tx_record_.active] & (BIOS_TX_BUSY | BIOS_TX_TO_SEND | BIOS_TX_WAIT_ON_ACK)) && res_type != RESPTYP_STATUS)
     {
