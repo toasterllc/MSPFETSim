@@ -94,6 +94,7 @@ public:
         
         _dev.setBitmode(BITMODE_RESET, 0);
         _dev.setBitmode(BITMODE_MPSSE, 0);
+//        _dev.setLatencyTimer(1);
 //        _dev.setBaudRate(1<<21);
         
         // TODO: these commands aren't all supported by all hardware
@@ -144,6 +145,7 @@ public:
         static constexpr uint8_t ReadDataBitsH              = 0x83;
         static constexpr uint8_t DisconnectTDITDOLoopback   = 0x85;
         static constexpr uint8_t SetClkDivisor              = 0x86;
+        static constexpr uint8_t SendImmediate              = 0x87;
         static constexpr uint8_t DisableClkDivideBy5        = 0x8A;
         static constexpr uint8_t Disable3PhaseDataClocking  = 0x8D;
         static constexpr uint8_t DisableAdaptiveClocking    = 0x97;
@@ -286,6 +288,10 @@ public:
     
     void _flush() {
         if (_cmds.empty()) return; // Short-circuit if there aren't any commands to flush
+        
+        // Append a 'SendImmediate' command, so the FTDI chip sends data back immediately
+        _cmds.push_back(MPSSE::SendImmediate);
+        
         // Write the commands
         _dev.write(_cmds.data(), _cmds.size());
         _cmds.clear();
@@ -413,6 +419,11 @@ private:
         void setBitmode(uint8_t mode, uint8_t pinDirs) {
             int ir = ftdi_set_bitmode(&_ctx, pinDirs, mode);
             _checkErr(ir, "ftdi_set_bitmode failed");
+        }
+        
+        void setLatencyTimer(uint8_t timer) {
+            int ir = ftdi_set_latency_timer(&_ctx, timer);
+            _checkErr(ir, "ftdi_set_latency_timer failed");
         }
         
         void setBaudRate(uint32_t baud) {
