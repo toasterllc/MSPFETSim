@@ -14,43 +14,6 @@
 #define ID_SHARED_MEMORY_TYPE_I_TICK 0xAA03
 #define ID_SHARED_MEMORY_TYPE_TIME_TICK 0xAA04
 
-struct _StreamSafe_
-{
-    uint8_t rx[12];
-    uint16_t *ext_data;
-    uint16_t ext_size;
-    uint16_t ext_counter;
-};
-typedef struct _StreamSafe_ StreamSafe;
-
-struct stream_funcs
-{
-    int16_t (MSPProbeSim::*out_init)(uint8_t, uint8_t);
-    int16_t (MSPProbeSim::*flush)(void);
-    int16_t (MSPProbeSim::*put_byte)(uint8_t);
-    int16_t (MSPProbeSim::*put_bytes)(void*, uint16_t);
-    int16_t (MSPProbeSim::*put_word)(uint16_t);
-    int16_t (MSPProbeSim::*put_long)(uint32_t);
-    int16_t (MSPProbeSim::*in_init)(void *, uint8_t);
-    int16_t (MSPProbeSim::*internal_stream)(uint8_t *, uint16_t, uint8_t *, uint16_t, StreamSafe *);
-    int16_t (MSPProbeSim::*external_stream)(StreamSafe *);
-    uint8_t (MSPProbeSim::*change_type)(uint8_t);
-    int16_t (MSPProbeSim::*get_byte)(uint8_t *);
-    int16_t (MSPProbeSim::*get_word)(uint16_t *);
-    int16_t (MSPProbeSim::*get_long)(uint32_t *);
-    int16_t (MSPProbeSim::*get_buffer)(void **, uint16_t *);
-    int16_t (MSPProbeSim::*discard_bytes)(uint16_t);
-    int16_t (MSPProbeSim::*memcpy)(uint8_t*, uint8_t*, uint16_t);
-    int16_t (MSPProbeSim::*biosLedOn)(uint8_t);
-    int16_t (MSPProbeSim::*biosLedOff)(uint8_t);
-    int16_t (MSPProbeSim::*biosLedBlink)(uint8_t, uint16_t);
-    int16_t (MSPProbeSim::*biosLedFlash)(uint8_t, uint16_t);
-    int16_t (MSPProbeSim::*biosLedAlternate)(uint16_t);
-    int16_t (MSPProbeSim::*sendDebug)(int8_t *, uint16_t size);
-    int16_t (MSPProbeSim::*getSharedVariable)(uint16_t IdMemoryType, uint16_t** Address);
-    int16_t (MSPProbeSim::*deleteSharedVariable)(uint16_t IdMemoryType);
-};
-
 //void STREAM_resetSharedVariables();
 
 #ifdef HAL_STREAM
@@ -198,7 +161,7 @@ StreamInput stream_input_ = {};
 //int16_t _stream_send_debug(int8_t *buffer, uint16_t size);
 
 // stream functions
-struct stream_funcs _stream_Funcs_Stream =
+struct stream_funcs _stream_Funcs_Default =
 {
     MEMBER_FN_PTR(_stream_out_init),
     MEMBER_FN_PTR(_stream_flush),

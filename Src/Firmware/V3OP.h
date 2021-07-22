@@ -1069,7 +1069,7 @@ int16_t V3OP_HalInterfaceInit(void)
     CALL_MEMBER_FN_PTR(_edt_Common_Methods_V3OP.SetToolID)(Bios_getTool_id());
 
     halStartUpCode = Bios_getHal_intvec(); // calls the (modified) startup code of HAL
-    hal_infos_V3OP_ = (HAL_INFOS_PTR)CALL_MEMBER_FN_PTR(halStartUpCode)((struct stream_funcs*)&_stream_Funcs, 0, V3OP_HilCrcOk(), V3OP_DcdcCrcOk()); // return HAL sw infos
+    hal_infos_V3OP_ = (HAL_INFOS_PTR)CALL_MEMBER_FN_PTR(halStartUpCode)(&_stream_Funcs_Default, 0, V3OP_HilCrcOk(), V3OP_DcdcCrcOk()); // return HAL sw infos
     hal_ptr_ = (HAL_REC_ARRAY)(*hal_infos_V3OP_).hal_list_ptr;
 
     IccMonitor_setHilIterface(&_edt_Common_Methods_V3OP);

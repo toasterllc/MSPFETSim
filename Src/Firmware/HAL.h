@@ -588,12 +588,12 @@ HAL_FUNCTION(_hal_DummyMacro)
 
 // called via cstartup form BIOS_HalInterfaceInit
 REQUIRED(ResetFirmware)
-void *ResetFirmware(void *stream_adr, uint32_t device_flags, uint8_t v3opHilCrcOk, uint8_t v3opDcdcCcOk)
+void *ResetFirmware(struct stream_funcs* stream_adr, uint32_t device_flags, uint8_t v3opHilCrcOk, uint8_t v3opDcdcCcOk)
 {
     globalVarsInit();
     memcpy((HAL_INFOS*)&hal_infos_in_ram_,&hal_infos_, sizeof(hal_infos_));
     // save address of stream funcs, located in core
-     _stream_Funcs=(struct stream_funcs *)stream_adr;
+     _stream_Funcs = stream_adr;
     _init_Hal();
     hal_infos_in_ram_.swCmp_0 = (VERSION_MAJOR_CMP - 1) << 14 | (VERSION_MINOR_CMP << 8) | VERSION_PATCH_CMP;
     hal_infos_in_ram_.swCmp_1 = VERSION_BUILD_CMP;
