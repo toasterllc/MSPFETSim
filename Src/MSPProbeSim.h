@@ -31,6 +31,8 @@ public:
             );
         }
         
+        Main();
+        
 //        ResetFirmware();
 //        BIOS_InitCom();
 //        
@@ -52,7 +54,7 @@ public:
     
 public:
     
-    #include "Firmware/Firmware.h"
+    #include "Firmware/Main.h"
     
     struct _Msg {
         uint8_t data[512];

@@ -763,3 +763,28 @@ BYTE USBCDC_handleDataReceived (BYTE intfNum)
     return (TRUE);
 }
 
+
+
+VOID USB_init(VOID)
+{
+//    //initialize RAM variables
+//    bHostAskMoreDataThanAvailable = 0;
+//    bFunctionSuspended = FALSE;
+//
+//    // configuration of USB module
+//    USBKEYPID  = 0x9628;            // set KEY and PID to 0x9628 -> access to configuration registers enabled
+//    USBPWRCTL = 0;                  // Workaround for USB9
+//    __no_operation();               // for workaround USB9
+//    USBPWRCTL  = VUSBEN + SLDOEN + SLDOAON /*+ VBOFFIE + VBONIE*/; // keep primary and secondary LDO (3.3 and 1.8 V) enabled
+//    USBPHYCTL  = PUSEL;             // use DP and DM as USB terminals (not needed because an external PHY is connected to port 9)
+//    IntDelay();
+//    bEnumerationStatus = 0x00;      // Device not enumerated yet
+}
+
+//WORD wUsbEventMask = 0;                 //used by USB_getEnabledEvents() and USB_setEnabledEvents()
+//
+//BYTE USB_setEnabledEvents (WORD events)
+//{
+//    wUsbEventMask = events;
+//    return (kUSB_succeed);
+//}
