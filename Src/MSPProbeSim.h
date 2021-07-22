@@ -63,7 +63,7 @@ public:
     
 //    using _Rep = _Msg;
     
-    void _dequeueUSBRequest(std::chrono::milliseconds timeout=0ms) {
+    void _dequeueUSBRequest(std::chrono::milliseconds timeout=std::chrono::milliseconds::max()) {
         auto xfer = _usb.read(timeout);
         if (xfer) _handleUSBXfer(std::move(*xfer));
     }

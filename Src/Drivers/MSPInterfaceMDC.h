@@ -21,7 +21,7 @@ public:
     }
     
     MSPInterfaceMDC(USBDevice&& dev) : _dev(std::move(dev)) {
-        assert(dev);
+        assert(_dev);
         _dev.open();
         _dev.claimInterface(_USBInterfaceIdx);
     }

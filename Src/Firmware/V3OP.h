@@ -1226,13 +1226,9 @@ void V3OP_Scheduler(void)
     
     printf("[V3OP_Scheduler] Serviced: %d\n", serviced);
     
-    constexpr uint16_t MaxServiceCount = 100;
-    if (serviced && serviceCount<MaxServiceCount) {
-        serviceCount++;
-    } else {
-        _dequeueUSBRequest(serviced ? 1ms : 0ms);
-        serviceCount = 0;
-    }
+    // If we have work to do, check once for USB messages and continue the work.
+    // If we don't have work to do, wait forever for a USB message.
+    _dequeueUSBRequest(serviced ? 0ms : std::chrono::milliseconds::max());
 }
 
 // System events
