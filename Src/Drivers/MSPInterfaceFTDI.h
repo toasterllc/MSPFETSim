@@ -425,7 +425,7 @@ private:
             while (off < len) {
                 int ir = ftdi_read_data(&_ctx, (uint8_t*)data+off, len-off);
                 _checkErr(ir, "ftdi_read_data failed");
-                printf("ftdi_read_data returned: %d\n", ir);
+//                printf("ftdi_read_data returned: %d\n", ir);
                 off += ir;
             }
         }

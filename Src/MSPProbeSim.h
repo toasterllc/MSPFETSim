@@ -150,11 +150,11 @@ public:
     void _handleUSBXferEPX(VirtualUSBDevice::Xfer&& xfer) {
         switch (xfer.ep) {
         case CDC0_OUTEP_ADDR:
-            printf("Endpoint CDC0_OUTEP_ADDR\n");
+//            printf("Endpoint CDC0_OUTEP_ADDR\n");
             _handleUSBXferData(std::move(xfer));
             break;
         case CDC1_OUTEP_ADDR:
-            printf("Endpoint CDC1_OUTEP_ADDR\n");
+//            printf("Endpoint CDC1_OUTEP_ADDR\n");
             break;
         default:
             throw RuntimeError("invalid endpoint: %02x", xfer.ep);
@@ -170,11 +170,11 @@ public:
 //    }
     
     void _handleUSBXferData(VirtualUSBDevice::Xfer&& xfer) {
-        printf("_handleUSBXferData: <");
-        for (size_t i=0; i<xfer.len; i++) {
-            printf(" %02x", xfer.data[i]);
-        }
-        printf(" >\n\n");
+//        printf("_handleUSBXferData: <");
+//        for (size_t i=0; i<xfer.len; i++) {
+//            printf(" %02x", xfer.data[i]);
+//        }
+//        printf(" >\n\n");
         
         _msgs.push_back({});
         _Msg& msg = _msgs.back();
