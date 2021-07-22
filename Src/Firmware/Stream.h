@@ -314,9 +314,7 @@ struct {
 
 int16_t _stream_flush(void)
 {
-    #undef THISFN
-    #define THISFN _stream_flush
-    STATIC_VARS_START();
+    STATIC_VARS_START(_stream_flush);
     DECL_STATIC_VAR(resp_id);
     
     uint16_t i;

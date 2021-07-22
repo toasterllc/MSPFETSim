@@ -4,9 +4,6 @@
 #include "HIL.h"
 #include "EDT.h"
 
-#define setFuncletRegisters _CONCAT(setFuncletRegisters, THISFN)
-#define clkTclkAndCheckDTC  _CONCAT(clkTclkAndCheckDTC, THISFN)
-
 #define TA0R 0
 #define TB0R 0
 
@@ -1688,9 +1685,8 @@ struct {
 
 HAL_FUNCTION(_hal_ExecuteFunclet)
 {
-    #undef THISFN
-    #define THISFN _hal_ExecuteFunclet
-    STATIC_VARS_START();
+#define setFuncletRegisters setFuncletRegisters_hal_ExecuteFunclet
+    STATIC_VARS_START(_hal_ExecuteFunclet);
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(ret_len);
     DECL_STATIC_VAR(Addr);
@@ -1933,6 +1929,7 @@ HAL_FUNCTION(_hal_ExecuteFunclet)
          ret_value = HALERR_EXECUTE_FUNCLET_EXECUTION_ERROR;
     }
     return(ret_value);
+#undef setFuncletRegisters
 }
 /**
 * \ingroup MODULMACROS
@@ -2058,9 +2055,8 @@ struct {
 
 HAL_FUNCTION(_hal_ExecuteFuncletJtag)
 {
-    #undef THISFN
-    #define THISFN _hal_ExecuteFuncletJtag
-    STATIC_VARS_START();
+#define setFuncletRegisters setFuncletRegisters_hal_ExecuteFuncletJtag
+    STATIC_VARS_START(_hal_ExecuteFuncletJtag);
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(Addr);
     DECL_STATIC_VAR(memSize);
@@ -2295,6 +2291,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletJtag)
          ret_value = HALERR_EXECUTE_FUNCLET_EXECUTION_ERROR;
     }
     return(ret_value);
+#undef setFuncletRegisters
 }
 /**
 * \ingroup MODULMACROS
@@ -2403,9 +2400,8 @@ struct {
 
 HAL_FUNCTION(_hal_ExecuteFuncletX)
 {
-    #undef THISFN
-    #define THISFN _hal_ExecuteFuncletX
-    STATIC_VARS_START();
+#define setFuncletRegisters setFuncletRegisters_hal_ExecuteFuncletX
+    STATIC_VARS_START(_hal_ExecuteFuncletX);
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(ret_len);
     DECL_STATIC_VAR(Addr);
@@ -2635,6 +2631,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletX)
          ret_value = HALERR_EXECUTE_FUNCLET_EXECUTION_ERROR;
     }
     return(ret_value);
+#undef setFuncletRegisters
 }
 /**
 * \ingroup MODULMACROSXV2
@@ -2729,9 +2726,8 @@ struct {
 
 HAL_FUNCTION(_hal_ExecuteFuncletXv2)
 {
-    #undef THISFN
-    #define THISFN _hal_ExecuteFuncletXv2
-    STATIC_VARS_START();
+#define setFuncletRegisters setFuncletRegisters_hal_ExecuteFuncletXv2
+    STATIC_VARS_START(_hal_ExecuteFuncletXv2);
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(ret_len);
     DECL_STATIC_VAR(registerBackups);
@@ -2909,6 +2905,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletXv2)
          ret_value = HALERR_EXECUTE_FUNCLET_EXECUTION_ERROR;
     }
     return(ret_value);
+#undef setFuncletRegisters
 }
 /*
  * \ingroup MODULMACROS
@@ -4580,9 +4577,7 @@ struct {
 
 HAL_FUNCTION(_hal_MemApTransactionArm)
 {
-    #undef THISFN
-    #define THISFN _hal_MemApTransactionArm
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_MemApTransactionArm);
     DECL_STATIC_VAR(apsel);
     DECL_STATIC_VAR(rnw);
     DECL_STATIC_VAR(dataWidth);
@@ -4736,9 +4731,7 @@ struct {
 
 HAL_FUNCTION(_hal_MemApTransactionArmSwd)
 {
-    #undef THISFN
-    #define THISFN _hal_MemApTransactionArmSwd
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_MemApTransactionArmSwd);
     DECL_STATIC_VAR(apsel);
     DECL_STATIC_VAR(rnw);
     DECL_STATIC_VAR(dataWidth);
@@ -5055,9 +5048,7 @@ struct {
 
 HAL_FUNCTION(_hal_PollJStateRegEt8)
 {
-    #undef THISFN
-    #define THISFN _hal_PollJStateRegEt8
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_PollJStateRegEt8);
     DECL_STATIC_VAR(buffer);
     DECL_STATIC_VAR(currentIndex);
     
@@ -5258,9 +5249,7 @@ struct {
 
 int16_t PollJStateReg(uint16_t JStateVersion)
 {
-    #undef THISFN
-    #define THISFN PollJStateReg
-    STATIC_VARS_START();
+    STATIC_VARS_START(PollJStateReg);
     DECL_STATIC_VAR(buffer);
     DECL_STATIC_VAR(currentIndex);
     
@@ -7354,9 +7343,7 @@ struct {
 
 HAL_FUNCTION(_hal_SendJtagMailboxXv2)
 {
-    #undef THISFN
-    #define THISFN _hal_SendJtagMailboxXv2
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_SendJtagMailboxXv2);
     DECL_STATIC_VAR(MailBoxMode);
     DECL_STATIC_VAR(DATA1);
     DECL_STATIC_VAR(DATA2);
@@ -8986,8 +8973,7 @@ int32_t clkTclkAndCheckDTC_hal_SyncJtag_Conditional_SaveContext(void)
 
 HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContext)
 {
-  #undef THISFN
-  #define THISFN _hal_SyncJtag_Conditional_SaveContext
+#define clkTclkAndCheckDTC  clkTclkAndCheckDTC_hal_SyncJtag_Conditional_SaveContext
   uint16_t i = 0, lOut = 0, ctl_sync = 0;
   int16_t MyOut[5] = {0};
   uint16_t address;
@@ -9239,6 +9225,7 @@ HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContext)
   STREAM_put_bytes((uint8_t*)MyOut, sizeof(MyOut));
 
   return (0);
+#undef clkTclkAndCheckDTC
 }
 /**
 * \ingroup MODULMACROSX
@@ -9316,8 +9303,7 @@ int32_t clkTclkAndCheckDTC_hal_SyncJtag_Conditional_SaveContextX(void)
 
 HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContextX)
 {
-  #undef THISFN
-  #define THISFN _hal_SyncJtag_Conditional_SaveContextX
+#define clkTclkAndCheckDTC  clkTclkAndCheckDTC_hal_SyncJtag_Conditional_SaveContextX
   uint16_t ctl_sync = 0;
   uint16_t i = 0;
   int16_t MyOut[5] = {0};
@@ -9522,6 +9508,7 @@ HAL_FUNCTION(_hal_SyncJtag_Conditional_SaveContextX)
   STREAM_put_bytes((uint8_t*)MyOut, sizeof(MyOut));
 
   return (0);
+#undef clkTclkAndCheckDTC
 }
 /**
 * \ingroup MODULMACROSXV2
@@ -10186,9 +10173,7 @@ struct {
 
 HAL_FUNCTION(_hal_WaitForStorage)
 {
-    #undef THISFN
-    #define THISFN _hal_WaitForStorage
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_WaitForStorage);
     DECL_STATIC_VAR(noChangeSince);
     
     int16_t RetState = 2;
@@ -10341,9 +10326,7 @@ struct {
 
 HAL_FUNCTION(_hal_WaitForStorageX)
 {
-    #undef THISFN
-    #define THISFN _hal_WaitForStorageX
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_WaitForStorageX);
     DECL_STATIC_VAR(noChangeSince);
     
     int16_t RetState = 2;
@@ -10689,9 +10672,7 @@ struct {
 
 HAL_FUNCTION(_hal_WriteFramQuickXv2)
 {
-    #undef THISFN
-    #define THISFN _hal_WriteFramQuickXv2
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_WriteFramQuickXv2);
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(Addr);
     DECL_STATIC_VAR(Mova);
@@ -10812,9 +10793,7 @@ struct {
 
 HAL_FUNCTION(_hal_WriteMemBytes)
 {
-    #undef THISFN
-    #define THISFN _hal_WriteMemBytes
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_WriteMemBytes);
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(lAddr);
     
@@ -10880,9 +10859,7 @@ struct {
 
 HAL_FUNCTION(_hal_WriteMemBytesX)
 {
-    #undef THISFN
-    #define THISFN _hal_WriteMemBytesX
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_WriteMemBytesX);
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(lAddr);
     
@@ -10984,9 +10961,7 @@ struct {
 
 HAL_FUNCTION(_hal_WriteMemWords)
 {
-    #undef THISFN
-    #define THISFN _hal_WriteMemWords
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_WriteMemWords);
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(lAddr);
     
@@ -11051,9 +11026,7 @@ struct {
 
 HAL_FUNCTION(_hal_WriteMemWordsX)
 {
-    #undef THISFN
-    #define THISFN _hal_WriteMemWordsX
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_WriteMemWordsX);
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(lAddr);
     
@@ -11130,9 +11103,7 @@ struct {
 
 HAL_FUNCTION(_hal_WriteMemWordsXv2)
 {
-    #undef THISFN
-    #define THISFN _hal_WriteMemWordsXv2
-    STATIC_VARS_START();
+    STATIC_VARS_START(_hal_WriteMemWordsXv2);
     DECL_STATIC_VAR(lLen);
     DECL_STATIC_VAR(lAddr);
     
