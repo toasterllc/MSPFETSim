@@ -380,12 +380,12 @@ void _dummy(uint16_t dummy){return;};
 
 int16_t _dummy_TapReset_Dma(void){return 0;}
 int16_t _dummy_CheckJtagFuse_Dma(void){return 0;}
-uint8_t _dummy_Instr_Dma(uint8_t Instruction){return 0;}
-uint8_t _dummy_SetReg_XBits08_Dma(uint8_t Data){return 0;}
-uint16_t _dummy_SetReg_XBits16_Dma(uint16_t Data){return 0;}
-uint32_t _dummy_SetReg_XBits20_Dma(uint32_t Data){return 0;}
-uint32_t _dummy_SetReg_XBits32_Dma(uint32_t Data){return 0;}
-uint64_t _dummy_SetReg_XBits64_Dma(uint64_t Data){return 0;}
+SBWShiftProxy<uint8_t> _dummy_Instr_Dma(uint8_t Instruction){return 0;}
+SBWShiftProxy<uint8_t> _dummy_SetReg_XBits08_Dma(uint8_t Data){return 0;}
+SBWShiftProxy<uint16_t> _dummy_SetReg_XBits16_Dma(uint16_t Data){return 0;}
+SBWShiftProxy<uint32_t,20> _dummy_SetReg_XBits20_Dma(uint32_t Data){return 0;}
+SBWShiftProxy<uint32_t> _dummy_SetReg_XBits32_Dma(uint32_t Data){return 0;}
+SBWShiftProxy<uint64_t> _dummy_SetReg_XBits64_Dma(uint64_t Data){return 0;}
 uint64_t _dummy_SetReg_XBits8_64_Dma(uint64_t Data, uint16_t loopCount, uint16_t Pg){return 0;}
 void  _dummy_Tclk_Dma(uint8_t state){return;}
 void  _dummy_StepPsa_Dma(uint32_t length){return;}
@@ -399,7 +399,7 @@ void  _dummy_ReadADC12(void){return;}
 void _dummy_ConfigFpgaIoMode(uint16_t mode){return;}
 
 uint64_t _dummy_SetReg_XBits(uint64_t *data, uint16_t count){return 0;}
-uint8_t _dummy_Instr_4(uint8_t Data){return 0;}
+SBWShiftProxy<uint8_t> _dummy_Instr_4(uint8_t Data){return 0;}
 
 int16_t _dummy_write_read_Dp(uint8_t address, uint32_t *data, uint16_t rnw) {return -1;}
 int16_t _dummy_write_read_Ap(uint32_t address, uint32_t *data, uint16_t rnw) {return -1;}

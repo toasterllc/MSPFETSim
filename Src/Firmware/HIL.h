@@ -43,27 +43,27 @@ typedef struct edt_common_methods edt_common_methods_t;
 
 struct edt_distinct_methods
 {
-    int16_t (MSPProbeSim::*TapReset)(void);
-    int16_t (MSPProbeSim::*CheckJtagFuse)(void);
-    uint8_t (MSPProbeSim::*Instr)(uint8_t);
-    uint8_t (MSPProbeSim::*Instr04)(uint8_t);
-    uint8_t (MSPProbeSim::*SetReg_XBits08)(uint8_t);
-    uint16_t (MSPProbeSim::*SetReg_XBits16)(uint16_t);
-    uint32_t (MSPProbeSim::*SetReg_XBits20)(uint32_t);
-    uint32_t (MSPProbeSim::*SetReg_XBits32)(uint32_t);
-    uint64_t (MSPProbeSim::*SetReg_XBits35)(uint64_t *Data);
-    uint64_t (MSPProbeSim::*SetReg_XBits64)(uint64_t);
-    uint64_t (MSPProbeSim::*SetReg_XBits8_64)(uint64_t, uint16_t, uint16_t);
-    uint64_t (MSPProbeSim::*SetReg_XBits)(uint64_t *Data, uint16_t count);
-    void (MSPProbeSim::*Tclk)(uint8_t);
-    void (MSPProbeSim::*StepPsa)(uint32_t);
-    int16_t (MSPProbeSim::*BlowFuse)(uint8_t); // Blow the JTAG acces fuse
-    uint8_t (MSPProbeSim::*GetPrevInstruction)(void);
-    int16_t (MSPProbeSim::*write_read_Dp)(uint8_t address, uint32_t *data, uint16_t rnw);
-    int16_t (MSPProbeSim::*write_read_Ap)(uint32_t address, uint32_t *data, uint16_t rnw);
-    int16_t (MSPProbeSim::*write_read_mem_Ap)(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw);
-    uint32_t (MSPProbeSim::*GetJtagIdCode)();
-    uint8_t (MSPProbeSim::*SwdTransferData)(uint8_t regiser, uint32_t* data, uint8_t rnw);
+    int16_t                     (MSPProbeSim::*TapReset)(void);
+    int16_t                     (MSPProbeSim::*CheckJtagFuse)(void);
+    SBWShiftProxy<uint8_t>      (MSPProbeSim::*Instr)(uint8_t);
+    SBWShiftProxy<uint8_t>      (MSPProbeSim::*Instr04)(uint8_t);
+    SBWShiftProxy<uint8_t>      (MSPProbeSim::*SetReg_XBits08)(uint8_t);
+    SBWShiftProxy<uint16_t>     (MSPProbeSim::*SetReg_XBits16)(uint16_t);
+    SBWShiftProxy<uint32_t,20>  (MSPProbeSim::*SetReg_XBits20)(uint32_t);
+    SBWShiftProxy<uint32_t>     (MSPProbeSim::*SetReg_XBits32)(uint32_t);
+    uint64_t                    (MSPProbeSim::*SetReg_XBits35)(uint64_t *Data);
+    SBWShiftProxy<uint64_t>     (MSPProbeSim::*SetReg_XBits64)(uint64_t);
+    uint64_t                    (MSPProbeSim::*SetReg_XBits8_64)(uint64_t, uint16_t, uint16_t);
+    uint64_t                    (MSPProbeSim::*SetReg_XBits)(uint64_t *Data, uint16_t count);
+    void                        (MSPProbeSim::*Tclk)(uint8_t);
+    void                        (MSPProbeSim::*StepPsa)(uint32_t);
+    int16_t                     (MSPProbeSim::*BlowFuse)(uint8_t); // Blow the JTAG acces fuse
+    uint8_t                     (MSPProbeSim::*GetPrevInstruction)(void);
+    int16_t                     (MSPProbeSim::*write_read_Dp)(uint8_t address, uint32_t *data, uint16_t rnw);
+    int16_t                     (MSPProbeSim::*write_read_Ap)(uint32_t address, uint32_t *data, uint16_t rnw);
+    int16_t                     (MSPProbeSim::*write_read_mem_Ap)(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw);
+    uint32_t                    (MSPProbeSim::*GetJtagIdCode)();
+    uint8_t                     (MSPProbeSim::*SwdTransferData)(uint8_t regiser, uint32_t* data, uint8_t rnw);
 };
 typedef struct edt_distinct_methods edt_distinct_methods_t;
 
@@ -150,25 +150,24 @@ uint16_t setPCclockBeforeCapture = 0;
 
 void _hil_Delay_1ms(uint16_t ms)
 {
-    printf("### IMPLEMENT %s\n", __FUNCTION__);
+    UNIMP_FN();
 }
 
 void _hil_Delay_1us(uint16_t  us)
 {
-    printf("### IMPLEMENT %s\n", __FUNCTION__);
+    UNIMP_FN();
 }
-
 
 int16_t _hil_dummy_TapReset(void) {return 0;}
 int16_t _hil_dummy_CheckJtagFuse(void){return 0;}
-uint8_t _hil_dummy_Instr(uint8_t Instruction){return 0;}
-uint8_t _hil_dummy_SetReg_XBits08(uint8_t Data){return 0;}
-uint8_t _hil_dummy_Instr_4(uint8_t Data){return 0;}
+SBWShiftProxy<uint8_t> _hil_dummy_Instr(uint8_t Instruction){return 0;}
+SBWShiftProxy<uint8_t> _hil_dummy_SetReg_XBits08(uint8_t Data){return 0;}
+SBWShiftProxy<uint8_t> _hil_dummy_Instr_4(uint8_t Data){return 0;}
 
-uint16_t _hil_dummy_SetReg_XBits16(uint16_t Data){return 0;}
-uint32_t _hil_dummy_SetReg_XBits20(uint32_t Data){return 0;}
-uint32_t _hil_dummy_SetReg_XBits32(uint32_t Data){return 0;}
-uint64_t _hil_dummy_SetReg_XBits64(uint64_t Data){return 0;}
+SBWShiftProxy<uint16_t> _hil_dummy_SetReg_XBits16(uint16_t Data){return 0;}
+SBWShiftProxy<uint32_t,20> _hil_dummy_SetReg_XBits20(uint32_t Data){return 0;}
+SBWShiftProxy<uint32_t> _hil_dummy_SetReg_XBits32(uint32_t Data){return 0;}
+SBWShiftProxy<uint64_t> _hil_dummy_SetReg_XBits64(uint64_t Data){return 0;}
 uint64_t _hil_dummy_SetReg_XBits8_64(uint64_t Data, uint16_t loopCount, uint16_t JStateVersion){return 0;}
 uint64_t _hil_dummy_SetReg_XBits(uint64_t *data, uint16_t count){return 0;}
 uint64_t _hil_dummy_SetReg_XBits35(uint64_t *data){return 0;}
@@ -2115,7 +2114,7 @@ int16_t _hil_2w_CheckJtagFuse_Dma(void)
     return 0;
 }
 
-uint8_t _hil_2w_Instr_Dma(uint8_t Instruction)
+SBWShiftProxy<uint8_t> _hil_2w_Instr_Dma(uint8_t Instruction)
 {
     UNIMP_FN();
     return 0;
@@ -2143,31 +2142,31 @@ uint64_t _hil_2w_SetReg_XBits8_64_Dma(uint64_t Data, uint16_t loopCount, uint16_
     return 0;
 }
 
-uint8_t _hil_2w_SetReg_XBits08_Dma(uint8_t data)
+SBWShiftProxy<uint8_t> _hil_2w_SetReg_XBits08_Dma(uint8_t data)
 {
     UNIMP_FN();
     return 0;
 }
 
-uint16_t _hil_2w_SetReg_XBits16_Dma(uint16_t data)
+SBWShiftProxy<uint16_t> _hil_2w_SetReg_XBits16_Dma(uint16_t data)
 {
     UNIMP_FN();
     return 0;
 }
 
-uint32_t _hil_2w_SetReg_XBits20_Dma(uint32_t data)
+SBWShiftProxy<uint32_t,20> _hil_2w_SetReg_XBits20_Dma(uint32_t data)
 {
     UNIMP_FN();
     return 0;
 }
 
-uint32_t _hil_2w_SetReg_XBits32_Dma(uint32_t data)
+SBWShiftProxy<uint32_t> _hil_2w_SetReg_XBits32_Dma(uint32_t data)
 {
     UNIMP_FN();
     return 0;
 }
 
-uint64_t _hil_2w_SetReg_XBits64_Dma(uint64_t data)
+SBWShiftProxy<uint64_t> _hil_2w_SetReg_XBits64_Dma(uint64_t data)
 {
     UNIMP_FN();
     return 0;
@@ -2322,7 +2321,7 @@ uint8_t _hil_generic_GetPrevInstruction()
     return prevInstruction_hil_generic_;
 }
 
-uint8_t _hil_generic_Instr(uint8_t instruction)
+SBWShiftProxy<uint8_t> _hil_generic_Instr(uint8_t instruction)
 {
     uint16_t retVal;
 
@@ -2333,7 +2332,7 @@ uint8_t _hil_generic_Instr(uint8_t instruction)
     return ((uint8_t)retVal);
 }
 
-uint8_t _hil_generic_SetReg_XBits08(uint8_t data)
+SBWShiftProxy<uint8_t> _hil_generic_SetReg_XBits08(uint8_t data)
 {
     uint16_t retVal;
 
@@ -2342,7 +2341,8 @@ uint8_t _hil_generic_SetReg_XBits08(uint8_t data)
 
     return ((uint8_t)retVal);
 }
-uint16_t _hil_generic_SetReg_XBits16(uint16_t data)
+
+SBWShiftProxy<uint16_t> _hil_generic_SetReg_XBits16(uint16_t data)
 {
     uint16_t retVal;
 
@@ -2352,7 +2352,7 @@ uint16_t _hil_generic_SetReg_XBits16(uint16_t data)
     return retVal;
 }
 
-uint32_t _hil_generic_SetReg_XBits20(uint32_t data)
+SBWShiftProxy<uint32_t,20> _hil_generic_SetReg_XBits20(uint32_t data)
 {
     uint32_t retVal;
 
@@ -2363,7 +2363,7 @@ uint32_t _hil_generic_SetReg_XBits20(uint32_t data)
 }
 
 // -----------------------------------------------------------------------------
-uint32_t _hil_generic_SetReg_XBits32(uint32_t data)
+SBWShiftProxy<uint32_t> _hil_generic_SetReg_XBits32(uint32_t data)
 {
     uint32_t retVal;
 
@@ -2373,7 +2373,7 @@ uint32_t _hil_generic_SetReg_XBits32(uint32_t data)
 }
 
 // -----------------------------------------------------------------------------
-uint64_t _hil_generic_SetReg_XBits64(uint64_t data)
+SBWShiftProxy<uint64_t> _hil_generic_SetReg_XBits64(uint64_t data)
 {
     uint64_t retVal;
 
@@ -2628,33 +2628,33 @@ void hil_Swd_Seq(uint16_t length, uint8_t *sequence)
 
 
 
-uint8_t _hil_generic432_Instr_4(uint8_t instruction)
+SBWShiftProxy<uint8_t> _hil_generic432_Instr_4(uint8_t instruction)
 {
     UNIMP_FN();
     return 0;
 }
 
-uint8_t _hil_generic432_SetReg_XBits08(uint8_t data)
+SBWShiftProxy<uint8_t> _hil_generic432_SetReg_XBits08(uint8_t data)
 {
     UNIMP_FN();
     return 0;
 }
 
-uint16_t _hil_generic432_SetReg_XBits16(uint16_t data)
-{
-    UNIMP_FN();
-    return 0;
-}
-
-// -----------------------------------------------------------------------------
-uint32_t _hil_generic432_SetReg_XBits32(uint32_t data)
+SBWShiftProxy<uint16_t> _hil_generic432_SetReg_XBits16(uint16_t data)
 {
     UNIMP_FN();
     return 0;
 }
 
 // -----------------------------------------------------------------------------
-uint64_t _hil_generic432_SetReg_XBits64(uint64_t data)
+SBWShiftProxy<uint32_t> _hil_generic432_SetReg_XBits32(uint32_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+SBWShiftProxy<uint64_t> _hil_generic432_SetReg_XBits64(uint64_t data)
 {
     UNIMP_FN();
     return 0;
@@ -2670,4 +2670,184 @@ uint64_t _hil_generic432_SetReg_XBits35(uint64_t *data)
 {
     UNIMP_FN();
     return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+bool TCLK_saved = 1;
+
+void TMSL_TDIL() { _sbwio(0,0); }
+void TMSH_TDIL() { _sbwio(1,0); }
+void TMSL_TDIH() { _sbwio(0,1); }
+void TMSH_TDIH() { _sbwio(1,1); }
+
+void TMSL_TDIL_TDOrd() { _sbwio_r(0,0); }
+void TMSH_TDIL_TDOrd() { _sbwio_r(1,0); }
+void TMSL_TDIH_TDOrd() { _sbwio_r(0,1); }
+void TMSH_TDIH_TDOrd() { _sbwio_r(1,1); }
+
+void _sbwio(bool tms, bool tdi) {
+    // With no `tclk` specified, use the value for TMS, so that the line stays constant
+    // between registering the TMS value and outputting the TDI value
+    _msp.sbwIO(tms, tms, tdi, false);
+}
+
+void _sbwio_r(bool tms, bool tdi) {
+    // With no `tclk` specified, use the value for TMS, so that the line stays constant
+    // between registering the TMS value and outputting the TDI value
+    _msp.sbwIO(tms, tms, tdi, true);
+}
+
+void _sbwioTclk(bool tms, bool tclk) {
+    _msp.sbwIO(tms, TCLK_saved, tclk, false);
+    TCLK_saved = tclk;
+}
+
+uint64_t _read(uint8_t w) {
+    uint8_t b[8];
+    _msp.sbwRead(&b, w/8+(w%8?1:0));
+    
+    if (w == 8) {
+        return b[0]<<0;
+    } else if (w == 16) {
+        return b[0]<<8 | b[1]<<0;
+    } else if (w == 20) {
+        return b[0]<<12 | b[1]<<4 | ((b[2]<<0)&0x0F);
+    } else if (w == 32) {
+        return b[0]<<24 | b[1]<<16 | b[2]<<8 | b[3]<<0;
+    } else {
+        abort();
+    }
+}
+
+void sbw_Shift(uint64_t Data, int16_t Bits)
+{
+    uint64_t MSB = 0x0000000000000000;
+
+    switch(Bits)
+    {
+        case F_BYTE: MSB = 0x00000080;
+            break;
+        case F_WORD: MSB = 0x00008000;
+            break;
+        case F_ADDR: MSB = 0x00080000;
+            break;
+        case F_LONG: MSB = 0x80000000;
+            break;
+        case F_LONG_LONG: MSB = 0x8000000000000000;
+            break;
+        default: // this is an unsupported format
+            abort();
+    }
+    do
+    {
+        if ((MSB & 1) == 1)                       // Last bit requires TMS=1
+        {
+            if(Data & MSB)
+            {
+                TMSH_TDIH();
+            }
+            else
+            {
+                TMSH_TDIL();
+            }
+        }
+        else
+        {
+            if(Data & MSB)
+            {
+                TMSL_TDIH();
+            }
+            else
+            {
+                TMSL_TDIL();
+            }
+        }
+    }
+    while(MSB >>= 1);
+
+    if (TCLK_saved)
+    {
+        TMSH_TDIH();
+        TMSL_TDIH();
+    }
+    else
+    {
+        TMSH_TDIL();
+        TMSL_TDIL();
+    }
+}
+
+uint64_t sbw_Shift_R(uint64_t Data, int16_t Bits)
+{
+    uint64_t MSB = 0x0000000000000000;
+
+    switch(Bits)
+    {
+        case F_BYTE: MSB = 0x00000080;
+            break;
+        case F_WORD: MSB = 0x00008000;
+            break;
+        case F_ADDR: MSB = 0x00080000;
+            break;
+        case F_LONG: MSB = 0x80000000;
+            break;
+        case F_LONG_LONG: MSB = 0x8000000000000000;
+            break;
+        default: // this is an unsupported format
+            abort();
+    }
+    do
+    {
+        if ((MSB & 1) == 1)                       // Last bit requires TMS=1
+        {
+            if(Data & MSB)
+            {
+                TMSH_TDIH_TDOrd();
+            }
+            else
+            {
+                TMSH_TDIL_TDOrd();
+            }
+        }
+        else
+        {
+            if(Data & MSB)
+            {
+                TMSL_TDIH_TDOrd();
+            }
+            else
+            {
+                TMSL_TDIL_TDOrd();
+            }
+        }
+    }
+    while(MSB >>= 1);
+
+    if (TCLK_saved)
+    {
+        TMSH_TDIH();
+        TMSL_TDIH();
+    }
+    else
+    {
+        TMSH_TDIL();
+        TMSL_TDIL();
+    }
+    uint64_t TDOvalue = _read(Bits);
+    // de-scramble upper 4 bits if it was a 20bit shift
+    if(Bits == F_ADDR)
+    {
+        TDOvalue = ((TDOvalue >> 4) | (TDOvalue << 16)) & 0x000FFFFF;
+    }
+    return(TDOvalue);
 }

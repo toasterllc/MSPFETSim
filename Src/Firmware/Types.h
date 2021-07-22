@@ -558,3 +558,60 @@ typedef void *(MSPProbeSim::*DcdcInit)(DCDC_INFOS_t* dcdcInfos_Pointer);
 
 
 #define PTR_FOR_CMP uintptr_t
+
+
+
+
+
+
+
+#pragma push_macro("static")
+#undef static
+template <class...> static constexpr std::false_type _AlwaysFalse = {};
+#pragma pop_macro("static")
+
+template <typename T, size_t W=sizeof(T)*8>
+class SBWShiftProxy {
+public:
+    // Default constructor returns a nop object that just returns the argument
+    // from the conversion operator
+    SBWShiftProxy(uint64_t data=0) : _data(data) {}
+    SBWShiftProxy(MSPProbeSim* self, uint64_t data) : _self(self), _data(data) {}
+    // Copy constructor: not allowed
+    SBWShiftProxy(const SBWShiftProxy& x) = delete;
+    SBWShiftProxy& operator=(const SBWShiftProxy& x) = delete;
+    // Move constructor: not allowed
+    SBWShiftProxy(SBWShiftProxy&& x) = delete;
+    SBWShiftProxy& operator=(SBWShiftProxy&& x) = delete;
+    
+    ~SBWShiftProxy() {
+        if (!_self) return; // Short-circuit if we're a nop object
+        if (!_read) {
+            // Perform non-read shift
+                 if constexpr (W ==  8) _self->sbw_Shift(_data, F_BYTE);
+            else if constexpr (W == 16) _self->sbw_Shift(_data, F_WORD);
+            else if constexpr (W == 20) _self->sbw_Shift(_data, F_ADDR);
+            else if constexpr (W == 32) _self->sbw_Shift(_data, F_LONG);
+            else if constexpr (W == 64) _self->sbw_Shift(_data, F_LONG_LONG);
+            else                        static_assert(_AlwaysFalse<T>);
+        }
+    }
+    
+    operator T() {
+        if (!_self) return _data; // Short-circuit if we're a nop object
+        
+        // Perform read shift and return result
+        _read = true;
+             if constexpr (W ==  8) return _self->sbw_Shift_R(_data, F_BYTE);
+        else if constexpr (W == 16) return _self->sbw_Shift_R(_data, F_WORD);
+        else if constexpr (W == 20) return _self->sbw_Shift_R(_data, F_ADDR);
+        else if constexpr (W == 32) return _self->sbw_Shift_R(_data, F_LONG);
+        else if constexpr (W == 64) return _self->sbw_Shift_R(_data, F_LONG_LONG);
+        else                        static_assert(_AlwaysFalse<T>);
+    }
+    
+private:
+    MSPProbeSim* _self = nullptr;
+    uint64_t _data = 0;
+    bool _read = false;
+};
