@@ -88,7 +88,7 @@ int16_t IHIL_CheckJtagFuse(void){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods
 void IHIL_Tclk(uint8_t tclk){CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Tclk)(tclk);}
 
 //#pragma inline=forced
-int8_t IHIL_Instr4(uint8_t ir){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr04)(ir);}
+SBWShiftProxy<uint8_t> IHIL_Instr4(uint8_t ir){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr04)(ir);}
 
 //#pragma inline=forced
 void IHIL_StepPsa(uint32_t length){CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.StepPsa)(length);}
@@ -109,19 +109,19 @@ uint64_t SetReg_XBits(uint64_t *Data, uint16_t count){return CALL_MEMBER_FN_PTR(
 uint64_t SetReg_35Bits(uint64_t *Data){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits35)(Data);}
 
 //#pragma inline=forced
-uint8_t SetReg_8Bits(uint8_t data){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits08)(data);}
+SBWShiftProxy<uint8_t> SetReg_8Bits(uint8_t data){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits08)(data);}
 
 //#pragma inline=forced
-uint16_t SetReg_16Bits(uint16_t data){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits16)(data);}
+SBWShiftProxy<uint16_t> SetReg_16Bits(uint16_t data){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits16)(data);}
 
 //#pragma inline=forced
-uint32_t SetReg_20Bits(uint32_t data) {return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits20)(data);}
+SBWShiftProxy<uint32_t,20> SetReg_20Bits(uint32_t data) {return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits20)(data);}
 
 //#pragma inline=forced
-uint32_t SetReg_32Bits(uint32_t data){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits32)(data);}
+SBWShiftProxy<uint32_t> SetReg_32Bits(uint32_t data){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits32)(data);}
 
 //#pragma inline=forced
-uint64_t SetReg_64Bits(uint64_t data){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits64)(data);}
+SBWShiftProxy<uint64_t> SetReg_64Bits(uint64_t data){return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits64)(data);}
 
 //ARM interface functions
 //#pragma inline=forced
@@ -142,89 +142,34 @@ uint64_t SetReg8_64Bits(uint64_t data, uint16_t loopCount, uint16_t PG)
     {return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.SetReg_XBits8_64)(data, loopCount, PG);}
 
 // JTAG instruction register access
-//#pragma inline=forced
-int16_t cntrl_sig_low_byte()        { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_LOW_BYTE); }
-
-//#pragma inline=forced
-int16_t cntrl_sig_capture()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_CAPTURE); }
-
-//#pragma inline=forced
-int16_t cntrl_sig_high_byte()       { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_HIGH_BYTE); }
-
-//#pragma inline=forced
-int16_t cntrl_sig_16bit()           { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_16BIT); }
-
-//#pragma inline=forced
-int16_t cntrl_sig_release()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_RELEASE); }
-
-//#pragma inline=forced
-int16_t addr_16bit()                { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_ADDR_16BIT); }
-
-//#pragma inline=forced
-int16_t addr_capture()              { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_ADDR_CAPTURE); }
-
-//#pragma inline=forced
-int16_t data_16bit()                { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DATA_16BIT); }
-
-//#pragma inline=forced
-int16_t data_capture()              {return  CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DATA_CAPTURE); }
-
-//#pragma inline=forced
-int16_t data_to_addr()              { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DATA_TO_ADDR); }
-
-//#pragma inline=forced
-int16_t data_quick()                { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DATA_QUICK); }
-
-//#pragma inline=forced
-int16_t config_fuses()              { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CONFIG_FUSES); }
-
-//#pragma inline=forced
-int16_t eem_data_exchange()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EMEX_DATA_EXCHANGE); }
-
-//#pragma inline=forced
-int16_t eem_data_exchange32()       { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EMEX_DATA_EXCHANGE32); }
-
-//#pragma inline=forced
-int16_t eem_read_control()          { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EMEX_READ_CONTROL); }
-
-//#pragma inline=forced
-int16_t eem_write_control()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EMEX_WRITE_CONTROL); }
-
-//#pragma inline=forced
-int16_t eem_read_trigger()          { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EMEX_READ_TRIGGER); }
-
-//#pragma inline=forced
-int16_t data_psa()                  { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DATA_PSA); }
-
-//#pragma inline=forced
-int16_t shift_out_psa()             { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_SHIFT_OUT_PSA); }
-
-//#pragma inline=forced
-int16_t flash_16bit_update()        { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_FLASH_16BIT_UPDATE); }
-
-//#pragma inline=forced
-int16_t jmb_exchange()              { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_JMB_EXCHANGE); }
-
-//#pragma inline=forced
-int16_t device_ip_pointer()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DEVICE_ID);}
-
-//#pragma inline=forced
-int16_t core_ip_pointer()           { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_COREIP_ID);}
-
-//#pragma inline=forced
-int16_t jstate_read()               { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_JSTATE_ID);}
-
-//#pragma inline=forced
-int16_t test_reg()                  { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_TEST_REG);}
-
-//#pragma inline=forced
-int16_t test_reg_3V()               { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_TEST_3V_REG);}
-
-//#pragma inline=forced
-int16_t prepare_blow()               { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_PREPARE_BLOW);}
-
-//#pragma inline=forced
-int16_t ex_blow()               { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EX_BLOW);}
+int16_t cntrl_sig_low_byte()        { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_LOW_BYTE);    }
+int16_t cntrl_sig_capture()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_CAPTURE);     }
+int16_t cntrl_sig_high_byte()       { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_HIGH_BYTE);   }
+int16_t cntrl_sig_16bit()           { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_16BIT);       }
+int16_t cntrl_sig_release()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_RELEASE);     }
+int16_t addr_16bit()                { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_ADDR_16BIT);            }
+int16_t addr_capture()              { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_ADDR_CAPTURE);          }
+int16_t data_16bit()                { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DATA_16BIT);            }
+int16_t data_capture()              { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DATA_CAPTURE);          }
+int16_t data_to_addr()              { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DATA_TO_ADDR);          }
+int16_t data_quick()                { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DATA_QUICK);            }
+int16_t config_fuses()              { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CONFIG_FUSES);          }
+int16_t eem_data_exchange()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EMEX_DATA_EXCHANGE);    }
+int16_t eem_data_exchange32()       { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EMEX_DATA_EXCHANGE32);  }
+int16_t eem_read_control()          { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EMEX_READ_CONTROL);     }
+int16_t eem_write_control()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EMEX_WRITE_CONTROL);    }
+int16_t eem_read_trigger()          { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EMEX_READ_TRIGGER);     }
+int16_t data_psa()                  { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DATA_PSA);              }
+int16_t shift_out_psa()             { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_SHIFT_OUT_PSA);         }
+int16_t flash_16bit_update()        { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_FLASH_16BIT_UPDATE);    }
+int16_t jmb_exchange()              { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_JMB_EXCHANGE);          }
+int16_t device_ip_pointer()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_DEVICE_ID);             }
+int16_t core_ip_pointer()           { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_COREIP_ID);             }
+int16_t jstate_read()               { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_JSTATE_ID);             }
+int16_t test_reg()                  { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_TEST_REG);              }
+int16_t test_reg_3V()               { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_TEST_3V_REG);           }
+int16_t prepare_blow()              { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_PREPARE_BLOW);          }
+int16_t ex_blow()                   { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_EX_BLOW);               }
 
 #define OUT1RDY 0x0008
 #define OUT0RDY 0x0004

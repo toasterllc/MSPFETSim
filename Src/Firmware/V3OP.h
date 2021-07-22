@@ -990,9 +990,6 @@ int16_t V3OP_HalInterfaceInit(void)
     HalMainFunc halStartUpCode = NULL;
     HilInitFunc hilInit = NULL;
 
-    uint8_t cmd[6] = {0x05, CMDTYP_EXECUTELOOP, 0, 0, 0, 0};
-    uint8_t i;
-
     V3OP_HalInterfaceClear();
     //set shared mem Variables to 0x00
     STREAM_resetSharedVariables();
@@ -1034,23 +1031,26 @@ int16_t V3OP_HalInterfaceInit(void)
     IccMonitor_setHilIterface(&_edt_Common_Methods_V3OP);
     CALL_MEMBER_FN_PTR(comInfos_.comSetHil)(&_edt_Common_Methods_V3OP);
 
-    if(hal_ptr_ != NULL)
-    {
-        //configure ICC monitor process
-        (*hal_ptr_)[(*hal_infos_V3OP_).hal_size-1].id = 0xFFFE;
-        (*hal_ptr_)[(*hal_infos_V3OP_).hal_size-1].function = MEMBER_FN_PTR(IccMonitor_Process);
-
-        for(i=0; i <(*hal_infos_V3OP_).hal_size; i++)
-        {
-            if(((*hal_ptr_)[i].id != 0xFFFF) && ((*hal_ptr_)[i].id >= 0xFF00))
-            {
-                cmd[4] = i;
-                cmd[5] = 0;
-                V3OP_SetLoop(cmd, 0);
-                break;
-            }
-        }
-    }
+    // MSPProbeSim: disable 'IccMonitor_Process' because it doesn't apply to the simulator
+    // and causes us to do busy work that isn't necessary
+//    if(hal_ptr_ != NULL)
+//    {
+//        uint8_t cmd[6] = {0x05, CMDTYP_EXECUTELOOP, 0, 0, 0, 0};
+//        //configure ICC monitor process
+//        (*hal_ptr_)[(*hal_infos_V3OP_).hal_size-1].id = 0xFFFE;
+//        (*hal_ptr_)[(*hal_infos_V3OP_).hal_size-1].function = MEMBER_FN_PTR(IccMonitor_Process);
+//
+//        for(uint8_t i=0; i <(*hal_infos_V3OP_).hal_size; i++)
+//        {
+//            if(((*hal_ptr_)[i].id != 0xFFFF) && ((*hal_ptr_)[i].id >= 0xFF00))
+//            {
+//                cmd[4] = i;
+//                cmd[5] = 0;
+//                V3OP_SetLoop(cmd, 0);
+//                break;
+//            }
+//        }
+//    }
     return 0;
 }
 
@@ -1223,6 +1223,8 @@ void V3OP_Scheduler(void)
         }
         while(rx_queu_counter_tmp != rx_queu_counter);
     }
+    
+    printf("serviced: %d\n", serviced);
     
     constexpr uint16_t MaxServiceCount = 100;
     if (serviced && serviceCount<MaxServiceCount) {
