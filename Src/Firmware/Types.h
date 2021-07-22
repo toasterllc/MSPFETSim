@@ -460,3 +460,4 @@ typedef struct _HalRec_ HalRec;
 #define DIAG_DEFAULT(x)
 #define DIAG_SUPPRESS(x)
 #define _NOP()
+#define __delay_cycles(x)

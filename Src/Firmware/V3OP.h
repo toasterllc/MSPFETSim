@@ -1083,7 +1083,7 @@ int16_t V3OP_HalInterfaceInit(void)
     CALL_MEMBER_FN_PTR(_edt_Common_Methods_V3OP.SetToolID)(Bios_getTool_id());
 
     halStartUpCode = (HalMainFunc)Bios_getHal_intvec(); // calls the (modified) startup code of HAL
-    hal_infos_V3OP_ = halStartUpCode((struct stream_funcs*)&_stream_Funcs, 0, V3OP_HilCrcOk(), V3OP_DcdcCrcOk()); // return HAL sw infos
+    hal_infos_V3OP_ = (HAL_INFOS_PTR)CALL_MEMBER_FN_PTR(halStartUpCode)((struct stream_funcs*)&_stream_Funcs, 0, V3OP_HilCrcOk(), V3OP_DcdcCrcOk()); // return HAL sw infos
     hal_ptr_ = (HAL_REC_ARRAY)(*hal_infos_V3OP_).hal_list_ptr;
 
     IccMonitor_setHilIterface(&_edt_Common_Methods_V3OP);
@@ -1093,7 +1093,7 @@ int16_t V3OP_HalInterfaceInit(void)
     {
         //configure ICC monitor process
         (*hal_ptr_)[(*hal_infos_V3OP_).hal_size-1].id = 0xFFFE;
-        (*hal_ptr_)[(*hal_infos_V3OP_).hal_size-1].function = (void*)IccMonitor_Process;
+        (*hal_ptr_)[(*hal_infos_V3OP_).hal_size-1].function = MEMBER_FN_PTR(IccMonitor_Process);
 
         for(i=0; i <(*hal_infos_V3OP_).hal_size; i++)
         {
@@ -1202,7 +1202,7 @@ void V3OP_Scheduler(void)
                     if(STREAM_out_init(v3op_loop_array_[loop_array_counter].msg_id, v3op_loop_array_[loop_array_counter].msg_type) >= 0)
                     {
                         STREAM_internal_stream(&v3op_loop_array_[loop_array_counter].indata[MESSAGE_EXECUTE_PAYLOAD_POS], v3op_loop_array_[loop_array_counter].indata[0]-3, (uint8_t*)0x0001, 0, &stream_tmp);
-                        if(pCallAddr(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG) == 1)
+                        if(CALL_MEMBER_FN_PTR(pCallAddr)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG) == 1)
                         {
                             STREAM_flush();
                             if(v3op_loop_array_[loop_array_counter].flags & V3OP_LOOP_WAIT_FLAG)
@@ -1354,208 +1354,80 @@ int16_t V3OP_CoreFlashFunctionInit(uint8_t *payload)
 
 uint16_t calculateCrc(uint16_t sum, uint16_t *adress, uint32_t segmentLength)
 {
-  //Initialize CRC register
-  CRCINIRES = sum;
-
-  //Compute CRC over the given segment
-  while (segmentLength--)
-  {
-    CRCDIRB = *adress++;
-  }
-  //Return CRC result
-  return CRCINIRES;
+    UNIMP_FN();
+    return 0;
 }
 
 uint16_t V3OP_GetHilCrc()
 {
-    uint16_t hilCrc = 0x0000;
-    uint32_t segmentLength = 0;
-    uint16_t *address  = 0;
-
-    //calculate CRC for HIL info segment 1 -------------------------------------
-    segmentLength = (CHECKSUM_HIL[0] - INFO_SEGMENTS_HIL[0])/2;
-    address = (uint16_t*)INFO_SEGMENTS_HIL[0];
-    hilCrc = calculateCrc(hilCrc, address, segmentLength);
-
-    //calculate CRC for HIL info segment 2
-    segmentLength = (INFO_SEGMENTS_HIL[1] - CHECKSUM_HIL[1])/2;
-    address = (uint16_t*)(CHECKSUM_HIL[1] + 1);
-    hilCrc = calculateCrc(hilCrc, address, segmentLength);
-
-    //calculate CRC for HIL main segment
-    segmentLength = (HIL_SEGMENTS[1] - HIL_SEGMENTS[0]+1)/2;
-    address = (uint16_t*)HIL_SEGMENTS[0];
-    hilCrc = calculateCrc(hilCrc, address, segmentLength);
-
-#ifdef MSP_FET
-    //calculate CRC for Hil main segment  2
-    segmentLength = (HIL_SEGMENTS[3] - HIL_SEGMENTS[2] + 1)/2;
-    address = (uint16_t*)HIL_SEGMENTS[2];
-    hilCrc = calculateCrc(hilCrc, address, segmentLength);
-#endif
-    //--------------------------------------------------------------------------
-
-    return hilCrc;
+    UNIMP_FN();
+    return 0;
 }
 
 uint16_t V3OP_GetHalFpgaCrc()
 {
-    uint16_t halCrc = 0x0000;
-#ifdef MSP_FET
-    uint32_t segmentLength = 0;
-    uint16_t *address  = 0;
-
-     //calculate CRC for Hal info segment 1 --------------------------------------
-    segmentLength = (CHECKSUM_HAL[0] - INFO_SEGMENTS_HAL[0])/2;
-    address = (uint16_t*)INFO_SEGMENTS_HAL[0];
-    halCrc = calculateCrc(halCrc, address, segmentLength);
-    //calculate CRC for Hal info segment 2
-    segmentLength = (INFO_SEGMENTS_HAL[1] - CHECKSUM_HAL[1])/2;
-    address = (uint16_t*)(CHECKSUM_HAL[1] + 1);
-    halCrc = calculateCrc(halCrc, address, segmentLength);
-
-     //calculate CRC for Hal main segment  1
-    segmentLength = (HAL_FPGA_SEGMENTS[1] - HAL_FPGA_SEGMENTS[0] + 1)/2;
-    address = (uint16_t*)HAL_FPGA_SEGMENTS[0];
-    halCrc = calculateCrc(halCrc, address, segmentLength);
-    //--------------------------------------------------------------------------
-#endif
-    return halCrc;
+    UNIMP_FN();
+    return 0;
 }
 
 uint16_t V3OP_GetHalCrc()
 {
-    uint16_t halCrc = 0x0000;
-    uint32_t segmentLength = 0;
-    uint16_t *address  = 0;
-
-     //calculate CRC for Hal info segment 1 --------------------------------------
-    segmentLength = (CHECKSUM_HAL[0] - INFO_SEGMENTS_HAL[0])/2;
-    address = (uint16_t*)INFO_SEGMENTS_HAL[0];
-    halCrc = calculateCrc(halCrc, address, segmentLength);
-    //calculate CRC for Hal info segment 2
-    segmentLength = (INFO_SEGMENTS_HAL[1] - CHECKSUM_HAL[1])/2;
-    address = (uint16_t*)(CHECKSUM_HAL[1] + 1);
-    halCrc = calculateCrc(halCrc, address, segmentLength);
-
-     //calculate CRC for Hal main segment  1
-    segmentLength = (HAL_SEGMENTS[1] - HAL_SEGMENTS[0] + 1)/2;
-    address = (uint16_t*)HAL_SEGMENTS[0];
-    halCrc = calculateCrc(halCrc, address, segmentLength);
-#ifdef eZ_FET
-    //calculate CRC for Hal main segment  2
-    segmentLength = (HAL_SEGMENTS[3] - HAL_SEGMENTS[2] + 1)/2;
-    address = (uint16_t*)HAL_SEGMENTS[2];
-    halCrc = calculateCrc(halCrc, address, segmentLength);
-#endif
-    //--------------------------------------------------------------------------
-
-    return halCrc;
+    UNIMP_FN();
+    return 0;
 }
 
 uint16_t V3OP_GetCoreCrc()
 {
-    uint16_t coreCrc = 0x0000;
-    uint32_t segmentLength = 0;
-    uint16_t *address  = 0;
-
-    //calculate CRC for core info segment 1 ------------------------------------
-    segmentLength = (CHECKSUM_CORE[0] - CORE_SEGMENTS[0])/2;
-    address = (uint16_t*)CORE_SEGMENTS[0];
-    coreCrc = calculateCrc(coreCrc, address, segmentLength);
-
-    //calculate CRC for core main segment
-    segmentLength = (CORE_SEGMENTS[1] - CHECKSUM_CORE[1] + 1)/2;
-    address = (uint16_t*) (CHECKSUM_CORE[1] + 1);
-    coreCrc = calculateCrc(coreCrc, address, segmentLength);
-
-    //calculate CRC for reset vector segment
-    segmentLength = (CORE_SEGMENTS_RESET[1] - CORE_SEGMENTS_RESET[0] + 1)/2;
-    address = (uint16_t*)CORE_SEGMENTS_RESET[0];
-    coreCrc = calculateCrc(coreCrc, address, segmentLength);
-    //--------------------------------------------------------------------------
-
-    return coreCrc;
+    UNIMP_FN();
+    return 0;
 }
 
 uint16_t V3OP_GetDcdcCrc()
 {
-    uint16_t dcdcCrc = 0x0000;
-    uint32_t segmentLength = 0;
-    uint16_t *address  = 0;
-
-    //calculate CRC for dcdc info segment 1 -------------------------------------
-    segmentLength = (CHECKSUM_DCDC[0] - INFO_SEGMENTS_DCDC[0])/2;
-    address = (uint16_t*)INFO_SEGMENTS_DCDC[0];
-    dcdcCrc = calculateCrc(dcdcCrc, address, segmentLength);
-
-    //calculate CRC for dcdc info segment 1
-    segmentLength = (INFO_SEGMENTS_DCDC[1] - CHECKSUM_DCDC[1])/2;
-    address = (uint16_t*)(CHECKSUM_DCDC[1] + 1);
-    dcdcCrc = calculateCrc(dcdcCrc, address, segmentLength);
-
-    //calculate CRC for dcdc main segment
-    segmentLength = (DCDC_SEGMENTS[1] - DCDC_SEGMENTS[0] + 1)/2;
-    address = (uint16_t*)DCDC_SEGMENTS[0];
-    dcdcCrc = calculateCrc(dcdcCrc, address, segmentLength);
-    //--------------------------------------------------------------------------
-
-    return dcdcCrc;
+    UNIMP_FN();
+    return 0;
 }
 
 uint16_t V3OP_GetComChannelCrc()
 {
-    uint16_t comChannelCrc = 0x0000;
-    uint32_t segmentLength = 0;
-    uint16_t *address  = 0;
-
-    //calculate CRC for comchannel info segment 1 -------------------------------------
-    segmentLength = (CHECKSUM_COMCHANNEL[0] - INFO_SEGMENTS_COMCHANNEL[0])/2;
-    address = (uint16_t*)INFO_SEGMENTS_COMCHANNEL[0];
-    comChannelCrc = calculateCrc(comChannelCrc, address, segmentLength);
-
-    //calculate CRC for comchannel info segment 1
-    segmentLength = (INFO_SEGMENTS_COMCHANNEL[1] - CHECKSUM_COMCHANNEL[1])/2;
-    address = (uint16_t*)(CHECKSUM_COMCHANNEL[1] + 1);
-    comChannelCrc = calculateCrc(comChannelCrc, address, segmentLength);
-
-    //calculate CRC for comchannel main segment
-    segmentLength = (COMCHANNEL_SEGMENTS[1] - COMCHANNEL_SEGMENTS[0] + 1)/2;
-    address = (uint16_t*)COMCHANNEL_SEGMENTS[0];
-    comChannelCrc = calculateCrc(comChannelCrc, address, segmentLength);
-    //--------------------------------------------------------------------------
-
-  return comChannelCrc;
+    UNIMP_FN();
+    return 0;
 }
 
 uint8_t V3OP_HilCrcOk()
 {
-  return(V3OP_GetHilCrc() == *((uint16_t*)CHECKSUM_HIL[0]));
+    UNIMP_FN();
+    return 0;
 }
 
 uint8_t V3OP_HalCrcOk()
 {
-  return(V3OP_GetHalCrc() == *((uint16_t*)CHECKSUM_HAL[0]));
+    UNIMP_FN();
+    return 0;
 }
 
 uint8_t V3OP_HalFpgaCrcOk()
 {
-  return(V3OP_GetHalFpgaCrc() == *((uint16_t*)CHECKSUM_HAL[0]));
+    UNIMP_FN();
+    return 0;
 }
 
 uint8_t V3OP_coreCrcOk()
 {
-  return(V3OP_GetCoreCrc() == *((uint16_t*)CHECKSUM_CORE[0]));
+    UNIMP_FN();
+    return 0;
 }
 
 uint8_t V3OP_DcdcCrcOk()
 {
-  return(V3OP_GetDcdcCrc() == *((uint16_t*)CHECKSUM_DCDC[0]));
+    UNIMP_FN();
+    return 0;
 }
 
 uint8_t V3OP_ComChannelCrcOk()
 {
-  return(V3OP_GetComChannelCrc() == *((uint16_t*)CHECKSUM_COMCHANNEL[0]));
+    UNIMP_FN();
+    return 0;
 }
 //! \brief test address on memory type
 //! \param[in] addr address to test
@@ -1565,75 +1437,7 @@ uint8_t V3OP_ComChannelCrcOk()
 #pragma optimize = low
 uint32_t V3OP_GetSegmentType(uint32_t addr)
 {
-    uint16_t i = 0;
-    for(i = 0; i < (sizeof(INFO_SEGMENTS_HIL)/sizeof(uint32_t)); i+=2)
-    {
-        if((addr >= INFO_SEGMENTS_HIL[i]) && (addr <= INFO_SEGMENTS_HIL[i+1]))
-        {
-            return (INFO_SEGMENT_HIL);
-        }
-    }
-    for(i = 0; i < (sizeof(INFO_SEGMENTS_HAL)/sizeof(uint32_t)); i+=2)
-    {
-        if((addr >= INFO_SEGMENTS_HAL[i]) && (addr <= INFO_SEGMENTS_HAL[i+1]))
-        {
-            return (INFO_SEGMENT_HAL);
-        }
-    }
-    for(i = 0; i < (sizeof(HAL_SEGMENTS)/sizeof(uint32_t)); i+=2)
-    {
-        if((addr >= HAL_SEGMENTS[i]) && (addr <= HAL_SEGMENTS[i+1]))
-        {
-            return (HAL_SEGMENT);
-        }
-    }
-    #ifdef MSP_FET
-    for(i = 0; i < (sizeof(HAL_FPGA_SEGMENTS)/sizeof(uint32_t)); i+=2)
-    {
-        if((addr >= HAL_FPGA_SEGMENTS[i]) && (addr <= HAL_FPGA_SEGMENTS[i+1]))
-        {
-            return (HAL_SEGMENT_FPGA);
-        }
-    }
-    #endif
-    for(i = 0; i < (sizeof(HIL_SEGMENTS)/sizeof(uint32_t)); i+=2)
-    {
-        if((addr >= HIL_SEGMENTS[i]) && (addr <= HIL_SEGMENTS[i+1]))
-        {
-            return (HIL_SEGMENT);
-        }
-    }
-    // dcdc segments
-    for(i = 0; i < (sizeof(DCDC_SEGMENTS)/sizeof(uint32_t)); i+=2)
-    {
-        if((addr >= DCDC_SEGMENTS[i]) && (addr <= DCDC_SEGMENTS[i+1]))
-        {
-            return (DCDC_SEGMENT);
-        }
-    }
-    for(i = 0; i < (sizeof(INFO_SEGMENTS_DCDC)/sizeof(uint32_t)); i+=2)
-    {
-        if((addr >= INFO_SEGMENTS_DCDC[i]) && (addr <= INFO_SEGMENTS_DCDC[i+1]))
-        {
-            return (INFO_SEGMENT_DCDC);
-        }
-    }
-    // comchannel segments
-    for(i = 0; i < (sizeof(COMCHANNEL_SEGMENTS)/sizeof(uint32_t)); i+=2)
-    {
-        if((addr >= COMCHANNEL_SEGMENTS[i]) && (addr <= COMCHANNEL_SEGMENTS[i+1]))
-        {
-            return (COMCHANNEL_SEGMENT);
-        }
-    }
-    // INFO comchannel segments
-    for(i = 0; i < (sizeof(INFO_SEGMENTS_COMCHANNEL)/sizeof(uint32_t)); i+=2)
-    {
-        if((addr >= INFO_SEGMENTS_COMCHANNEL[i]) && (addr <= INFO_SEGMENTS_COMCHANNEL[i+1]))
-        {
-            return (INFO_SEGMENT_COMCHANNEL);
-        }
-    }
+    UNIMP_FN();
     return 0;
 }
 
@@ -1843,11 +1647,161 @@ uint16_t V3OP_SystemOk(void)
 }
 
 
+
+
+
+void IccMonitor_setHilIterface(edt_common_methods_t *edt_c)
+{
+    UNIMP_FN();
+}
+
 void IccMonitor_StartVoltageSupervision()
 {
     UNIMP_FN();
 }
+
 void IccMonitor_StopVoltageSupervision()
+{
+    UNIMP_FN();
+}
+
+void IccMonitor_TriggerAdc()
+{
+    UNIMP_FN();
+}
+
+void IccMonitor_StopDcdcOvercurrentDetection()
+{
+    UNIMP_FN();
+}
+
+void IccMonitor_StartDcdcOvercurrentDetection()
+{
+    UNIMP_FN();
+}
+
+void IccMonitor_SendOverCurrentEvent(uint16_t event)
+{
+    UNIMP_FN();
+}
+
+int16_t IccMonitor_Process(uint16_t flags)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+
+
+#pragma push_macro("static")
+#undef static
+
+// This header file defines the memory segments for each FET
+// The values are used during the firmware update process
+
+// Info memory
+// Used for storing firmware module specific information (e.g. signature, checksum)
+// These segments stay the same for both, eZ-FET and MSP-FET
+static const inline uint32_t INFO_SEGMENTS_COMCHANNEL[] = {0x1980,0x19FF}; // INFOA
+static const inline uint32_t INFO_SEGMENTS_HAL[] ={0x1900, 0x197F}; // INFOB
+static const inline uint32_t INFO_SEGMENTS_HIL[] ={0x1880, 0x18FF}; // INFOC
+static const inline uint32_t INFO_SEGMENTS_DCDC[] ={0x1800, 0x187F}; // INFOD
+
+
+// Checksum address for each firmware module
+static const inline uint32_t CHECKSUM_COMCHANNEL[] = {0x19FA, 0x19FB};
+static const inline uint32_t CHECKSUM_HAL[] = {0x197A, 0x197B};
+static const inline uint32_t CHECKSUM_HIL[] = {0x18FA, 0x18FB};
+static const inline uint32_t CHECKSUM_DCDC[] = {0x187A, 0x187B};
+// Core checksum is not FET independent because it's not stored in INFO memory
+// but rather on the beginning of the core segment
+
+
+// Flash segments for each firmware module
+#ifdef eZ_FET
+    // Core checksum is not FET independent because it's not stored in INFO memory
+    // but rather on the beginning of the core segment
+    static const inline uint32_t CHECKSUM_CORE[] = {0x4402, 0x4403};
+
+    static const inline uint32_t HAL_SEGMENTS[] = {0x0E000, 0x0FDFF, 0x10000, 0x1DFFF};
+    static const inline uint32_t HIL_SEGMENTS[] = {0x8A00, 0xDFFF};
+    static const inline uint32_t DCDC_SEGMENTS[] = {0x23000,0x243FF};
+    static const inline uint32_t COMCHANNEL_SEGMENTS[] = {0x21000,0x22FFF};
+    static const inline uint32_t CORE_SEGMENTS[] = {0x4400,0x89FF};
+    static const inline uint32_t CORE_SEGMENTS_RESET[] = {0xFF80,0xFFFF};
+#endif
+
+#ifdef MSP_FET
+    static const inline uint32_t CHECKSUM_CORE[] = {0x8002, 0x8003};
+
+    static const inline uint32_t HAL_SEGMENTS[] = {0x18E00, 0x30DFF};
+    static const inline uint32_t HAL_FPGA_SEGMENTS[] = {0x18E00, 0x45FFF};
+    static const inline uint32_t HIL_SEGMENTS[] = {0xCC00, 0xFDFF, 0x10000, 0x18DFF};
+    static const inline uint32_t DCDC_SEGMENTS[] = {0x47200,0x47FFF};
+    static const inline uint32_t COMCHANNEL_SEGMENTS[] = {0x46000,0x471FF};
+    static const inline uint32_t CORE_SEGMENTS[] = {0x8000,0xCBFF};
+    static const inline uint32_t CORE_SEGMENTS_RESET[] = {0xFE00,0xFFFF};
+#endif
+
+
+// Segment types
+// These are used during the update process to determine which segments to erase
+// or write
+static const inline uint8_t NO_SEGMENT = 0;
+static const inline uint8_t INFO_SEGMENT_HIL = 1;
+static const inline uint8_t INFO_SEGMENT_HAL = 2;
+static const inline uint8_t HAL_SEGMENT = 3;
+static const inline uint8_t HIL_SEGMENT = 4;
+static const inline uint8_t INFO_SEGMENT_DCDC = 5;
+static const inline uint8_t DCDC_SEGMENT = 6;
+static const inline uint8_t INFO_SEGMENT_COMCHANNEL = 7;
+static const inline uint8_t COMCHANNEL_SEGMENT = 8;
+static const inline uint8_t HAL_SEGMENT_FPGA = 9;
+
+// Segment size of different memory parts (e.g. INFO memory, Flash memory)
+static const inline uint16_t   SEGMENT_SIZE_INFO = 128; // Segment size in bytes of Flash
+static const inline uint16_t   SEGMENT_SIZE_HAL_HIL = 512; // Segment size in bytes of Flash
+
+#pragma pop_macro("static")
+
+
+void Flash_SegmentErase(uint16_t *Flash_ptr)
+{
+    UNIMP_FN();
+}
+
+uint8_t Flash_EraseCheck(uint8_t *Flash_ptr, uint32_t len)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+void FlashWrite_8(uint8_t *Data_ptr, uint8_t *Flash_ptr, uint16_t count)
+{
+    UNIMP_FN();
+}
+
+void FlashWrite_16(uint16_t *Data_ptr, uint16_t *Flash_ptr, uint32_t count)
+{
+    UNIMP_FN();
+}
+
+void FlashWrite_32(uint32_t *Data_ptr, uint32_t *Flash_ptr, uint32_t count)
+{
+    UNIMP_FN();
+}
+
+void FlashMemoryFill_32(uint32_t value, uint32_t *Flash_ptr, uint16_t count)
+{
+    UNIMP_FN();
+}
+
+void UnlockInfoA()
+{
+    UNIMP_FN();
+}
+
+void LockInfoA()
 {
     UNIMP_FN();
 }
