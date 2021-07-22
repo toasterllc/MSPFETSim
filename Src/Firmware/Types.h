@@ -9,6 +9,25 @@
 #include "Bios/src/hal/JTAG_defs.h"
 #include "Bios/src/hal/EEM_defs.h"
 
+using CHAR      = int8_t;
+using UCHAR     = uint8_t;
+using INT       = int16_t;
+using UINT      = uint16_t;
+using SHORT     = int16_t;
+using USHORT    = uint16_t;
+using LONG      = int32_t;
+using ULONG     = uint32_t;
+using VOID      = void;
+using HANDLE    = uint32_t;
+using PSTR      = int8_t*;
+using BOOL      = int16_t;
+using DOUBLE    = double;
+using BYTE      = uint8_t;
+using PBYTE     = uint8_t*;
+using WORD      = uint16_t;
+using DWORD     = uint32_t;
+using PDWORD    = uint32_t*;
+
 #define FPGA_VERSION 0x016
 #define FPGA_SIGNATURE 0xADACADAC
 
@@ -535,36 +554,6 @@ typedef struct _HAL_INFOS_ HAL_INFOS;
 
 
 
-struct DCDC_INFOS
-{
-    int16_t (MSPProbeSim::*getSubMcuVersion)(void);
-    int16_t (MSPProbeSim::*getLayerVersion)(void);
-    int16_t (MSPProbeSim::*dcdcCalibrate)(uint16_t resistor[4], uint16_t resCount, uint16_t vcc);
-    int16_t (MSPProbeSim::*dcdcPowerDown)(void);
-    int16_t (MSPProbeSim::*dcdcSetVcc)(uint16_t vcc);
-    int16_t (MSPProbeSim::*dcdcRestart)(uint16_t fetType_);
-    void    (MSPProbeSim::*dcdc_getCalibrationValues)(uint16_t vcc, uint16_t resistor,  uint16_t resCount, uint32_t *ticks, uint32_t *time);
-    int16_t (MSPProbeSim::*getLayerVersionCmp)(void);
-};
-typedef struct DCDC_INFOS DCDC_INFOS_t;
-
-typedef void *(MSPProbeSim::*DcdcInit)(DCDC_INFOS_t* dcdcInfos_Pointer);
-
-
-//#define _CONCAT2(x, y) x ## y
-//#define _CONCAT(x, y) _CONCAT2(x, y)
-//#define STATIC_VARS_START(fn) auto& sv = _CONCAT(fn, _staticVars)
-#define STATIC_VARS_START(fn) auto& sv = fn ## _staticVars
-#define DECL_STATIC_VAR(n) auto& n = sv.n
-
-
-#define PTR_FOR_CMP uintptr_t
-
-
-
-
-
-
 
 #pragma push_macro("static")
 #undef static
@@ -616,3 +605,129 @@ private:
     uint64_t _data = 0;
     bool _read = false;
 };
+
+
+
+
+
+
+struct edt_common_methods
+{
+    int16_t (MSPProbeSim::*Init)(void);
+    int16_t (MSPProbeSim::*SetVcc)(uint16_t);
+    void  (MSPProbeSim::*SwitchVccFET)(uint16_t);
+    int16_t (MSPProbeSim::*GetVcc)(double*, double*);
+    int16_t (MSPProbeSim::*SetProtocol)(uint16_t);
+    void  (MSPProbeSim::*SetPsaTCLK)(uint16_t);
+    int16_t (MSPProbeSim::*Open)(uint8_t state);
+    int16_t (MSPProbeSim::*Close)(void);
+    void  (MSPProbeSim::*Delay_1us)(uint16_t);
+    void  (MSPProbeSim::*Delay_1ms)(uint16_t);
+    int16_t (MSPProbeSim::*Loop)(uint16_t);
+    void  (MSPProbeSim::*EntrySequences)(uint8_t);
+    void (MSPProbeSim::*SetReset)(uint8_t);      // Set the Reset pin to the specified value
+    void (MSPProbeSim::*SetTest)(uint8_t);       // Set the Test pin to the specified value
+    void (MSPProbeSim::*SetJtagSpeed)(uint16_t, uint16_t);
+    void (MSPProbeSim::*ConfigureSetPc)(uint16_t);
+    void (MSPProbeSim::*initDelayTimer)(void);
+    void (MSPProbeSim::*BSL_EntrySequence)(uint16_t switchBypassOff);
+    void (MSPProbeSim::*SetTMS)(uint8_t);      // Set the TMS pin to the specified value
+    void (MSPProbeSim::*SetTCK)(uint8_t);      // Set the TCK pin to the specified value
+    void (MSPProbeSim::*SetTDI)(uint8_t);      // Set the TDI pin to the specified value
+    int16_t (MSPProbeSim::*regulateVcc)(void);
+    void (MSPProbeSim::*setFpgaTimeOut)(uint16_t state);
+    uint16_t (MSPProbeSim::*getFpgaVersion)(void);
+    void (MSPProbeSim::*ReadADC12)(void);
+    void (MSPProbeSim::*ConfigFpgaIoMode)(uint16_t mode);
+    void (MSPProbeSim::*BSL_EntrySequence1xx_4xx)(void);
+    void (MSPProbeSim::*SetToolID)(uint16_t id);
+};
+typedef struct edt_common_methods edt_common_methods_t;
+
+struct edt_distinct_methods
+{
+    int16_t                     (MSPProbeSim::*TapReset)(void);
+    int16_t                     (MSPProbeSim::*CheckJtagFuse)(void);
+    SBWShiftProxy<uint8_t>      (MSPProbeSim::*Instr)(uint8_t);
+    SBWShiftProxy<uint8_t>      (MSPProbeSim::*Instr04)(uint8_t);
+    SBWShiftProxy<uint8_t>      (MSPProbeSim::*SetReg_XBits08)(uint8_t);
+    SBWShiftProxy<uint16_t>     (MSPProbeSim::*SetReg_XBits16)(uint16_t);
+    SBWShiftProxy<uint32_t,20>  (MSPProbeSim::*SetReg_XBits20)(uint32_t);
+    SBWShiftProxy<uint32_t>     (MSPProbeSim::*SetReg_XBits32)(uint32_t);
+    uint64_t                    (MSPProbeSim::*SetReg_XBits35)(uint64_t *Data);
+    SBWShiftProxy<uint64_t>     (MSPProbeSim::*SetReg_XBits64)(uint64_t);
+    uint64_t                    (MSPProbeSim::*SetReg_XBits8_64)(uint64_t, uint16_t, uint16_t);
+    uint64_t                    (MSPProbeSim::*SetReg_XBits)(uint64_t *Data, uint16_t count);
+    void                        (MSPProbeSim::*Tclk)(uint8_t);
+    void                        (MSPProbeSim::*StepPsa)(uint32_t);
+    int16_t                     (MSPProbeSim::*BlowFuse)(uint8_t); // Blow the JTAG acces fuse
+    uint8_t                     (MSPProbeSim::*GetPrevInstruction)(void);
+    int16_t                     (MSPProbeSim::*write_read_Dp)(uint8_t address, uint32_t *data, uint16_t rnw);
+    int16_t                     (MSPProbeSim::*write_read_Ap)(uint32_t address, uint32_t *data, uint16_t rnw);
+    int16_t                     (MSPProbeSim::*write_read_mem_Ap)(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw);
+    uint32_t                    (MSPProbeSim::*GetJtagIdCode)();
+    uint8_t                     (MSPProbeSim::*SwdTransferData)(uint8_t regiser, uint32_t* data, uint8_t rnw);
+};
+typedef struct edt_distinct_methods edt_distinct_methods_t;
+
+
+
+
+
+
+struct DCDC_INFOS
+{
+    int16_t (MSPProbeSim::*getSubMcuVersion)(void);
+    int16_t (MSPProbeSim::*getLayerVersion)(void);
+    int16_t (MSPProbeSim::*dcdcCalibrate)(uint16_t resistor[4], uint16_t resCount, uint16_t vcc);
+    int16_t (MSPProbeSim::*dcdcPowerDown)(void);
+    int16_t (MSPProbeSim::*dcdcSetVcc)(uint16_t vcc);
+    int16_t (MSPProbeSim::*dcdcRestart)(uint16_t fetType_);
+    void    (MSPProbeSim::*dcdc_getCalibrationValues)(uint16_t vcc, uint16_t resistor,  uint16_t resCount, uint32_t *ticks, uint32_t *time);
+    int16_t (MSPProbeSim::*getLayerVersionCmp)(void);
+};
+typedef struct DCDC_INFOS DCDC_INFOS_t;
+
+typedef struct FET_USB_INFOS
+{
+    BYTE(MSPProbeSim::*FetUSB_bytesInUSBBuffer)(BYTE intfNum);
+    BYTE(MSPProbeSim::*FetUSB_receiveData)(BYTE* data, WORD size, BYTE intfNum);
+    BYTE(MSPProbeSim::*FetUsb_CdcSendDataInBackground)(BYTE* dataBuf,WORD size,BYTE intfNum,ULONG ulTimeout);
+}FET_USB_INFOS_t;
+
+struct COM_INFOS
+{
+    int16_t (MSPProbeSim::*comGetLayerVersion)(void);
+    int16_t (MSPProbeSim::*comConfig)(uint32_t Baudrate, uint32_t MCLK_Frequency, uint16_t);
+    int16_t (MSPProbeSim::*comTransmit)(void);
+    int16_t (MSPProbeSim::*comReceive)(uint16_t character);
+    void    (MSPProbeSim::*comClose)(void);
+    void    (MSPProbeSim::*comSetHil)(edt_common_methods_t*);
+    void    (MSPProbeSim::*comSetDcdc)(DCDC_INFOS_t*);
+    void    (MSPProbeSim::*comSetUSB)(FET_USB_INFOS_t*);
+    void    (MSPProbeSim::*comLoop)(void);
+    int16_t (MSPProbeSim::*comConfigMode)(uint32_t Baudrate);
+    int16_t (MSPProbeSim::*comSetCts)(void);
+    int16_t (MSPProbeSim::*comClearCts)(void);
+    void    (MSPProbeSim::*comSetRts)(void);
+    int16_t (MSPProbeSim::*comGetLayerVersionCmp)(void);
+};
+typedef struct COM_INFOS COM_INFOS_t;
+
+typedef void (MSPProbeSim::*DcdcInit)(DCDC_INFOS_t* dcdcInfos_Pointer);
+typedef void (MSPProbeSim::*ComInit)(COM_INFOS_t* comInfos_Pointer);
+
+//#define _CONCAT2(x, y) x ## y
+//#define _CONCAT(x, y) _CONCAT2(x, y)
+//#define STATIC_VARS_START(fn) auto& sv = _CONCAT(fn, _staticVars)
+#define STATIC_VARS_START(fn) auto& sv = fn ## _staticVars
+#define DECL_STATIC_VAR(n) auto& n = sv.n
+
+
+#define PTR_FOR_CMP uintptr_t
+
+
+
+
+
+

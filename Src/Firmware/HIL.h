@@ -8,65 +8,6 @@
 #define REGULATION_ON    1
 #define REGULATION_OFF   0
 
-struct edt_common_methods
-{
-    int16_t (MSPProbeSim::*Init)(void);
-    int16_t (MSPProbeSim::*SetVcc)(uint16_t);
-    void  (MSPProbeSim::*SwitchVccFET)(uint16_t);
-    int16_t (MSPProbeSim::*GetVcc)(double*, double*);
-    int16_t (MSPProbeSim::*SetProtocol)(uint16_t);
-    void  (MSPProbeSim::*SetPsaTCLK)(uint16_t);
-    int16_t (MSPProbeSim::*Open)(uint8_t state);
-    int16_t (MSPProbeSim::*Close)(void);
-    void  (MSPProbeSim::*Delay_1us)(uint16_t);
-    void  (MSPProbeSim::*Delay_1ms)(uint16_t);
-    int16_t (MSPProbeSim::*Loop)(uint16_t);
-    void  (MSPProbeSim::*EntrySequences)(uint8_t);
-    void (MSPProbeSim::*SetReset)(uint8_t);      // Set the Reset pin to the specified value
-    void (MSPProbeSim::*SetTest)(uint8_t);       // Set the Test pin to the specified value
-    void (MSPProbeSim::*SetJtagSpeed)(uint16_t, uint16_t);
-    void (MSPProbeSim::*ConfigureSetPc)(uint16_t);
-    void (MSPProbeSim::*initDelayTimer)(void);
-    void (MSPProbeSim::*BSL_EntrySequence)(uint16_t switchBypassOff);
-    void (MSPProbeSim::*SetTMS)(uint8_t);      // Set the TMS pin to the specified value
-    void (MSPProbeSim::*SetTCK)(uint8_t);      // Set the TCK pin to the specified value
-    void (MSPProbeSim::*SetTDI)(uint8_t);      // Set the TDI pin to the specified value
-    int16_t (MSPProbeSim::*regulateVcc)(void);
-    void (MSPProbeSim::*setFpgaTimeOut)(uint16_t state);
-    uint16_t (MSPProbeSim::*getFpgaVersion)(void);
-    void (MSPProbeSim::*ReadADC12)(void);
-    void (MSPProbeSim::*ConfigFpgaIoMode)(uint16_t mode);
-    void (MSPProbeSim::*BSL_EntrySequence1xx_4xx)(void);
-    void (MSPProbeSim::*SetToolID)(uint16_t id);
-};
-typedef struct edt_common_methods edt_common_methods_t;
-
-struct edt_distinct_methods
-{
-    int16_t                     (MSPProbeSim::*TapReset)(void);
-    int16_t                     (MSPProbeSim::*CheckJtagFuse)(void);
-    SBWShiftProxy<uint8_t>      (MSPProbeSim::*Instr)(uint8_t);
-    SBWShiftProxy<uint8_t>      (MSPProbeSim::*Instr04)(uint8_t);
-    SBWShiftProxy<uint8_t>      (MSPProbeSim::*SetReg_XBits08)(uint8_t);
-    SBWShiftProxy<uint16_t>     (MSPProbeSim::*SetReg_XBits16)(uint16_t);
-    SBWShiftProxy<uint32_t,20>  (MSPProbeSim::*SetReg_XBits20)(uint32_t);
-    SBWShiftProxy<uint32_t>     (MSPProbeSim::*SetReg_XBits32)(uint32_t);
-    uint64_t                    (MSPProbeSim::*SetReg_XBits35)(uint64_t *Data);
-    SBWShiftProxy<uint64_t>     (MSPProbeSim::*SetReg_XBits64)(uint64_t);
-    uint64_t                    (MSPProbeSim::*SetReg_XBits8_64)(uint64_t, uint16_t, uint16_t);
-    uint64_t                    (MSPProbeSim::*SetReg_XBits)(uint64_t *Data, uint16_t count);
-    void                        (MSPProbeSim::*Tclk)(uint8_t);
-    void                        (MSPProbeSim::*StepPsa)(uint32_t);
-    int16_t                     (MSPProbeSim::*BlowFuse)(uint8_t); // Blow the JTAG acces fuse
-    uint8_t                     (MSPProbeSim::*GetPrevInstruction)(void);
-    int16_t                     (MSPProbeSim::*write_read_Dp)(uint8_t address, uint32_t *data, uint16_t rnw);
-    int16_t                     (MSPProbeSim::*write_read_Ap)(uint32_t address, uint32_t *data, uint16_t rnw);
-    int16_t                     (MSPProbeSim::*write_read_mem_Ap)(uint16_t ap_sel, uint32_t address, uint32_t *data, uint16_t rnw);
-    uint32_t                    (MSPProbeSim::*GetJtagIdCode)();
-    uint8_t                     (MSPProbeSim::*SwdTransferData)(uint8_t regiser, uint32_t* data, uint8_t rnw);
-};
-typedef struct edt_distinct_methods edt_distinct_methods_t;
-
 //! \brief version of bios code
 const uint16_t hil_version_ = MSP_FET_HIL_VERSION;
 //#pragma required=hil_version_
@@ -150,12 +91,14 @@ uint16_t setPCclockBeforeCapture = 0;
 
 void _hil_Delay_1ms(uint16_t ms)
 {
-    UNIMP_FN();
+    _flush();
+    usleep(ms*1000);
 }
 
-void _hil_Delay_1us(uint16_t  us)
+void _hil_Delay_1us(uint16_t us)
 {
-    UNIMP_FN();
+    _flush();
+    usleep(us);
 }
 
 int16_t _hil_dummy_TapReset(void) {return 0;}
@@ -282,88 +225,92 @@ volatile uint8_t useTDI = 0;
 //#pragma inline=forced
 void RSTset1()
 {
-    { (*_Jtag.Out) |= _Jtag.RST; }
+    _msp.sbwRstSet(1);
     _hil_Delay_1ms(5);
 }
 //#pragma inline=forced
 void RSTset0()
 {
-    { (*_Jtag.Out) &= ~_Jtag.RST; }
-     _hil_Delay_1ms(5);
+    _msp.sbwRstSet(0);
+    _hil_Delay_1ms(5);
 }
 
 //#pragma inline=forced
 void TMSset1()
 {
-    { (*_Jtag.Out) |= _Jtag.TMS; }
-    _hil_Delay_1ms(5);
+    UNIMP_FN();
+//    { (*_Jtag.Out) |= _Jtag.TMS; }
+//    _hil_Delay_1ms(5);
 }
 //#pragma inline=forced
 void TMSset0()
 {
-    { (*_Jtag.Out) &= ~_Jtag.TMS; }
-     _hil_Delay_1ms(5);
+    UNIMP_FN();
+//    { (*_Jtag.Out) &= ~_Jtag.TMS; }
+//    _hil_Delay_1ms(5);
 }
 
 //#pragma inline=forced
 void TCKset1()
 {
-    { (*_Jtag.Out) |= _Jtag.TCK; }
+    _msp.sbwTestSet(1);
     _hil_Delay_1ms(5);
 }
 //#pragma inline=forced
 void TCKset0()
 {
-    { (*_Jtag.Out) &= ~_Jtag.TCK; }
-     _hil_Delay_1ms(5);
+    _msp.sbwTestSet(0);
+    _hil_Delay_1ms(5);
 }
 
 //#pragma inline=forced
 void TCKset1NoDelay()
 {
-    { (*_Jtag.Out) |= _Jtag.TCK; }
+    _msp.sbwTestSet(1);
 }
 
 //#pragma inline=forced
 void TCKset0NoDelay()
 {
-    { (*_Jtag.Out) &= ~_Jtag.TCK; }
+    _msp.sbwTestSet(0);
 }
 
 //#pragma inline=forced
 void TDIset1()
 {
-    { (*_Jtag.Out) |= _Jtag.TDI; }
-    _hil_Delay_1ms(5);
+    UNIMP_FN();
+//    { (*_Jtag.Out) |= _Jtag.TDI; }
+//    _hil_Delay_1ms(5);
 }
 //#pragma inline=forced
 void TDIset0()
 {
-    { (*_Jtag.Out) &= ~_Jtag.TDI; }
-     _hil_Delay_1ms(5);
+    UNIMP_FN();
+//    { (*_Jtag.Out) &= ~_Jtag.TDI; }
+//     _hil_Delay_1ms(5);
 }
 
 //#pragma inline=forced
 void TSTset1()
 {
-    { (*_Jtag.Out) |= _Jtag.TST;}
+    _msp.sbwTestSet(1);
     _hil_Delay_1ms(5);
 }
 //#pragma inline=forced
 void TSTset0()
 {
-    {(*_Jtag.Out) &= ~_Jtag.TST; }
+    _msp.sbwTestSet(0);
     _hil_Delay_1ms(5);
 }
 //#pragma inline=forced
 void TSTset1NoDelay()
 {
-    { (*_Jtag.Out) |= _Jtag.TST;}
+    _msp.sbwTestSet(1);
 }
 //#pragma inline=forced
 void TSTset0NoDelay()
 {
-    {(*_Jtag.Out) &= ~_Jtag.TST; }
+    _msp.sbwTestSet(0);
 }
 
 ////#pragma inline=forced
@@ -480,27 +427,21 @@ void hil_initTimerA2(void)
 //#pragma inline=forced
 void qDriveJTAG(void)
 {
-    (*_Jtag.Out) |= (_Jtag.TCK + _Jtag.TMS + _Jtag.TDI + _Jtag.RST );
-    (*_Jtag.Out) &= (~_Jtag.TST);
-    (*_Jtag.DIRECTION) |= (_Jtag.TCK + _Jtag.TMS + _Jtag.TDI);
-    (*_Jtag.DIRECTION) |= (_Jtag.TST + _Jtag.RST);
-    (*_Jtag.DIRECTION) &= (~_Jtag.TDO);
+    UNIMP_FN();
 }
 
 //#pragma inline=forced
 void qDriveSbw(void)
 {
-    (*_Jtag.Out) |= _Jtag.RST;
-    (*_Jtag.Out) &= ~_Jtag.TST;
-    (*_Jtag.DIRECTION) |= ( _Jtag.TST +  _Jtag.RST);
+    // TEST=0, RST=1
+    _msp.sbwTestSet(0);
+    _msp.sbwRstSet(1);
 }
 
 //#pragma inline=forced
 void qDriveSwd(void)
 {
-   (*_Jtag.Out) |= _Jtag.TCK;
-   (*_Jtag.Out) &= ~_Jtag.TMS;
-   (*_Jtag.DIRECTION) |= ( _Jtag.TCK + _Jtag.TMS);
+    UNIMP_FN();
 }
 
 void _hil_ConfigFpgaIoMode(uint16_t mode)
@@ -1016,35 +957,36 @@ Rst_____________________|
 INLINE(forced)
 void _hil_EntrySequences_RstLow_JTAG()
 {
-    _DINT_FET();
-    TSTset0();                    //1
-    _hil_Delay_1ms(4);           //reset TEST logic
-
-    RSTset0();                    //2
-
-    //TSTset1();                    //3
-    (*_Jtag.Out) |= _Jtag.TST;
-    _hil_Delay_1ms(50);         //activate TEST logic
-
-    //RSTset0();                    //4
-    (*_Jtag.Out) &= ~_Jtag.RST;
-    _hil_Delay_1us(40);
-
-     // for 4-wire JTAG clear Test pin Test(0)
-    //TSTset0();   //5
-    (*_Jtag.Out) &= ~_Jtag.TST;
-    _hil_Delay_1us(2);
-
-    // for 4-wire JTAG -dry  Reset(1)
-    //(*_Jtag.Out) |= _Jtag.RST;
-    (*_Jtag.Out) &= ~_Jtag.RST;  // This actually starts the BSL
-    _hil_Delay_1us(2);
-
-    // 4-wire JTAG - Test (1)
-    //TSTset1();  //7
-    (*_Jtag.Out) |= _Jtag.TST;
-    _hil_Delay_1ms(5);
-    _EINT_FET();
+    UNIMP_FN();
+//    _DINT_FET();
+//    TSTset0();                    //1
+//    _hil_Delay_1ms(4);           //reset TEST logic
+//
+//    RSTset0();                    //2
+//
+//    //TSTset1();                    //3
+//    (*_Jtag.Out) |= _Jtag.TST;
+//    _hil_Delay_1ms(50);         //activate TEST logic
+//
+//    //RSTset0();                    //4
+//    (*_Jtag.Out) &= ~_Jtag.RST;
+//    _hil_Delay_1us(40);
+//
+//     // for 4-wire JTAG clear Test pin Test(0)
+//    //TSTset0();   //5
+//    (*_Jtag.Out) &= ~_Jtag.TST;
+//    _hil_Delay_1us(2);
+//
+//    // for 4-wire JTAG -dry  Reset(1)
+//    //(*_Jtag.Out) |= _Jtag.RST;
+//    (*_Jtag.Out) &= ~_Jtag.RST;  // This actually starts the BSL
+//    _hil_Delay_1us(2);
+//
+//    // 4-wire JTAG - Test (1)
+//    //TSTset1();  //7
+//    (*_Jtag.Out) |= _Jtag.TST;
+//    _hil_Delay_1ms(5);
+//    _EINT_FET();
 }
 
 /*-------------RstHigh_JTAG--------------
@@ -1057,28 +999,29 @@ Rst____|       |_________________|
 INLINE(forced)
 void _hil_EntrySequences_RstHigh_JTAG()
 {
-    TSTset0();                    //1
-    _hil_Delay_1ms(1);           //reset TEST logic
-
-    RSTset1();                    //2
-
-    TSTset1();                    //3
-    _hil_Delay_1ms(100);         //activate TEST logic
-
-    RSTset0();                    //4
-    _hil_Delay_1us(40);
-
-    // for 4-wire JTAG clear Test pin Test(0)
-    (*_Jtag.Out) &= ~_Jtag.TST;   //5
-    _hil_Delay_1us(1);
-
-    // for 4-wire JTAG - Test (1)
-    (*_Jtag.Out) |= _Jtag.TST;  //7
-    _hil_Delay_1us(40);
-
-    // phase 5 Reset(1)
-    RSTset1();
-    _hil_Delay_1ms(5);
+    UNIMP_FN();
+//    TSTset0();                    //1
+//    _hil_Delay_1ms(1);           //reset TEST logic
+//
+//    RSTset1();                    //2
+//
+//    TSTset1();                    //3
+//    _hil_Delay_1ms(100);         //activate TEST logic
+//
+//    RSTset0();                    //4
+//    _hil_Delay_1us(40);
+//
+//    // for 4-wire JTAG clear Test pin Test(0)
+//    (*_Jtag.Out) &= ~_Jtag.TST;   //5
+//    _hil_Delay_1us(1);
+//
+//    // for 4-wire JTAG - Test (1)
+//    (*_Jtag.Out) |= _Jtag.TST;  //7
+//    _hil_Delay_1us(40);
+//
+//    // phase 5 Reset(1)
+//    RSTset1();
+//    _hil_Delay_1ms(5);
 }
 
 /*-------------RstHigh_SBW---------------
@@ -1088,32 +1031,23 @@ Test ______|        |_________|
 Rst____|
 ----------------------------------------*/
 INLINE(forced)
-void _hil_EntrySequences_RstHigh_SBW()
-{
-    TSTset0();                //1
-    _hil_Delay_1ms(1);       // reset TEST logic
-
-    RSTset1();                //2
-
-    TSTset1();                //3
-    _hil_Delay_1ms(100);     // activate TEST logic
-
-    // phase 1
-    RSTset1();                //4
-    _hil_Delay_1us(40);
-
-    // phase 2 -> TEST pin to 0, no change on RST pin
-    // for Spy-Bi-Wire
-    _DINT_FET();
-    (*_Jtag.Out) &= ~_Jtag.TST;     //5
-    _hil_Delay_1us(1);
-
-    // phase 4 -> TEST pin to 1, no change on RST pin
-    // for Spy-Bi-Wire
-    (*_Jtag.Out) |= _Jtag.TST;      //7
-    _EINT_FET();
-    _hil_Delay_1us(40);
-
+void _hil_EntrySequences_RstHigh_SBW() {
+    // TEST=0, RST=0
+    _msp.sbwTestSet(0);
+    _msp.sbwRstSet(0);
+    _hil_Delay_1ms(5);
+    
+    // RST=1
+    _msp.sbwRstSet(1);
+    _hil_Delay_1ms(5);
+    
+    // TEST=1
+    _msp.sbwTestSet(1);
+    _hil_Delay_1ms(100);
+    
+    // TEST pulse 1->0->1
+    // (Use a SBW IO cycle to pulse TEST)
+    _msp.sbwTestPulse();
     _hil_Delay_1ms(5);
 }
 
@@ -1124,31 +1058,23 @@ Test ______|        |_________|
 Rst__________|
 ----------------------------------------*/
 INLINE(forced)
-void _hil_EntrySequences_RstLow_SBW()
-{
-    TSTset0();                //1
-    _hil_Delay_1ms(1);       // reset TEST logic
-
-    RSTset0();                //2
-
-    TSTset1();                //3
-    _hil_Delay_1ms(100);     // activate TEST logic
-
-    // phase 1
-    RSTset1();                //4
-    _hil_Delay_1us(40);
-
-    // phase 2 -> TEST pin to 0, no change on RST pin
-    // for Spy-Bi-Wire
-    _DINT_FET();
-    (*_Jtag.Out) &= ~_Jtag.TST;     //5
-    _hil_Delay_1us(1);
-
-    // phase 4 -> TEST pin to 1, no change on RST pin
-    // for Spy-Bi-Wire
-    (*_Jtag.Out) |= _Jtag.TST;      //7
-    _EINT_FET();
-    _hil_Delay_1us(40);
+void _hil_EntrySequences_RstLow_SBW() {
+    // TEST=0, RST=0
+    _msp.sbwTestSet(0);
+    _msp.sbwRstSet(0);
+    _hil_Delay_1ms(5);
+    
+    // TEST=1
+    _msp.sbwTestSet(1);
+    _hil_Delay_1ms(100);
+    
+    // RST=1
+    _msp.sbwRstSet(1);
+    _hil_Delay_1ms(5);
+    
+    // TEST pulse 1->0->1
+    // (Use a SBW IO cycle to pulse TEST)
+    _msp.sbwTestPulse();
     _hil_Delay_1ms(5);
 }
 
@@ -2104,13 +2030,37 @@ uint64_t sbw_ShiftDma(uint64_t Data, uint16_t Bits)
 
 int16_t _hil_2w_TapReset_Dma(void)
 {
-    UNIMP_FN();
+    // From msp_fet:_hil_2w_TapReset()
+    uint16_t i;
+    
+    // Reset JTAG FSM
+    for (i = 6; i > 0; i--)      // 6 is nominal
+    {
+        TMSH_TDIH();
+    }
+    // JTAG FSM is now in Test-Logic-Reset
+    TMSL_TDIH();                 // now in Run/Test Idle
     return 0;
 }
 
 int16_t _hil_2w_CheckJtagFuse_Dma(void)
 {
-    UNIMP_FN();
+    // From _hil_2w_CheckJtagFuse()
+    TMSL_TDIH();
+    TMSH_TDIH();
+    _hil_Delay_1ms(1);
+    
+    TMSL_TDIH();
+    TMSH_TDIH();
+    _hil_Delay_1ms(1);
+    
+    TMSL_TDIH();
+    TMSH_TDIH();
+    _hil_Delay_1ms(1);
+    // In every TDI slot a TCK for the JTAG machine is generated.
+    // Thus we need to get TAP in Run/Test Idle state back again.
+    TMSH_TDIH();
+    TMSL_TDIH();
     return 0;
 }
 
@@ -2600,16 +2550,9 @@ uint64_t _hil_generic_XBits8_64(uint64_t Data, uint16_t loopCount,uint16_t PG)
 
 
 // -----------------------------------------------------------------------------
-void _hil_generic_Tclk(uint8_t state)
+void _hil_generic_Tclk(uint8_t tclk)
 {
-    if(state)
-    {
-        hil_fpga_write_cmd_data0(FPGA_CMD_CFG, REG_TCLKset1);
-    }
-    else
-    {
-        hil_fpga_write_cmd_data0(FPGA_CMD_CFG, REG_TCLKset0);
-    }
+    _sbwioTclk(0, tclk);
 }
 
 
@@ -2953,4 +2896,8 @@ uint64_t sbw_Shift_R(uint64_t Data, int16_t Bits)
         TDOvalue = ((TDOvalue >> 4) | (TDOvalue << 16)) & 0x000FFFFF;
     }
     return(TDOvalue);
+}
+
+void _flush() {
+    _msp.sbwRead(nullptr, 0);
 }

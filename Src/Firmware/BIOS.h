@@ -490,17 +490,17 @@ const volatile uint16_t *bios_intvec_ = (uint16_t*)0xFF80;
 
 //! \brief Pointer to HAL IRQ vector table
 const HalMainFunc   hal_intvec_ = MEMBER_FN_PTR(ResetFirmware);
-//const uint32_t   hal_signature_ = 0;
+const uint32_t      hal_signature_ = HAL_SIGNATURE;
 
-const DcdcInit   dcdc_intvec_ = 0;
-const uint32_t   dcdc_signature_ = 0;
+const DcdcInit      dcdc_intvec_ = MEMBER_FN_PTR(dcdc_Init);
+const uint32_t      dcdc_signature_ = DCDC_SIGNATURE;
 
 //const uint32_t   hil_signature_ = 0;
 //const uint16_t  hil_Start_UP_ = 0
 
-const uint32_t   com_intvec_ = 0;
-const uint32_t   com_signature_ = 0;
-const int32_t  com_semaphore_ = 0;
+const ComInit       com_intvec_ = MEMBER_FN_PTR(COM_BASE_Init);
+const uint32_t      com_signature_ = COM_SIGNATURE;
+const int32_t       com_semaphore_ = 0;
 
 HalMainFunc Bios_getHal_intvec()
 {
@@ -514,7 +514,7 @@ DcdcInit Bios_getDcdc_intvec()
 {
    return dcdc_intvec_;
 }
-uint32_t Bios_getCom_intvec()
+ComInit Bios_getCom_intvec()
 {
    return com_intvec_;
 }
@@ -524,7 +524,7 @@ uint32_t Bios_getDcdc_signature()
 }
 uint32_t Bios_getHal_signature()
 {
-    return hal_Signature_;
+    return hal_signature_;
 }
 uint32_t Bios_getHil_signature()
 {

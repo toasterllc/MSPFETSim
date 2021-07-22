@@ -3,25 +3,6 @@
 #include "BIOS.h"
 #include "V3OP.h"
 
-using CHAR      = int8_t;
-using UCHAR     = uint8_t;
-using INT       = int16_t;
-using UINT      = uint16_t;
-using SHORT     = int16_t;
-using USHORT    = uint16_t;
-using LONG      = int32_t;
-using ULONG     = uint32_t;
-using VOID      = void;
-using HANDLE    = uint32_t;
-using PSTR      = int8_t*;
-using BOOL      = int16_t;
-using DOUBLE    = double;
-using BYTE      = uint8_t;
-using PBYTE     = uint8_t*;
-using WORD      = uint16_t;
-using DWORD     = uint32_t;
-using PDWORD    = uint32_t*;
-
 /*----------------------------------------------------------------------------+
  | USB Constants, Type Definition & Macro                                      |
  +----------------------------------------------------------------------------*/
@@ -694,8 +675,7 @@ BYTE USBCDC_intfStatus (BYTE intfNum, WORD* bytesSent, WORD* bytesReceived) {
 }
 
 BYTE USBCDC_abortSend (WORD* size, BYTE intfNum) {
-    // Unimplemented
-    abort();
+    UNIMP_FN();
     return 0;
 }
 
@@ -723,7 +703,7 @@ BYTE cdcSendDataInBackground (BYTE* dataBuf, WORD size, BYTE intfNum, ULONG ulTi
     }
 }
 
-uint8_t USBCDC_bytesInUSBBuffer(BYTE intfNum) {
+BYTE USBCDC_bytesInUSBBuffer(BYTE intfNum) {
     assert(intfNum == DEBUG_CHANNEL);
     assert(!_msgs.empty());
     _Msg& msg = _msgs.front();
@@ -788,3 +768,8 @@ VOID USB_init(VOID)
 //    wUsbEventMask = events;
 //    return (kUSB_succeed);
 //}
+
+void UsbMain_setComIterface(COM_INFOS_t *ui_c)
+{
+    UNIMP_FN();
+}

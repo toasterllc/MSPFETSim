@@ -25,16 +25,6 @@ typedef HalRec (*HAL_REC_ARRAY)[];
 //! \li upload of HAL macros
 //! \li loop management
 
-
-//typedef struct FET_USB_INFOS
-//{
-//    BYTE(*FetUSB_bytesInUSBBuffer)(BYTE intfNum);
-//    BYTE(*FetUSB_receiveData)(BYTE* data, WORD size, BYTE intfNum);
-//    BYTE(*FetUsb_CdcSendDataInBackground)(BYTE* dataBuf,WORD size,BYTE intfNum,ULONG ulTimeout);
-//}FET_USB_INFOS_t;
-//
-//
-//
 #define CMD_CONFIGURE               0x01
 #define CMD_SETPWM                  0x02
 #define CMD_CALLOAD                 0x03
@@ -61,21 +51,6 @@ struct calibrationValues
 };
 typedef struct calibrationValues calibrationValues_t;
 
-void dcdc_Init(DCDC_INFOS_t* dcdcInfos_Pointer);
-int16_t dcdc_Calibrate(uint16_t resistor[5], uint16_t resCount, uint16_t vcc);
-int16_t dcdc_PowerDown();
-int16_t dcdc_SetVcc(uint16_t vcc);
-int16_t dcdc_getSubMcuVersion();
-int16_t dcdc_getLayerVersion();
-int16_t dcdc_getLayerVersionCmp();
-int16_t dcdc_Restart(uint16_t fetType_);
-int16_t dcdc_Send(uint16_t cmd, uint16_t data);
-int16_t dcdc_Receive(uint16_t *data_read);
-void dcdc_getCalibrationValues(uint16_t vcc, uint16_t resistor, uint16_t resCount, uint32_t *ticks, uint32_t *time);
-//
-//
-//
-//
 //#ifdef eZ_FET
 //
 //    // UART port direction
@@ -243,24 +218,6 @@ void dcdc_getCalibrationValues(uint16_t vcc, uint16_t resistor, uint16_t resCoun
 //#define BSL_I2C_SEQUENCE1 100002ul
 //#define BSL_I2C_SEQUENCE2 400002ul
 
-struct COM_INFOS
-{
-    int16_t (MSPProbeSim::*comGetLayerVersion)(void);
-    int16_t (MSPProbeSim::*comConfig)(uint32_t Baudrate, uint32_t MCLK_Frequency, uint16_t);
-    int16_t (MSPProbeSim::*comTransmit)(void);
-    int16_t (MSPProbeSim::*comReceive)(uint16_t character);
-    void    (MSPProbeSim::*comClose)(void);
-    void    (MSPProbeSim::*comSetHil)(edt_common_methods_t*);
-    void    (MSPProbeSim::*comSetDcdc)(DCDC_INFOS_t*);
-//    void  (MSPProbeSim::*comSetUSB)(FET_USB_INFOS_t*);
-    void    (MSPProbeSim::*comLoop)(void);
-    int16_t (MSPProbeSim::*comConfigMode)(uint32_t Baudrate);
-    int16_t (MSPProbeSim::*comSetCts)(void);
-    int16_t (MSPProbeSim::*comClearCts)(void);
-    void    (MSPProbeSim::*comSetRts)(void);
-    int16_t (MSPProbeSim::*comGetLayerVersionCmp)(void);
-};
-typedef struct COM_INFOS COM_INFOS_t;
 //
 //int16_t COM_BASE_GetLayerVersion();
 //int16_t COM_BASE_GetLayerVersionCmp();
@@ -282,9 +239,6 @@ typedef struct COM_INFOS COM_INFOS_t;
 DCDC_INFOS_t dcdcInfos_ = {};
 //#pragma required=dcdcInfos_
 
-//typedef void *(*ComInit)(COM_INFOS_t* comInfos_Pointer);
-
-
 edt_common_methods_t  _edt_Common_Methods_V3OP = {};
 //typedef void (*HilInitGetEdtCommenFunc)(edt_common_methods_t* edt_commen); // * hal_size, void * stream_adr)
 //HilInitGetEdtCommenFunc hilEdtCom = NULL;
@@ -305,7 +259,7 @@ void _dummy_dcdc_getCalibrationValues(uint16_t vcc, uint16_t resistor, uint16_t 
 
 void _dummy_comSetHil(edt_common_methods_t* dummy){};
 void _dummy_comSetDcdc(DCDC_INFOS_t* dummy){};
-//void _dummy_comSetUSB(FET_USB_INFOS_t* dummy){};
+void _dummy_comSetUSB(FET_USB_INFOS_t* dummy){};
 void _dummy_comLoop(void){};
 int16_t _dummy_comConfig2(uint32_t Baudrate){return 0;};
 
@@ -327,7 +281,7 @@ COM_INFOS_t comInfos_ =
     MEMBER_FN_PTR(_dummy_voidOutVoidIn),
     MEMBER_FN_PTR(_dummy_comSetHil),
     MEMBER_FN_PTR(_dummy_comSetDcdc),
-//  MEMBER_FN_PTR(_dummy_comSetUSB),
+    MEMBER_FN_PTR(_dummy_comSetUSB),
     MEMBER_FN_PTR(_dummy_comLoop),
     MEMBER_FN_PTR(_dummy_comConfig2),
     MEMBER_FN_PTR(_dummy_comTransmit),
@@ -335,13 +289,13 @@ COM_INFOS_t comInfos_ =
     MEMBER_FN_PTR(_dummy_voidOutVoidIn)
 };
 //#pragma required=comInfos_
-//
-//FET_USB_INFOS_t fetUsbInfos_ =
-//{
-//    USBCDC_bytesInUSBBuffer,
-//    USBCDC_receiveData,
-//    cdcSendDataInBackground,
-//};
+
+FET_USB_INFOS_t fetUsbInfos_ =
+{
+    MEMBER_FN_PTR(USBCDC_bytesInUSBBuffer),
+    MEMBER_FN_PTR(USBCDC_receiveData),
+    MEMBER_FN_PTR(cdcSendDataInBackground),
+};
 //#pragma required=fetUsbInfos_
 
 //------------------------------------------------------------------------------
@@ -1135,13 +1089,40 @@ int16_t V3OP_DcdcInterfaceInit(void)
 //******************** Module Implementation **************
 int16_t V3OP_ComInterfaceInit(void)
 {
-    UNIMP_FN();
+    ComInit com_Init_ = NULL;
+    if(!Bios_getCom_intvec() || (Bios_getCom_signature() != 0xACDCACDC)|| ! V3OP_ComChannelCrcOk())
+    {
+        V3OP_ComInterfaceClear();
+        return -1;
+    }
+    com_Init_ = (ComInit)Bios_getCom_intvec();
+    CALL_MEMBER_FN_PTR(com_Init_)(&comInfos_);
+
+    UsbMain_setComIterface(&comInfos_);
+    CALL_MEMBER_FN_PTR(comInfos_.comSetUSB)(&fetUsbInfos_);
+
+    CALL_MEMBER_FN_PTR(comInfos_.comSetHil)(&_edt_Common_Methods_V3OP);
+    CALL_MEMBER_FN_PTR(comInfos_.comSetDcdc)(&dcdcInfos_);
+
     return 0;
 }
 
 void V3OP_ComInterfaceClear(void)
 {
-    UNIMP_FN();
+    comInfos_.comGetLayerVersion      = MEMBER_FN_PTR(_dummy_int16_tOutVoidIn);
+    comInfos_.comGetLayerVersionCmp   = MEMBER_FN_PTR(_dummy_int16_tOutVoidIn);
+    comInfos_.comConfig               = MEMBER_FN_PTR(_dummy_comConfig);
+    comInfos_.comTransmit             = MEMBER_FN_PTR(_dummy_comTransmit);
+    comInfos_.comReceive              = MEMBER_FN_PTR(_dummy_comReceive);
+    comInfos_.comClose                = MEMBER_FN_PTR(_dummy_voidOutVoidIn);
+    comInfos_.comSetHil               = MEMBER_FN_PTR(_dummy_comSetHil);
+    comInfos_.comSetDcdc              = MEMBER_FN_PTR(_dummy_comSetDcdc);
+    comInfos_.comSetUSB               = MEMBER_FN_PTR(_dummy_comSetUSB);
+    comInfos_.comLoop                 = MEMBER_FN_PTR(_dummy_comLoop);
+    comInfos_.comSetCts               = MEMBER_FN_PTR(_dummy_comTransmit);
+    comInfos_.comClearCts             = MEMBER_FN_PTR(_dummy_comTransmit);
+    comInfos_.comSetRts               = MEMBER_FN_PTR(_dummy_voidOutVoidIn);
+    UsbMain_setComIterface(&comInfos_);
 }
 
 //*****************************************
@@ -1372,7 +1353,8 @@ uint16_t calculateCrc(uint16_t sum, uint16_t *adress, uint32_t segmentLength)
 
 uint16_t V3OP_GetHilCrc()
 {
-    return 0x6153; // Determined empirically by printing `expectedHilCrc` in UpdateManagerFet.cpp
+    // MSPProbeSim: Determined empirically by printing `expectedHilCrc` in UpdateManagerFet.cpp
+    return 0x6153;
 }
 
 uint16_t V3OP_GetHalFpgaCrc()
@@ -1640,4 +1622,231 @@ void UnlockInfoA()
 void LockInfoA()
 {
     UNIMP_FN();
+}
+
+
+
+void dcdc_Init(DCDC_INFOS_t* dcdcInfos_Pointer)
+{
+    // map funciotn pointers in FET dcdc layer
+    dcdcInfos_.dcdcCalibrate                = MEMBER_FN_PTR(dcdc_Calibrate);
+    dcdcInfos_.getSubMcuVersion             = MEMBER_FN_PTR(dcdc_getSubMcuVersion);
+    dcdcInfos_.getLayerVersion              = MEMBER_FN_PTR(dcdc_getLayerVersion);
+    dcdcInfos_.dcdcPowerDown                = MEMBER_FN_PTR(dcdc_PowerDown);
+    dcdcInfos_.dcdcSetVcc                   = MEMBER_FN_PTR(dcdc_SetVcc);
+    dcdcInfos_.dcdcRestart                  = MEMBER_FN_PTR(dcdc_Restart);
+    dcdcInfos_.dcdc_getCalibrationValues    = MEMBER_FN_PTR(dcdc_getCalibrationValues);
+    dcdcInfos_.getLayerVersionCmp           = MEMBER_FN_PTR(dcdc_getLayerVersionCmp);
+    // now copy getLayerVersion and retrun it to uper core layer
+    *dcdcInfos_Pointer =  dcdcInfos_;
+
+//    _UCBxCTL1 = 0 ;
+//    _UCBxIFG   = 0  ;
+//    _UCBxTXBUF  = 0 ;
+//    _UCBxRXBUF = 0 ;
+//    _fetType = 0 ;
+}
+
+int16_t dcdc_Restart(uint16_t fetType_)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+//#pragma optimize = low
+int16_t dcdc_SetVcc(uint16_t vcc)
+{
+    // MSPProbeSim: pretend to work
+    return 0;
+}
+
+/* TBD make ADC and timer config configurable via pointers like or I2c communication */
+void dcdc_RunCalibrate(uint32_t *ticks, uint32_t *time, uint16_t count)
+{
+    UNIMP_FN();
+}
+//#pragma optimize = low
+void dcdc_getCalibrationValues(uint16_t vcc, uint16_t resistor,  uint16_t resCount, uint32_t *ticks, uint32_t *time)
+{
+    UNIMP_FN();
+}
+//#pragma optimize = low
+int16_t dcdc_Calibrate(uint16_t resistors[5], uint16_t resCount, uint16_t vcc)
+{
+    UNIMP_FN();
+    return 0;
+}
+//#pragma optimize = low
+int16_t dcdc_getSubMcuVersion()
+{
+    // MSPProbeSim: Determined empirically by printing `expectedDcdcSubMcuVersion` in UpdateManagerFet.cpp
+    return 0x0034;
+}
+
+int16_t dcdc_getLayerVersion()
+{
+    return DCDC_LAYER_VERSION;
+}
+
+int16_t dcdc_getLayerVersionCmp()
+{
+    return DCDC_LAYER_VERSION_CMP;
+}
+
+int16_t dcdc_PowerDown()
+{
+    UNIMP_FN();
+    return 0;
+}
+
+//#pragma optimize = low
+// Generic send function
+int16_t dcdc_Send(uint16_t cmd, uint16_t data)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+//#pragma optimize = low
+// Generic receive function
+int16_t dcdc_Receive(uint16_t *data_read)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+void COM_BASE_Init(COM_INFOS_t* comInfos_Pointer)
+{
+    // map function pointers in FET UART layer
+    // get Infos about UART-module
+    comInfos_.comGetLayerVersion      = MEMBER_FN_PTR(COM_BASE_GetLayerVersion);
+    comInfos_.comConfig               = MEMBER_FN_PTR(COM_BASE_Config);
+    comInfos_.comReceive              = MEMBER_FN_PTR(COM_BASE_Receive);
+    comInfos_.comSetHil               = MEMBER_FN_PTR(COM_BASE_SetHil);
+    comInfos_.comSetDcdc              = MEMBER_FN_PTR(COM_BASE_SetDcdc);
+    comInfos_.comSetUSB               = MEMBER_FN_PTR(COM_BASE_SetUsb);
+    comInfos_.comLoop                 = MEMBER_FN_PTR(COM_BASE_Loop);
+    comInfos_.comClose                = MEMBER_FN_PTR(COM_BASE_Close);
+
+    // set CTS to dummy - only needed for UART mode with handshake
+    comInfos_.comSetCts               = MEMBER_FN_PTR(COM_BASE_SetCtsDummy);
+    comInfos_.comClearCts             = MEMBER_FN_PTR(COM_BASE_SetCtsDummy);
+    comInfos_.comSetRts               = MEMBER_FN_PTR(UART_SetRts);
+
+    // UART without handshake is configured  by default
+    comInfos_.comTransmit             = MEMBER_FN_PTR(Uart_Send);
+    comInfos_.comConfigMode           = MEMBER_FN_PTR(Uart_Config);
+
+    comInfos_.comGetLayerVersionCmp   = MEMBER_FN_PTR(COM_BASE_GetLayerVersionCmp);
+
+//    Uart_Init(UART_NO_HANDSHAKE, PARITY_NONE);
+//
+//     // init Rx FIFO pointer
+//    RxFifoPosition = 0;
+//    RxActiveBuffer = RxBufferFront;
+//    FrontBufferUsed = 1;
+
+    // now copy getLayerVersion and return it to uper core layer
+    *comInfos_Pointer =  comInfos_;
+}
+
+void COM_BASE_SetHil(edt_common_methods_t* hil_Pointers)
+{
+    UNIMP_FN();
+}
+
+void COM_BASE_SetDcdc(DCDC_INFOS_t* dcdc_Pointers)
+{
+    UNIMP_FN();
+}
+
+void COM_BASE_SetUsb(FET_USB_INFOS_t* usb_Pointers)
+{
+    UNIMP_FN();
+}
+
+void COM_BASE_Close()
+{
+    UNIMP_FN();
+}
+
+// return UART layer version
+int16_t COM_BASE_GetLayerVersion()
+{
+    return (COM_LAYER_VERSION);
+}
+
+int16_t COM_BASE_GetLayerVersionCmp()
+{
+    return (COM_LAYER_VERSION_CMP);
+}
+
+void COM_BASE_EvaluateBaudRateCommand(uint32_t Baudrate, uint16_t fetType)
+{
+    UNIMP_FN();
+}
+
+// configuration function for UART settings
+// UART will be configure automatically about COM channel configuration
+int16_t COM_BASE_Config(uint32_t Baudrate, uint32_t MCLK_Frequency,
+                      uint16_t fetType)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+void COM_BASE_SwitchBuffer()
+{
+    UNIMP_FN();
+}
+
+uint8_t *COM_BASE_GetBuffer()
+{
+    UNIMP_FN();
+    return nullptr;
+}
+
+int16_t COM_BASE_Receive(uint16_t character)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+void COM_BASE_Loop()
+{
+    UNIMP_FN();
+}
+
+
+// Dummy functions loaded by default
+#ifdef MSP_FET
+    int16_t COM_BASE_ConfigModeDummy(uint32_t UartBaudrate){return 0;}
+    void COM_BASE_SetRtsDummy(){return;}
+#endif
+int16_t COM_BASE_SetCtsDummy(){return 0;}
+
+void UART_SetRts()
+{
+    UNIMP_FN();
+}
+
+int16_t Uart_Config(uint32_t UartBaudrate)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+int16_t Uart_Send()
+{
+    UNIMP_FN();
+    return 0;
 }
