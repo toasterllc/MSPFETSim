@@ -1224,7 +1224,7 @@ void V3OP_Scheduler(void)
         while(rx_queu_counter_tmp != rx_queu_counter);
     }
     
-    printf("serviced: %d\n", serviced);
+    printf("[V3OP_Scheduler] Serviced: %d\n", serviced);
     
     constexpr uint16_t MaxServiceCount = 100;
     if (serviced && serviceCount<MaxServiceCount) {

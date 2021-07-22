@@ -577,7 +577,6 @@ public:
     ~SBWShiftProxy() {
         if (!_self) return; // Short-circuit if we're a nop object
         if (!_read) {
-            printf("NON-READ SHIFT\n");
             // Perform non-read shift
                  if constexpr (W ==  8) _self->sbw_Shift(_data, F_BYTE);
             else if constexpr (W == 16) _self->sbw_Shift(_data, F_WORD);
