@@ -20,9 +20,13 @@ public:
     //   for later retrieval via `read()`.
     virtual void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) {}
     
-    // read(): Retrieves data previously stored via sbwIO()
-    //   For optimal performance, IO operations should be queued until read() is called, at
+    // sbwRead(): Retrieves data previously stored via sbwIO()
+    //   For optimal performance, IO operations should be queued until sbwRead() is called, at
     //   which point the queued operations should be flushed to the device.
+    //   
+    //   When sbwRead() is called, the amount of queued data (ie the number of sbwIO operations
+    //   where tdoRead=1) is guaranteed to be a byte multiple, so the implementation doesn't
+    //   need to concern itself with returing partial bytes.
     //   
     //   len==0 is valid and must flush outstanding IO operations without returning any data.
     virtual void sbwRead(void* buf, size_t len) {}
