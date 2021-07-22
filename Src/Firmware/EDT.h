@@ -1,7 +1,6 @@
 #pragma once
 #include "HIL.h"
 
-typedef void (*HilInitFunc)();
 typedef void (*HilInitGetEdtCommenFunc)(edt_common_methods_t* edt_commen);
 typedef void (*HilInitGetEdtDistinctFunc)(edt_distinct_methods_t* edt_distinct);
 

@@ -61,7 +61,7 @@ public:
 //        printf("\n\n");
         
         static struct {
-            std::mutex lock;
+            std::mutex lock = {};
             struct ftdi_context* ctx = nullptr;
         } FTDICtx;
         
@@ -481,7 +481,7 @@ private:
 //            USBDevice usbDev;
 //        } _s;
         
-        struct ftdi_context _ctx;
+        struct ftdi_context _ctx = {};
         USBDevice _usbDev;
     };
     
@@ -510,7 +510,7 @@ private:
     const uint8_t _testPin = 0;
     const uint8_t _rstPin = 0;
     _FTDIDevice _dev;
-    std::vector<uint8_t> _cmds;
-    std::vector<uint8_t> _readData;
+    std::vector<uint8_t> _cmds = {};
+    std::vector<uint8_t> _readData = {};
     size_t _readLen = 0;
 };

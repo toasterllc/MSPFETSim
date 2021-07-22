@@ -78,7 +78,7 @@ const uint32_t hil_signature_ = HIL_SIGNATURE;
 //#pragma required=hil_signature_
 
 // MSPProbeSim: not sure what this value is supposed to be
-const uint16_t hil_Start_UP_ = 0;
+const HilInitFunc hil_Start_UP_ = MEMBER_FN_PTR(_hil_startUp);
 
 
 uint16_t gTclkHighWhilePsa = 0;
@@ -246,8 +246,8 @@ void _hil_dummy_SetToolID(uint16_t id) {return;}
 //extern void initJtagSbw2Dma(struct jtag tmp);
 //extern void initJtagSbw4(struct jtag tmp);
 
-edt_common_methods_t   _Common_Methods;
-edt_distinct_methods_t _Distinct_Methods;
+edt_common_methods_t   _Common_Methods = {};
+edt_distinct_methods_t _Distinct_Methods = {};
 
 struct jtag _Jtag =
 {
@@ -686,7 +686,7 @@ void _hil_switchVccFET(uint16_t switchVccFET)
     UNIMP_FN();
 }
 
-savedDacValues_t _savedDacValues;
+savedDacValues_t _savedDacValues = {};
 
 //#pragma optimize = low
 int16_t _hil_SetVccSupplyDt(uint16_t Vcc)

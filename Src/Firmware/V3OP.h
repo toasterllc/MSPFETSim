@@ -61,19 +61,6 @@ struct calibrationValues
 };
 typedef struct calibrationValues calibrationValues_t;
 
-struct DCDC_INFOS
-{
-    int16_t (MSPProbeSim::*getSubMcuVersion)(void);
-    int16_t (MSPProbeSim::*getLayerVersion)(void);
-    int16_t (MSPProbeSim::*dcdcCalibrate)(uint16_t resistor[4], uint16_t resCount, uint16_t vcc);
-    int16_t (MSPProbeSim::*dcdcPowerDown)(void);
-    int16_t (MSPProbeSim::*dcdcSetVcc)(uint16_t vcc);
-    int16_t (MSPProbeSim::*dcdcRestart)(uint16_t fetType_);
-    void    (MSPProbeSim::*dcdc_getCalibrationValues)(uint16_t vcc, uint16_t resistor,  uint16_t resCount, uint32_t *ticks, uint32_t *time);
-    int16_t (MSPProbeSim::*getLayerVersionCmp)(void);
-};
-typedef struct DCDC_INFOS DCDC_INFOS_t;
-
 void dcdc_Init(DCDC_INFOS_t* dcdcInfos_Pointer);
 int16_t dcdc_Calibrate(uint16_t resistor[5], uint16_t resCount, uint16_t vcc);
 int16_t dcdc_PowerDown();
@@ -292,14 +279,13 @@ typedef struct COM_INFOS COM_INFOS_t;
 
 
  // module handling
-typedef void *(*DcdcInit)(DCDC_INFOS_t* dcdcInfos_Pointer);
-DCDC_INFOS_t dcdcInfos_;
+DCDC_INFOS_t dcdcInfos_ = {};
 //#pragma required=dcdcInfos_
 
 //typedef void *(*ComInit)(COM_INFOS_t* comInfos_Pointer);
 
 
-edt_common_methods_t  _edt_Common_Methods_V3OP;
+edt_common_methods_t  _edt_Common_Methods_V3OP = {};
 //typedef void (*HilInitGetEdtCommenFunc)(edt_common_methods_t* edt_commen); // * hal_size, void * stream_adr)
 //HilInitGetEdtCommenFunc hilEdtCom = NULL;
 
@@ -330,7 +316,7 @@ int16_t _dummy_comConfig2(uint32_t Baudrate){return 0;};
 //void _dummy_setFpgaTimeOut(uint16_t state) {return;};
 //int16_t _dummy_regulateVcc(void) { return 0; }
 
-uint8_t rx_queu_counter_public_;
+uint8_t rx_queu_counter_public_ = 0;
 
 COM_INFOS_t comInfos_ =
 {
@@ -1057,7 +1043,7 @@ int16_t V3OP_HalInterfaceInit(void)
 
 
      // if hil is not loaded - did not make sence to init hal
-    if(Bios_getHil_signature() != 0xF00DF00D || Bios_getHil_intvec() == 0xFFFF || !V3OP_HilCrcOk())
+    if(Bios_getHil_signature() != 0xF00DF00D || !Bios_getHil_intvec() || !V3OP_HilCrcOk())
     {
          _edt_Common_Methods_V3OP.Init           = MEMBER_FN_PTR(_dummy_Init);
          _edt_Common_Methods_V3OP.SetVcc         = MEMBER_FN_PTR(_dummy_SetVcc);
@@ -1068,9 +1054,9 @@ int16_t V3OP_HalInterfaceInit(void)
          _edt_Common_Methods_V3OP.SetToolID      = MEMBER_FN_PTR(_dummy_SwitchVccFET);
           return -1;
     }
-    hilInit = (HilInitFunc)Bios_getHil_intvec();
+    hilInit = Bios_getHil_intvec();
     // call startup of HIL layer
-    hilInit();
+    CALL_MEMBER_FN_PTR(hilInit)();
     HilInitGetEdtCommenFunc hilEdtCom = (HilInitGetEdtCommenFunc)0x18A0;
     hilEdtCom(&_edt_Common_Methods_V3OP);
 
@@ -1127,13 +1113,13 @@ void V3OP_DcdcInterfaceClear(void)
 int16_t V3OP_DcdcInterfaceInit(void)
 {
     DcdcInit dcdc_Init_ = NULL;
-    if(Bios_getDcdc_intvec() == 0xFFFF  || Bios_getDcdc_signature() != 0xABBAABBA || !V3OP_DcdcCrcOk())
+    if(!Bios_getDcdc_intvec()  || Bios_getDcdc_signature() != 0xABBAABBA || !V3OP_DcdcCrcOk())
     {
         V3OP_DcdcInterfaceClear();
         return -1;
     }
     dcdc_Init_ = (DcdcInit)Bios_getDcdc_intvec(); // calls the (modified) startup code of HAL
-    dcdc_Init_(&dcdcInfos_);
+    CALL_MEMBER_FN_PTR(dcdc_Init_)(&dcdcInfos_);
 
     CALL_MEMBER_FN_PTR(comInfos_.comSetDcdc)(&dcdcInfos_);
     CALL_MEMBER_FN_PTR(dcdcInfos_.dcdcRestart)(Bios_getTool_id());
@@ -1429,187 +1415,41 @@ uint8_t V3OP_ComChannelCrcOk()
     UNIMP_FN();
     return 0;
 }
-//! \brief test address on memory type
-//! \param[in] addr address to test
-//! \return 0 -> flash memory
-//! \return 1 -> info memory
-//! \return 2 -> RAM
-#pragma optimize = low
+
 uint32_t V3OP_GetSegmentType(uint32_t addr)
 {
     UNIMP_FN();
     return 0;
 }
 
-//! \brief test address on write access
-//! \param[in] addr address to test
-//! \return 0 -> no write access
-//! \return 1 -> write allow
 uint8_t V3OP_WriteAllowed(uint16_t addr)
 {
-    return(0);
-}
-//! \brief test address on erase access
-//! \param[in] addr address to test
-//! \return 0 -> no erase access
-//! \return 1 -> erase allow
-uint8_t V3OP_EraseAllowed(uint16_t StartAddr)
-{
-    return(0);
-}
-
-//! \brief erase on UIF (HAL) all blocks which included in start address + size
-//! \param[in] *payload pointer to receive buffer
-//! \return 1 -> flash erase done
-//! \return <0 -> error
-#pragma optimize = low
-int16_t V3OP_CoreFlashFunctionErase(uint8_t *payload)
-{
-    uint32_t address_pointer;
-    uint32_t  start_addr = (*(uint32_t*)&payload[4] & 0xFFFFF);
-    uint32_t  end_addr   = start_addr + (*(uint32_t*)&payload[8] & 0xFFFFF)-2;
-    uint8_t  segment_type;
-    uint32_t segmentSize =0;
-
-    segment_type = V3OP_GetSegmentType(start_addr);
-
-    if(segment_type == NO_SEGMENT)
-    {
-        return -1;
-    }
-
-    // erase INFO mem
-    if(segment_type == HAL_SEGMENT || segment_type == INFO_SEGMENT_HAL)
-    {
-        segmentSize = SEGMENT_SIZE_HAL_HIL;
-        // First erase entry point into Hil Layer
-        // IF firmware update is interrupted HIL could not be started
-        Flash_SegmentErase((uint16_t*)INFO_SEGMENTS_HAL[1]);
-    }
-
-    if(segment_type == HIL_SEGMENT || segment_type == INFO_SEGMENT_HIL)
-    {
-        segmentSize = SEGMENT_SIZE_HAL_HIL;
-        // First erase entry point into HAL Layer
-        // IF firmware update is interrupted HAL could not be started
-        Flash_SegmentErase((uint16_t*)INFO_SEGMENTS_HIL[0]);
-    }
-
-    if(segment_type == INFO_SEGMENT_DCDC || segment_type == DCDC_SEGMENT)
-    {
-        segmentSize = SEGMENT_SIZE_HAL_HIL;
-        // First erase entry point into HAL Layer
-        // IF firmware update is interrupted HAL could not be started
-        Flash_SegmentErase((uint16_t*)INFO_SEGMENTS_DCDC[0]);
-    }
-
-    if(segment_type == COMCHANNEL_SEGMENT || segment_type == INFO_SEGMENT_COMCHANNEL)
-    {
-        segmentSize = SEGMENT_SIZE_HAL_HIL;
-        // First erase entry point into HAL Layer
-        // IF firmware update is interrupted HAL could not be started
-        UnlockInfoA();
-        Flash_SegmentErase((uint16_t*)INFO_SEGMENTS_COMCHANNEL[0]);
-    }
-
-    // Erase HIL/HAL/DCDC/COM
-    for(address_pointer = start_addr; address_pointer < end_addr; address_pointer += segmentSize)
-    {
-        if(V3OP_GetSegmentType(address_pointer) != NO_SEGMENT)
-        {
-            Flash_SegmentErase((uint16_t*)address_pointer);
-        }
-    }
-
-    // Do erase check of HIL/HAL/DCDC
-    for(address_pointer = start_addr; address_pointer < end_addr; address_pointer += segmentSize)
-    {
-        if(V3OP_GetSegmentType(address_pointer) != NO_SEGMENT)
-        {
-            Flash_EraseCheck((uint8_t*)address_pointer, (segmentSize+1)); // (uint32_t *Flash_ptr, uint32_t len)
-        }
-    }
-    LockInfoA();
-    return(1);
-}
-//! \brief write payload to UIF (HAL) flash memory, RAM is allowed, too
-//! \param[in] *payload pointer to receive buffer
-//! \details on first function call the:
-//! \li bytes 4 -7: the flash address
-//! \li bytes 8 -11: data length
-//! \li bytes 12 ... payload
-//! \details if data length is larger then message size the function returns after writing the message. Direct follow calls
-//! of this function continue writing.
-//! \return 1 -> flash write done
-//! \return <0 -> error
-//#pragma optimize = low
-
-struct {
-    uint32_t address_pointer = 0;
-    uint32_t start_addr = 0; //(*(uint32_t*)&payload[4] & 0xFFFFF);
-    uint32_t end_addr   = 0; //start_addr + (*(uint32_t*)&payload[8] & 0xFFFFF);
-    uint32_t segmentSize = 0;
-} V3OP_CoreFlashFunctionWrite_staticVars;
-
-int16_t V3OP_CoreFlashFunctionWrite(uint8_t *payload, uint16_t v30p_stream_flags_)
-{
-    #undef THISFN
-    #define THISFN V3OP_CoreFlashFunctionWrite
-    STATIC_VARS_START();
-    DECL_STATIC_VAR(address_pointer);
-    DECL_STATIC_VAR(start_addr);
-    DECL_STATIC_VAR(end_addr);
-    DECL_STATIC_VAR(segmentSize);
-    
-    uint8_t  segment_type;
-    uint16_t *data_ptr = NULL;
-    uint16_t *data_ptr_end = NULL;
-
-
-    if(v30p_stream_flags_ & MESSAGE_NEW_MSG)
-    {
-        start_addr = (*(uint32_t*)&payload[4] & 0xFFFFF);
-        end_addr   = start_addr + (*(uint32_t*)&payload[8] & 0xFFFFF);
-        data_ptr = (uint16_t*)&payload[12];
-        data_ptr_end = data_ptr + (payload[0] - 11) / sizeof(uint16_t); // write words /2
-        segment_type = V3OP_GetSegmentType(start_addr);
-
-        if(segment_type == NO_SEGMENT)
-        {
-            return -1;
-        }
-        // 2 bytes are written in one line
-        segmentSize = 2;
-        address_pointer = start_addr;
-        UnlockInfoA();
-    }
-    else
-    {
-        data_ptr = (uint16_t*)&payload[4];
-        data_ptr_end = data_ptr + (payload[0] - 3) / sizeof(uint16_t);
-        LockInfoA();
-    }
-    for(;(address_pointer < end_addr) && (data_ptr < (data_ptr_end)); address_pointer += segmentSize)
-    {
-        // check if wirte is going into info or HAL/Hil segment
-        // don't programm any core segment
-        if(V3OP_GetSegmentType(address_pointer) != NO_SEGMENT)
-        {
-            FlashWrite_16(data_ptr, (uint16_t*)address_pointer, 1);
-            data_ptr++;
-        }
-    }
+    UNIMP_FN();
     return 0;
 }
 
-//! \brief reads UIF memory, inclusive BIOS area
-//! \param[in] *payload pointer to receive buffer
-//! \li bytes 4 -7: the flash address
-//! \li bytes 8 -11: data length
-//! \return 0
+uint8_t V3OP_EraseAllowed(uint16_t StartAddr)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+int16_t V3OP_CoreFlashFunctionErase(uint8_t *payload)
+{
+    UNIMP_FN();
+    return 0;
+}
+
+int16_t V3OP_CoreFlashFunctionWrite(uint8_t *payload, uint16_t v30p_stream_flags_)
+{
+    UNIMP_FN();
+    return 0;
+}
+
 int16_t V3OP_CoreFlashFunctionRead(uint8_t *payload)
 {
-    return(0);
+    UNIMP_FN();
+    return 0;
 }
 
 void V3OP_UpCore(void)
@@ -1619,12 +1459,8 @@ void V3OP_UpCore(void)
 
 uint16_t V3OP_SystemOk(void)
 {
-    if(!V3OP_coreCrcOk())
-    {
-        Flash_SegmentErase((uint16_t*)0xFFFE);
-        return 0;
-    }
-    return 1;
+    UNIMP_FN();
+    return 0;
 }
 
 

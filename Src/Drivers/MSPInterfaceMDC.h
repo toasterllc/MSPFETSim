@@ -20,9 +20,8 @@ public:
         return r;
     }
     
-    MSPInterfaceMDC(USBDevice&& dev) {
+    MSPInterfaceMDC(USBDevice&& dev) : _dev(std::move(dev)) {
         assert(dev);
-        _dev = std::move(dev);
         _dev.open();
         _dev.claimInterface(_USBInterfaceIdx);
     }
@@ -99,7 +98,7 @@ private:
     static constexpr uint32_t _USBInterfaceIdx = 0;
     
     USBDevice _dev;
-    std::vector<STLoader::MSPDebugCmd> _cmds;
+    std::vector<STLoader::MSPDebugCmd> _cmds = {};
     size_t _readLen = 0;
     
     static bool _DeviceMatches(USBDevice& dev) {

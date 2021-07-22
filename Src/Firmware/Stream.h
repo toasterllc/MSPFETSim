@@ -150,20 +150,3 @@ typedef int16_t (MSPProbeSim::*FuncInOut)  (uint16_t id);
 
 #define DEVICE_FLAG_MSPFET  0x00000010
 #define DEVICE_FLAG_EZFET   0x00000020
-
-struct _HAL_INFOS_
-{
-    HalMainFunc init;
-    int16_t sw_0;
-    int16_t sw_1;
-    uint16_t hal_size;
-    HalRec *hal_list_ptr;
-    uint16_t hil_version;
-    uint16_t fpga_version;
-    int16_t swCmp_0;
-    int16_t swCmp_1;
-    uint16_t hil_versionCmp;
-};
-typedef struct _HAL_INFOS_ *HAL_INFOS_PTR;
-typedef struct _HAL_INFOS_ HAL_INFOS;
-

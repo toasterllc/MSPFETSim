@@ -135,5 +135,5 @@ private:
     struct {
         libusb_device* dev = nullptr;
         libusb_device_handle* devHandle = nullptr;
-    } _s;
+    } _s = {};
 };

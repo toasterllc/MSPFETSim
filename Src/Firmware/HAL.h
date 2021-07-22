@@ -328,10 +328,10 @@ enum hal_id
 //extern void globalVarsInit(void);
 
 REQUIRED(_edt_Common_Methods_HAL)
-edt_common_methods_t  _edt_Common_Methods_HAL;
+edt_common_methods_t  _edt_Common_Methods_HAL = {};
 
 REQUIRED(_edt_Distinct_Methods_HAL)
-edt_distinct_methods_t _edt_Distinct_Methods_HAL;
+edt_distinct_methods_t _edt_Distinct_Methods_HAL = {};
 
 //extern int16_t _hil_Init( void );
 //extern uint32_t _hal_mclkCntrl0;
@@ -415,9 +415,9 @@ int16_t _dummy_write_read_mem_Ap(uint16_t ap_sel, uint32_t address, uint32_t *da
 
 void _dummy_setFpgaTimeOut(uint16_t state) {return;};
 
-struct stream_funcs *_stream_Funcs;
+struct stream_funcs *_stream_Funcs = nullptr;
 
-HAL_INFOS hal_infos_in_ram_;
+HAL_INFOS hal_infos_in_ram_ = {};
 
 void globalVarsInit(void)
 {
@@ -605,7 +605,7 @@ void *ResetFirmware(void *stream_adr, uint32_t device_flags, uint8_t v3opHilCrcO
 
     {
        // check if we have a valid hil layer programmed into our tool
-        if(hil_signature_ == 0xF00DF00D && hil_Start_UP_ != 0xFFFF && v3opHilCrcOk)
+        if(hil_signature_ == 0xF00DF00D && hil_Start_UP_ && v3opHilCrcOk)
         {
             // INIT HIL layer
             HilInitGetEdtCommenFunc hilEdtCom = NULL;
@@ -1676,20 +1676,20 @@ void setFuncletRegisters_hal_ExecuteFunclet(const uint16_t* registerData)
 }
 
 struct {
-    uint32_t lLen = 0;
-    uint16_t ret_len = 0;
-    uint32_t Addr = 0;
-    uint16_t memSize = 0;
-    uint16_t LockA = 0;
-    uint16_t usType = 0;
-    uint16_t startAddr = 0;
-    uint16_t R12_BCSLTC1 = 0;
-    uint16_t R11_DCO = 0;
-    uint16_t registerBackups[7] = {};
-    uint16_t FCTL1Value = 0;
-    uint16_t FCTL2Value = 0;
-    uint16_t FCTL3Value = 0;
-} _hal_ExecuteFunclet_staticVars;
+    uint32_t lLen;
+    uint16_t ret_len;
+    uint32_t Addr;
+    uint16_t memSize;
+    uint16_t LockA;
+    uint16_t usType;
+    uint16_t startAddr;
+    uint16_t R12_BCSLTC1;
+    uint16_t R11_DCO;
+    uint16_t registerBackups[7];
+    uint16_t FCTL1Value;
+    uint16_t FCTL2Value;
+    uint16_t FCTL3Value;
+} _hal_ExecuteFunclet_staticVars = {};
 
 HAL_FUNCTION(_hal_ExecuteFunclet)
 {
@@ -1796,7 +1796,7 @@ HAL_FUNCTION(_hal_ExecuteFunclet)
             WriteMemWord(0x12C,LockA | 0x40);
         }
         {
-            uint16_t registerValues[7] = {Addr, lLen, usType, LockA, 0,R11_DCO,R12_BCSLTC1};
+            uint16_t registerValues[7] = {(uint16_t)Addr, (uint16_t)lLen, usType, LockA, 0,R11_DCO,R12_BCSLTC1};
             setFuncletRegisters(registerValues);
             WriteCpuReg(2, 0);
         }
@@ -2047,19 +2047,19 @@ void stopAndRestoreRam(uint16_t startAddr)
 }
 
 struct {
-    uint32_t lLen = 0;
-    uint32_t Addr = 0;
-    uint16_t memSize = 0;
-    uint16_t LockA = 0;
-    uint16_t usType = 0;
-    uint16_t startAddr = 0;
-    uint16_t R12_BCSLTC1 = 0;
-    uint16_t R11_DCO = 0;
-    uint16_t registerBackups[7] = {};
-    uint16_t FCTL1Value = 0;
-    uint16_t FCTL2Value = 0;
-    uint16_t FCTL3Value = 0;
-} _hal_ExecuteFuncletJtag_staticVars;
+    uint32_t lLen;
+    uint32_t Addr;
+    uint16_t memSize;
+    uint16_t LockA;
+    uint16_t usType;
+    uint16_t startAddr;
+    uint16_t R12_BCSLTC1;
+    uint16_t R11_DCO;
+    uint16_t registerBackups[7];
+    uint16_t FCTL1Value;
+    uint16_t FCTL2Value;
+    uint16_t FCTL3Value;
+} _hal_ExecuteFuncletJtag_staticVars = {};
 
 HAL_FUNCTION(_hal_ExecuteFuncletJtag)
 {
@@ -2174,7 +2174,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletJtag)
         }
 
         {
-            uint16_t registerValues[7] = {Addr, lLen, usType, LockA, 0, R11_DCO, R12_BCSLTC1};
+            uint16_t registerValues[7] = {(uint16_t)Addr, (uint16_t)lLen, usType, LockA, 0, R11_DCO, R12_BCSLTC1};
             setFuncletRegisters(registerValues);
             WriteCpuReg(2, 0);
         }
@@ -2391,20 +2391,20 @@ void setFuncletRegisters_hal_ExecuteFuncletX(const uint32_t* registerData)
 }
 
 struct {
-    uint32_t lLen = 0;
-    uint16_t ret_len = 0;
-    uint32_t Addr = 0;
-    uint16_t memSize = 0;
-    uint16_t LockA = 0;
-    uint16_t usType = 0;
-    uint16_t startAddr = 0;
-    uint16_t R12_BCSLTC1 = 0;
-    uint16_t R11_DCO = 0;
-    uint32_t registerBackups[7] = {};
-    uint16_t FCTL1Value = 0;
-    uint16_t FCTL2Value = 0;
-    uint16_t FCTL3Value = 0;
-} _hal_ExecuteFuncletX_staticVars;
+    uint32_t lLen;
+    uint16_t ret_len;
+    uint32_t Addr;
+    uint16_t memSize;
+    uint16_t LockA;
+    uint16_t usType;
+    uint16_t startAddr;
+    uint16_t R12_BCSLTC1;
+    uint16_t R11_DCO;
+    uint32_t registerBackups[7];
+    uint16_t FCTL1Value;
+    uint16_t FCTL2Value;
+    uint16_t FCTL3Value;
+} _hal_ExecuteFuncletX_staticVars = {};
 
 HAL_FUNCTION(_hal_ExecuteFuncletX)
 {
@@ -2532,7 +2532,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletX)
             lOut_long = SetReg_20Bits(0);
             timeOut--;
         }
-        while(!((lOut_long >= (startAddr + WAIT_FOR_DEAD_START)) && (lOut_long <= (startAddr + WAIT_FOR_DEAD_END))) && timeOut);
+        while(!((lOut_long >= ((uint32_t)startAddr + WAIT_FOR_DEAD_START)) && (lOut_long <= ((uint32_t)startAddr + WAIT_FOR_DEAD_END))) && timeOut);
     }
 
     while (lLen && (ret_value == 0) && timeOut)
@@ -2585,7 +2585,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletX)
           lOut_long = SetReg_20Bits(0);
           timeOut--;
       }
-      while(!(lOut_long == (startAddr + FINISHED_OFFSET)) && timeOut);
+      while(!(lOut_long == ((uint32_t)startAddr + FINISHED_OFFSET)) && timeOut);
     }
 
     if(flags & MESSAGE_LAST_MSG )
@@ -2724,13 +2724,13 @@ void setFuncletRegisters_hal_ExecuteFuncletXv2(const uint32_t* registerData)
 */
 
 struct {
-    uint32_t lLen = 0;
-    uint16_t ret_len = 0;
-    uint32_t registerBackups[4] = {};
-    uint16_t allignNeed = 0;
-    uint16_t dataL = 0;
-    uint16_t dataH = 0;
-} _hal_ExecuteFuncletXv2_staticVars;
+    uint32_t lLen;
+    uint16_t ret_len;
+    uint32_t registerBackups[4];
+    uint16_t allignNeed;
+    uint16_t dataL;
+    uint16_t dataH;
+} _hal_ExecuteFuncletXv2_staticVars = {};
 
 HAL_FUNCTION(_hal_ExecuteFuncletXv2)
 {
@@ -2867,16 +2867,16 @@ HAL_FUNCTION(_hal_ExecuteFuncletXv2)
             ret_value = HALERR_EXECUTE_FUNCLET_FINISH_TIMEOUT;
             //Setup values for watchdog control regsiters
 
-            uint8_t DummyIn[8] = {wdtctlAddress5xx & 0xFF, (wdtctlAddress5xx >> 8) & 0xFF,
+            uint8_t DummyIn[8] = {(uint8_t)(wdtctlAddress5xx & 0xFF), (uint8_t)((wdtctlAddress5xx >> 8) & 0xFF),
                                     WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
 
             STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
             (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
             STREAM_external_stream(&stream_tmp);
 
-            Mova = 0x0060 | (10 << 8) & 0x0F00;
+            Mova = 0x0060 | ((10 << 8) & 0x0F00);
             registerBackups[0] = ReadCpuRegXv2(Mova);
-            Mova = 0x0060 | (11 << 8) & 0x0F00;
+            Mova = 0x0060 | ((11 << 8) & 0x0F00);
             registerBackups[1] = ReadCpuRegXv2(Mova);
 
             if( registerBackups[1] != 0 && registerBackups[0] != 0xFFFE)
@@ -2886,7 +2886,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletXv2)
         }
         {
             //Setup values for watchdog control regsiters
-            uint8_t DummyIn[8] = {wdtctlAddress5xx & 0xFF,(wdtctlAddress5xx >> 8) & 0xFF,
+            uint8_t DummyIn[8] = {(uint8_t)(wdtctlAddress5xx & 0xFF), (uint8_t)((wdtctlAddress5xx >> 8) & 0xFF),
                                     WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
 
             STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
@@ -2904,7 +2904,7 @@ HAL_FUNCTION(_hal_ExecuteFuncletXv2)
     else
     {
          //Setup values for watchdog control regsiters
-         uint8_t DummyIn[8] = {wdtctlAddress5xx & 0xFF,(wdtctlAddress5xx >> 8) & 0xFF,
+         uint8_t DummyIn[8] = {(uint8_t)(wdtctlAddress5xx & 0xFF), (uint8_t)((wdtctlAddress5xx >> 8) & 0xFF),
                                      WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
 
          STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
@@ -4464,7 +4464,7 @@ uint8_t readLowLevel(uint8_t address, uint32_t *dataInOut)
         uint64_t tmp = dataIn64 | (address >> 1) | READ;
         dataOut64 = SetReg_35Bits(&tmp);
     }
-    while((dataOut64 & 0x7 != ACK) && (--retry));
+    while(((dataOut64 & 0x7) != ACK) && (--retry));
 
     *dataInOut = dataOut64 >> 3;
 
@@ -4576,12 +4576,12 @@ int16_t JtagHandleError()
 
 
 struct {
-    uint64_t apsel = 0;
-    uint16_t rnw = 0;
-    uint16_t dataWidth = 0;
-    uint32_t address = 0;
-    uint32_t count = 0;
-} _hal_MemApTransactionArm_staticVars;
+    uint64_t apsel;
+    uint16_t rnw;
+    uint16_t dataWidth;
+    uint32_t address;
+    uint32_t count;
+} _hal_MemApTransactionArm_staticVars = {};
 
 HAL_FUNCTION(_hal_MemApTransactionArm)
 {
@@ -4732,12 +4732,12 @@ HAL_FUNCTION(_hal_MemApTransactionArm)
 
 
 struct {
-    uint64_t apsel = 0;
-    uint16_t rnw = 0;
-    uint16_t dataWidth = 0;
-    uint32_t address = 0;
-    uint32_t count = 0;
-} _hal_MemApTransactionArmSwd_staticVars;
+    uint64_t apsel;
+    uint16_t rnw;
+    uint16_t dataWidth;
+    uint32_t address;
+    uint32_t count;
+} _hal_MemApTransactionArmSwd_staticVars = {};
 
 HAL_FUNCTION(_hal_MemApTransactionArmSwd)
 {
@@ -5054,9 +5054,9 @@ uint32_t getIMeasure()
 //-----------------------------------------------------------------Event type 8 only analog ------------------------------------------------------------------
 
 struct {
-    EnergyTraceRecordEt8_t buffer[NUM_RECORDS_TO_CAPTURE] = {0};
-    uint16_t currentIndex = 0;
-} _hal_PollJStateRegEt8_staticVars;
+    EnergyTraceRecordEt8_t buffer[NUM_RECORDS_TO_CAPTURE];
+    uint16_t currentIndex;
+} _hal_PollJStateRegEt8_staticVars = {};
 
 HAL_FUNCTION(_hal_PollJStateRegEt8)
 {
@@ -5201,7 +5201,7 @@ int16_t PollforLPMx5(uint64_t JStateValue, uint16_t forceSendState)
         if(((!(JStateValue & LPMX5_MASK_J)) && !forceSendState) || (LPMx5Wakeup && !forceSendState))
         {   //Device woke up on its own, so sync again
             //Setup values for watchdog control regsiters
-            uint8_t DummyIn[8] = {wdtctlAddress5xx & 0xFF,(wdtctlAddress5xx >> 8) & 0xFF,
+            uint8_t DummyIn[8] = {(uint8_t)(wdtctlAddress5xx & 0xFF), (uint8_t)((wdtctlAddress5xx >> 8) & 0xFF),
                                      WDTHOLD_DEF,WDTPW_DEF,0,0,0,0};
             STREAM_internal_stream(DummyIn, sizeof(DummyIn), NULL, 0, &stream_tmp);
             (this->*HAL_SyncJtag_Conditional_SaveContextXv2)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG);
@@ -5257,9 +5257,9 @@ HAL_FUNCTION(_hal_PollDStatePCRegEt)
 }
 
 struct {
-    EnergyTraceRecordEt7_t buffer[NUM_RECORDS_TO_CAPTURE] = {0};
-    uint16_t currentIndex = 0;
-} PollJStateReg_staticVars;
+    EnergyTraceRecordEt7_t buffer[NUM_RECORDS_TO_CAPTURE];
+    uint16_t currentIndex;
+} PollJStateReg_staticVars = {};
 
 int16_t PollJStateReg(uint16_t JStateVersion)
 {
@@ -5500,7 +5500,7 @@ uint8_t getSystemState()
                     StreamSafe stream_tmp;
 
                     //Setup values for watchdog control regsiters
-                    uint8_t Dummy[8] = {wdtctlAddress5xx & 0xFF,(wdtctlAddress5xx >> 8) & 0xFF,
+                    uint8_t Dummy[8] = {(uint8_t)(wdtctlAddress5xx & 0xFF), (uint8_t)((wdtctlAddress5xx >> 8) & 0xFF),
                                             WDTHOLD_DEF|WDTSSEL_ACLK,WDTPW_DEF,0,0,0,0};
 
                     STREAM_internal_stream(Dummy, sizeof(Dummy), 0, 0, &stream_tmp);
@@ -5762,7 +5762,7 @@ HAL_FUNCTION(_hal_PsaX)
 HAL_FUNCTION(_hal_PsaXv2)
 {
     //Setup values for watchdog control regsiters
-    uint8_t DummyIn[37] = {wdtctlAddress5xx & 0xFF, (wdtctlAddress5xx >> 8) & 0xFF,
+    uint8_t DummyIn[37] = {(uint8_t)(wdtctlAddress5xx & 0xFF), (uint8_t)((wdtctlAddress5xx >> 8) & 0xFF),
                                         WDTHOLD_DEF, WDTPW_DEF};
     uint32_t addr;
     uint32_t length;
@@ -6222,7 +6222,7 @@ HAL_FUNCTION(_hal_ReadMemQuick)
     STREAM_get_long(&lAddr);
     STREAM_get_long(&lLen);
 
-    Pc  = (uint16_t)((lAddr-2 & 0xFFFF));
+    Pc  = (uint16_t)(((lAddr-2) & 0xFFFF));
 
     instrLoad();
 
@@ -7352,10 +7352,10 @@ HAL_FUNCTION(_hal_ScanApArm)
 */
 
 struct {
-    uint16_t  MailBoxMode = 0;
-    uint16_t  DATA1 = 0x0;
-    uint16_t  DATA2 = 0x0;
-} _hal_SendJtagMailboxXv2_staticVars;
+    uint16_t  MailBoxMode;
+    uint16_t  DATA1;
+    uint16_t  DATA2;
+} _hal_SendJtagMailboxXv2_staticVars = {};
 
 HAL_FUNCTION(_hal_SendJtagMailboxXv2)
 {
@@ -10186,8 +10186,8 @@ uint16_t lastTraceWritePos = 0;
 */
 
 struct {
-    uint16_t noChangeSince = 0;
-} _hal_WaitForStorage_staticVars;
+    uint16_t noChangeSince;
+} _hal_WaitForStorage_staticVars = {};
 
 HAL_FUNCTION(_hal_WaitForStorage)
 {
@@ -10341,8 +10341,8 @@ HAL_FUNCTION(_hal_WaitForStorage)
 */
 
 struct {
-    uint16_t noChangeSince = 0;
-} _hal_WaitForStorageX_staticVars;
+    uint16_t noChangeSince;
+} _hal_WaitForStorageX_staticVars = {};
 
 HAL_FUNCTION(_hal_WaitForStorageX)
 {
@@ -10511,7 +10511,7 @@ HAL_FUNCTION(_hal_WriteAllCpuRegs)
             Registers += 2;
         }
         tmp = STREAM_get_word(&Rx);
-        if((Registers != 15) && (tmp != 0) || (Registers == 15) && (tmp < 0))
+        if(((Registers != 15) && (tmp != 0)) || ((Registers == 15) && (tmp < 0)))
         {
             return HALERR_WRITE_ALL_CPU_REGISTERS_STREAM;
         }
@@ -10613,7 +10613,7 @@ HAL_FUNCTION(_hal_WriteAllCpuRegsX)
         STREAM_get_byte((uint8_t*)&Rx+1);
         tmp = STREAM_get_byte((uint8_t*)&Rx+2);
 
-        if((Registers != 15) && (tmp != 0) || (Registers == 15) && (tmp < 0))
+        if(((Registers != 15) && (tmp != 0)) || ((Registers == 15) && (tmp < 0)))
         {
             return HALERR_WRITE_ALL_CPU_REGISTERS_STREAM;
         }
@@ -10685,12 +10685,12 @@ HAL_FUNCTION(_hal_WriteAllCpuRegsXv2)
 */
 
 struct {
-    uint32_t lLen = 0;
-    uint32_t Addr = 0;
-    uint16_t Mova = 0;
-    uint16_t ret_len = 0;
-    uint16_t id = 0;
-} _hal_WriteFramQuickXv2_staticVars;
+    uint32_t lLen;
+    uint32_t Addr;
+    uint16_t Mova;
+    uint16_t ret_len;
+    uint16_t id;
+} _hal_WriteFramQuickXv2_staticVars = {};
 
 HAL_FUNCTION(_hal_WriteFramQuickXv2)
 {
@@ -10811,9 +10811,9 @@ HAL_FUNCTION(_hal_WriteFramQuickXv2)
 */
 
 struct {
-    uint32_t lLen = 0;
-    uint32_t lAddr = 0;
-} _hal_WriteMemBytes_staticVars;
+    uint32_t lLen;
+    uint32_t lAddr;
+} _hal_WriteMemBytes_staticVars = {};
 
 HAL_FUNCTION(_hal_WriteMemBytes)
 {
@@ -10879,9 +10879,9 @@ HAL_FUNCTION(_hal_WriteMemBytes)
 */
 
 struct {
-    uint32_t lLen = 0;
-    uint32_t lAddr = 0;
-} _hal_WriteMemBytesX_staticVars;
+    uint32_t lLen;
+    uint32_t lAddr;
+} _hal_WriteMemBytesX_staticVars = {};
 
 HAL_FUNCTION(_hal_WriteMemBytesX)
 {
@@ -10983,9 +10983,9 @@ HAL_FUNCTION(_hal_WriteMemBytesXv2)
 */
 
 struct {
-    uint32_t lLen = 0;
-    uint32_t lAddr = 0;
-} _hal_WriteMemWords_staticVars;
+    uint32_t lLen;
+    uint32_t lAddr;
+} _hal_WriteMemWords_staticVars = {};
 
 HAL_FUNCTION(_hal_WriteMemWords)
 {
@@ -11050,9 +11050,9 @@ HAL_FUNCTION(_hal_WriteMemWords)
 */
 
 struct {
-    uint32_t lLen = 0;
-    uint32_t lAddr = 0;
-} _hal_WriteMemWordsX_staticVars;
+    uint32_t lLen;
+    uint32_t lAddr;
+} _hal_WriteMemWordsX_staticVars = {};
 
 HAL_FUNCTION(_hal_WriteMemWordsX)
 {
@@ -11129,9 +11129,9 @@ HAL_FUNCTION(_hal_WriteMemWordsX)
 */
 
 struct {
-    uint32_t lLen = 0;
-    uint32_t lAddr = 0;
-} _hal_WriteMemWordsXv2_staticVars;
+    uint32_t lLen;
+    uint32_t lAddr;
+} _hal_WriteMemWordsXv2_staticVars = {};
 
 HAL_FUNCTION(_hal_WriteMemWordsXv2)
 {

@@ -438,7 +438,7 @@ typedef union
 } s_FPGA_PB;
 
 
-#define UNIMP_FN()          printf("### UNIMPLEMENTED: %s\n", __FUNCTION__)
+#define UNIMP_FN()  printf("### UNIMPLEMENTED: %s\n", __FUNCTION__)
 
 #define CONST_AT(x, y) const x
 
@@ -455,8 +455,24 @@ struct _HalRec_
 typedef struct _HalRec_ HalRec;
 #endif
 
+typedef void (MSPProbeSim::*HilInitFunc)();
 typedef void *(MSPProbeSim::*HalMainFunc)(void *stream_adr, uint32_t, uint8_t v3opHilCrcOk, uint8_t v3opDcdcCrcOk);
 
+struct _HAL_INFOS_
+{
+    HalMainFunc init;
+    int16_t sw_0;
+    int16_t sw_1;
+    uint16_t hal_size;
+    HalRec *hal_list_ptr;
+    uint16_t hil_version;
+    uint16_t fpga_version;
+    int16_t swCmp_0;
+    int16_t swCmp_1;
+    uint16_t hil_versionCmp;
+};
+typedef struct _HAL_INFOS_ *HAL_INFOS_PTR;
+typedef struct _HAL_INFOS_ HAL_INFOS;
 
 #define RO_PLACEMENT_NO_INIT
 #define DIAG_DEFAULT(x)
@@ -464,3 +480,21 @@ typedef void *(MSPProbeSim::*HalMainFunc)(void *stream_adr, uint32_t, uint8_t v3
 #define _NOP()
 #define __delay_cycles(x)
 
+
+
+
+
+struct DCDC_INFOS
+{
+    int16_t (MSPProbeSim::*getSubMcuVersion)(void);
+    int16_t (MSPProbeSim::*getLayerVersion)(void);
+    int16_t (MSPProbeSim::*dcdcCalibrate)(uint16_t resistor[4], uint16_t resCount, uint16_t vcc);
+    int16_t (MSPProbeSim::*dcdcPowerDown)(void);
+    int16_t (MSPProbeSim::*dcdcSetVcc)(uint16_t vcc);
+    int16_t (MSPProbeSim::*dcdcRestart)(uint16_t fetType_);
+    void    (MSPProbeSim::*dcdc_getCalibrationValues)(uint16_t vcc, uint16_t resistor,  uint16_t resCount, uint32_t *ticks, uint32_t *time);
+    int16_t (MSPProbeSim::*getLayerVersionCmp)(void);
+};
+typedef struct DCDC_INFOS DCDC_INFOS_t;
+
+typedef void *(MSPProbeSim::*DcdcInit)(DCDC_INFOS_t* dcdcInfos_Pointer);

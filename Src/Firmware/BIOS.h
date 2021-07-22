@@ -492,7 +492,7 @@ const volatile uint16_t *bios_intvec_ = (uint16_t*)0xFF80;
 const HalMainFunc   hal_intvec_ = MEMBER_FN_PTR(ResetFirmware);
 //const uint32_t   hal_signature_ = 0;
 
-const uint32_t   dcdc_intvec_ = 0;
+const DcdcInit   dcdc_intvec_ = 0;
 const uint32_t   dcdc_signature_ = 0;
 
 //const uint32_t   hil_signature_ = 0;
@@ -506,11 +506,11 @@ HalMainFunc Bios_getHal_intvec()
 {
    return hal_intvec_;
 }
-uint16_t Bios_getHil_intvec()
+HilInitFunc Bios_getHil_intvec()
 {
    return hil_Start_UP_;
 }
-uint32_t Bios_getDcdc_intvec()
+DcdcInit Bios_getDcdc_intvec()
 {
    return dcdc_intvec_;
 }

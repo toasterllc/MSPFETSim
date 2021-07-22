@@ -11,6 +11,13 @@ public:
     _usb(_usbDeviceInfo) {
     }
     
+    // Copy constructor: illegal
+    MSPProbeSim(const MSPProbeSim& x) = delete;
+    MSPProbeSim& operator=(const MSPProbeSim& x) = delete;
+    // Move constructor: illegal
+    MSPProbeSim(MSPProbeSim&& x) = delete;
+    MSPProbeSim& operator=(MSPProbeSim&& x) = delete;
+    
     void run() {
         try {
             _usb.start();
@@ -207,7 +214,7 @@ public:
     MSPInterface& _msp;
     VirtualUSBDevice _usb;
     
-    std::deque<_Msg> _msgs; // Messages host->device
+    std::deque<_Msg> _msgs = {}; // Messages host->device
 //    std::deque<_Rep> _reps; // Replies device->host
 //    std::deque<VirtualUSBDevice::Xfer> _inXfers; // USB host requests for data from device
     
