@@ -131,9 +131,8 @@ public:
         // Synchronize with FTDI by sending a bad command and ensuring we get the expected error
         uint8_t resp[2];
         _dev.read(resp, sizeof(resp));
-        printf("resp: %x %x\n", resp[0], resp[1]);
-//            if (!(resp[0]==MPSSE::BadCommandResp && resp[1]==MPSSE::BadCommand))
-//                throw RuntimeError("init sync failed (%x %x)", resp[0], resp[1]);
+        if (!(resp[0]==MPSSE::BadCommandResp && resp[1]==MPSSE::BadCommand))
+            throw RuntimeError("FTDI sync failed (expected: <%x %x> got: <%x %x>)", MPSSE::BadCommandResp, MPSSE::BadCommand, resp[0], resp[1]);
     }
     
     ~MSPInterfaceFTDI() {}
