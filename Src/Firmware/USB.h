@@ -763,15 +763,3 @@ BYTE USBCDC_handleDataReceived (BYTE intfNum)
     return (TRUE);
 }
 
-
-BYTE USB_disconnect ()
-{
-    UNIMP_FN();
-    return 0;
-}
-
-BYTE USB_disable (VOID)
-{
-    UNIMP_FN();
-    return 0;
-}

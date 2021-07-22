@@ -489,20 +489,20 @@ void BIOS_GlobalError(void)
 const volatile uint16_t *bios_intvec_ = (uint16_t*)0xFF80;
 
 //! \brief Pointer to HAL IRQ vector table
-RO_PLACEMENT_NO_INIT volatile const uint32_t   hal_intvec_ = 0;
-//RO_PLACEMENT_NO_INIT volatile const uint32_t   hal_signature_ = 0;
+const HalMainFunc   hal_intvec_ = MEMBER_FN_PTR(ResetFirmware);
+//const uint32_t   hal_signature_ = 0;
 
-RO_PLACEMENT_NO_INIT volatile const uint32_t   dcdc_intvec_ = 0;
-RO_PLACEMENT_NO_INIT volatile const uint32_t   dcdc_signature_ = 0;
+const uint32_t   dcdc_intvec_ = 0;
+const uint32_t   dcdc_signature_ = 0;
 
-//RO_PLACEMENT_NO_INIT volatile const uint32_t   hil_signature_ = 0;
-//RO_PLACEMENT_NO_INIT volatile const uint16_t  hil_Start_UP_ = 0
+//const uint32_t   hil_signature_ = 0;
+//const uint16_t  hil_Start_UP_ = 0
 
-RO_PLACEMENT_NO_INIT volatile const uint32_t   com_intvec_ = 0;
-RO_PLACEMENT_NO_INIT volatile const uint32_t   com_signature_ = 0;
-RO_PLACEMENT_NO_INIT volatile const int32_t  com_semaphore_ = 0;
+const uint32_t   com_intvec_ = 0;
+const uint32_t   com_signature_ = 0;
+const int32_t  com_semaphore_ = 0;
 
-uint32_t Bios_getHal_intvec()
+HalMainFunc Bios_getHal_intvec()
 {
    return hal_intvec_;
 }

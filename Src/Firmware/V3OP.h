@@ -303,7 +303,7 @@ edt_common_methods_t  _edt_Common_Methods_V3OP;
 //typedef void (*HilInitGetEdtCommenFunc)(edt_common_methods_t* edt_commen); // * hal_size, void * stream_adr)
 //HilInitGetEdtCommenFunc hilEdtCom = NULL;
 
-typedef int16_t (*HalFpgaUpdateFunc)(void);// FPGA update function
+typedef int16_t (MSPProbeSim::*HalFpgaUpdateFunc)(void);// FPGA update function
 
 int16_t _dummy_int16_tOutVoidIn(void) {return 0;}
 void _dummy_voidOutVoidIn(void){};
@@ -1075,14 +1075,14 @@ int16_t V3OP_HalInterfaceInit(void)
     hilEdtCom(&_edt_Common_Methods_V3OP);
 
     // check if rest vector is not FFFF and if a valid Hal/Programm signature was found
-    if(Bios_getHal_intvec() == 0xFFFF || Bios_getHal_signature() != 0xBEEFBEEF || !V3OP_HalCrcOk())
+    if(!Bios_getHal_intvec() || Bios_getHal_signature() != 0xBEEFBEEF || !V3OP_HalCrcOk())
     {
         return -1;
     }
 
     CALL_MEMBER_FN_PTR(_edt_Common_Methods_V3OP.SetToolID)(Bios_getTool_id());
 
-    halStartUpCode = (HalMainFunc)Bios_getHal_intvec(); // calls the (modified) startup code of HAL
+    halStartUpCode = Bios_getHal_intvec(); // calls the (modified) startup code of HAL
     hal_infos_V3OP_ = (HAL_INFOS_PTR)CALL_MEMBER_FN_PTR(halStartUpCode)((struct stream_funcs*)&_stream_Funcs, 0, V3OP_HilCrcOk(), V3OP_DcdcCrcOk()); // return HAL sw infos
     hal_ptr_ = (HAL_REC_ARRAY)(*hal_infos_V3OP_).hal_list_ptr;
 
@@ -1160,13 +1160,13 @@ int16_t V3OP_HalFpgaUpdate(void)
     int16_t retVal;
 
     // check if rest vector is not FFFF and if a valid Hal/Programm signature was found
-    if(Bios_getHal_intvec() == 0xFFFF || Bios_getHal_signature() != 0xADACADAC || !V3OP_HalFpgaCrcOk())
+    if(!Bios_getHal_intvec() || Bios_getHal_signature() != 0xADACADAC || !V3OP_HalFpgaCrcOk())
     {
         return -1;
     }
 
     halFpgaUpdateCode = (HalFpgaUpdateFunc)Bios_getHal_intvec(); // calls the (modified) startup code of HAL
-    retVal = halFpgaUpdateCode(); // return update status, input parameters are don't care
+    retVal = CALL_MEMBER_FN_PTR(halFpgaUpdateCode)(); // return update status, input parameters are don't care
 
     return retVal;
 }
@@ -1614,26 +1614,7 @@ int16_t V3OP_CoreFlashFunctionRead(uint8_t *payload)
 
 void V3OP_UpCore(void)
 {
-    _DINT_FET(); // Ensure no application interrupts fire during stop
-    USB_disconnect();
-    FPGA_RESET_ASSERT
-    //~1.6 s delay
-    __delay_cycles(40000000);
-
-    USB_disable();
-    XT2_Stop();
-    //erase infoB
-    Flash_SegmentErase((uint16_t*)0x197F);
-    //erase infoC
-    Flash_SegmentErase((uint16_t*)0x18FF);
-    //erase infoD
-    Flash_SegmentErase((uint16_t*)0x187F);
-    // erase flash reset vector to invoke usb bsl by next startup
-    Flash_SegmentErase((uint16_t*)0xFFFE);
-
-    //~1.6 s delay
-    __delay_cycles(40000000);
-    PMMCTL0 = PMMPW | PMMSWBOR; // generate BOR for reseting device
+    UNIMP_FN();
 }
 
 uint16_t V3OP_SystemOk(void)

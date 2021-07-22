@@ -455,9 +455,12 @@ struct _HalRec_
 typedef struct _HalRec_ HalRec;
 #endif
 
+typedef void *(MSPProbeSim::*HalMainFunc)(void *stream_adr, uint32_t, uint8_t v3opHilCrcOk, uint8_t v3opDcdcCrcOk);
+
 
 #define RO_PLACEMENT_NO_INIT
 #define DIAG_DEFAULT(x)
 #define DIAG_SUPPRESS(x)
 #define _NOP()
 #define __delay_cycles(x)
+

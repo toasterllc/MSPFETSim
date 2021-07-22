@@ -130,7 +130,6 @@ void STREAM_resetSharedVariables();
 // function numbers in "zero function(s) in HAL modul" must start at 0xFF and count downward
 #endif // HAL_STREAM
 
-typedef void *(MSPProbeSim::*HalMainFunc)(void *stream_adr, uint32_t, uint8_t v3opHilCrcOk, uint8_t v3opDcdcCrcOk);
 typedef int16_t (MSPProbeSim::*FuncInOut)  (uint16_t id);
 
 // MSPProbeSim: Moved to Types.h
