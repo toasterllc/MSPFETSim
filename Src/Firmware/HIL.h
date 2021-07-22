@@ -1812,8 +1812,7 @@ void hil_fpga_power_up_target(void)
 
 uint16_t hil_fpga_get_version(void)
 {
-    UNIMP_FN();
-    return 0;
+    return FPGA_VERSION;
 }
 
 
