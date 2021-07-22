@@ -1361,8 +1361,7 @@ uint16_t calculateCrc(uint16_t sum, uint16_t *adress, uint32_t segmentLength)
 
 uint16_t V3OP_GetHilCrc()
 {
-    UNIMP_FN();
-    return 0;
+    return 0x6153; // Determined empirically by printing `expectedHilCrc` in UpdateManagerFet.cpp
 }
 
 uint16_t V3OP_GetHalFpgaCrc()
@@ -1373,62 +1372,56 @@ uint16_t V3OP_GetHalFpgaCrc()
 
 uint16_t V3OP_GetHalCrc()
 {
-    UNIMP_FN();
-    return 0;
+    // MSPProbeSim: Determined empirically by printing `expectedHalCrc` in UpdateManagerFet.cpp
+    return 0xF70B;
 }
 
 uint16_t V3OP_GetCoreCrc()
 {
-    UNIMP_FN();
-    return 0;
+    // MSPProbeSim: Determined empirically by printing `expectedCoreCrc` in UpdateManagerFet.cpp
+    return 0x7aaa;
 }
 
 uint16_t V3OP_GetDcdcCrc()
 {
-    UNIMP_FN();
-    return 0;
+    // MSPProbeSim: Determined empirically by printing `expectedDcdcCrc` in UpdateManagerFet.cpp
+    return 0xF66F;
 }
 
 uint16_t V3OP_GetComChannelCrc()
 {
-    UNIMP_FN();
-    return 0;
+    // MSPProbeSim: Determined empirically by printing `expectedFetComChannelCRC` in UpdateManagerFet.cpp
+    return 0x8457;
 }
 
 uint8_t V3OP_HilCrcOk()
 {
-    UNIMP_FN();
-    return 0;
+    return 1;
 }
 
 uint8_t V3OP_HalCrcOk()
 {
-    UNIMP_FN();
-    return 0;
+    return 1;
 }
 
 uint8_t V3OP_HalFpgaCrcOk()
 {
-    UNIMP_FN();
-    return 0;
+    return 1;
 }
 
 uint8_t V3OP_coreCrcOk()
 {
-    UNIMP_FN();
-    return 0;
+    return 1;
 }
 
 uint8_t V3OP_DcdcCrcOk()
 {
-    UNIMP_FN();
-    return 0;
+    return 1;
 }
 
 uint8_t V3OP_ComChannelCrcOk()
 {
-    UNIMP_FN();
-    return 0;
+    return 1;
 }
 
 uint32_t V3OP_GetSegmentType(uint32_t addr)
