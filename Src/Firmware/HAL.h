@@ -4,9 +4,6 @@
 #include "HIL.h"
 #include "EDT.h"
 
-#define TA0R 0
-#define TB0R 0
-
 int16_t jtagIdIsValid(uint32_t id)
 {
 	return id == 0x89 || id == 0x8D || id == 0x91 || id == 0x95 || id == 0x98 || id == 0x99 || id == 0x4ba00477;
@@ -5007,48 +5004,52 @@ typedef enum ETMode
 //#pragma inline=forced
 uint32_t getTimeStamp()
 {
-    uint32_t TimeStamp = 0;
-    uint16_t currentTA0R = TA0R;
-    uint16_t currentTA0R2 = TA0R;
-    uint16_t * TimeTick = 0;
-    uint16_t testa = 0;
-
-    if (currentTA0R2 < currentTA0R)
-    {
-        currentTA0R = currentTA0R2;
-    }
-
-    STREAM_getSharedVariable(ID_SHARED_MEMORY_TYPE_TIME_TICK, &TimeTick);
-    testa = *(uint16_t*)TimeTick;
-
-    TimeStamp = (((uint32_t)testa) << 16) + (uint32_t)(currentTA0R & 0xFFFF);
-    return TimeStamp;
+    UNIMP_FN();
+    return 0;
+//    uint32_t TimeStamp = 0;
+//    uint16_t currentTA0R = TA0R;
+//    uint16_t currentTA0R2 = TA0R;
+//    uint16_t * TimeTick = 0;
+//    uint16_t testa = 0;
+//
+//    if (currentTA0R2 < currentTA0R)
+//    {
+//        currentTA0R = currentTA0R2;
+//    }
+//
+//    STREAM_getSharedVariable(ID_SHARED_MEMORY_TYPE_TIME_TICK, &TimeTick);
+//    testa = *(uint16_t*)TimeTick;
+//
+//    TimeStamp = (((uint32_t)testa) << 16) + (uint32_t)(currentTA0R & 0xFFFF);
+//    return TimeStamp;
 }
 
 //#pragma inline=forced
 uint32_t getIMeasure()
 {
-    uint32_t IMeasure = 0;
-#ifdef MSP_FET
-    uint16_t currentIClocks = TB0R;
-    uint16_t currentIClocks2 = TB0R;
-#else
-    uint16_t currentIClocks = TA2R;
-    uint16_t currentIClocks2 = TA2R;
-#endif
-    uint16_t* ITick = 0;
-    uint16_t testt = 0;
-
-    if (currentIClocks2 < currentIClocks)
-    {
-        currentIClocks = currentIClocks2;
-    }
-
-    STREAM_getSharedVariable(ID_SHARED_MEMORY_TYPE_I_TICK, &ITick);
-    testt = *(uint16_t*)ITick;
-
-    IMeasure = (((uint32_t)testt) << 16) + (uint32_t)(currentIClocks & 0xFFFF);
-    return IMeasure;
+    UNIMP_FN();
+    return 0;
+//    uint32_t IMeasure = 0;
+//#ifdef MSP_FET
+//    uint16_t currentIClocks = TB0R;
+//    uint16_t currentIClocks2 = TB0R;
+//#else
+//    uint16_t currentIClocks = TA2R;
+//    uint16_t currentIClocks2 = TA2R;
+//#endif
+//    uint16_t* ITick = 0;
+//    uint16_t testt = 0;
+//
+//    if (currentIClocks2 < currentIClocks)
+//    {
+//        currentIClocks = currentIClocks2;
+//    }
+//
+//    STREAM_getSharedVariable(ID_SHARED_MEMORY_TYPE_I_TICK, &ITick);
+//    testt = *(uint16_t*)ITick;
+//
+//    IMeasure = (((uint32_t)testt) << 16) + (uint32_t)(currentIClocks & 0xFFFF);
+//    return IMeasure;
 }
 //-----------------------------------------------------------------Event type 8 only analog ------------------------------------------------------------------
 
@@ -5095,10 +5096,11 @@ HAL_FUNCTION(_hal_PollJStateRegEt8)
 
     buffer[currentIndex].eventID = 8;
 
-    while(TA0R > 0xFFA0 || TA0R  < 2)
-    {
-        IHIL_Delay_1us(3);
-    }
+    // MSPProbeSim: disable timer-related stuff
+//    while(TA0R > 0xFFA0 || TA0R  < 2)
+//    {
+//        IHIL_Delay_1us(3);
+//    }
 
     _DINT_FET();
 
@@ -5307,10 +5309,11 @@ int16_t PollJStateReg(uint16_t JStateVersion)
 
         buffer[currentIndex].eventID = 7;
 
-        while(TA0R > 0xFFA0 || TA0R  < 2)
-        {
-            IHIL_Delay_1us(3);
-        }
+        // MSPProbeSim: disable timer-related stuff
+//        while(TA0R > 0xFFA0 || TA0R  < 2)
+//        {
+//            IHIL_Delay_1us(3);
+//        }
 
         _DINT_FET();
 
@@ -5522,6 +5525,8 @@ uint16_t LPMx5_DEVICE_STATE  = ACTIVE;       // Assume device starts in Wake-up 
 */
 HAL_FUNCTION(_hal_PollJStateRegFR57xx)
 {
+    return 0;
+    printf("MEOWMIX _hal_PollJStateRegFR57xx\n");
     int16_t RetState = HALERR_UNDEFINED_ERROR;
 
     volatile uint8_t state = LPM5_MODE;
@@ -10126,6 +10131,7 @@ HAL_FUNCTION(_hal_WaitForDebugHaltArm)
 
 HAL_FUNCTION(_hal_WaitForEem)
 {
+    printf("MEOWMIX _hal_WaitForEem\n");
     int16_t RetState = HALERR_UNDEFINED_ERROR;
     uint32_t lMask = 0;
     uint16_t sGenCtrl = 0, lOut = 0;

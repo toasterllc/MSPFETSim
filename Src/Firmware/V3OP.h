@@ -595,6 +595,10 @@ int16_t V3OP_SetLoop(uint8_t *payload_incl_addr, uint8_t flags)
     }
     if(i < V3OP_LOOP_ARRAY_COUNT)   // free slot found
     {
+//        if ((*(uint16_t*)&payload_incl_addr[MESSAGE_EXECUTE_CALL_ADDR_POS]) == ID_PollJStateRegFR57xx) {
+//            printf("MEOWMIX BLOCKING LOOP FOR ID_PollJStateRegFR57xx\n");
+//            return 1;
+//        }
         if(payload_incl_addr[0] >= MESSAGE_EXECUTE_PAYLOAD_POS)
         {
             payload_size = payload_incl_addr[0]+1;
@@ -646,6 +650,11 @@ int16_t V3OP_SetLoop(uint8_t *payload_incl_addr, uint8_t flags)
 //! \return 0
 int16_t V3OP_Rx (uint8_t *str)
 {
+    #warning REMOVE ME
+    if (_edt_Distinct_Methods_HAL.Instr) {
+        cntrl_sig_capture();
+    }
+    
     uint8_t tmp_char;
     uint16_t call_addr;
     int16_t ret_value = -1;

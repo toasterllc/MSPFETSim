@@ -302,13 +302,16 @@ public:
         // Logic error if our commands are larger than FTDI's buffer capacity
         assert(_cmds.size() <= _FTDIBufferCapacity);
         
+        printf("MEOWMIX FTDI flushing %zu commands\n", _cmds.size());
+        
         // Write the commands
         _dev.write(_cmds.data(), _cmds.size());
         _cmds.clear();
         
         // Read expected amount of data into the end of `_readData`
         // We expect 2 extra bytes: {MPSSE::BadCommandResp, MPSSE::BadCommand}
-        const size_t readLen = _readLen+2;
+        constexpr size_t ResponseExtraByteCount = 2;
+        const size_t readLen = _readLen+ResponseExtraByteCount;
         const size_t off = _readData.size();
         _readData.resize(_readData.size() + readLen);
         _dev.read(_readData.data()+off, readLen);
@@ -316,7 +319,7 @@ public:
         
         // Verify that the 2 extra response bytes are what we
         // expect: {MPSSE::BadCommandResp, MPSSE::BadCommand}
-        const uint8_t* back = &(*(_readData.end()-2));
+        const uint8_t* back = &(*(_readData.end()-ResponseExtraByteCount));
         if (!(back[0]==MPSSE::BadCommandResp && back[1]==MPSSE::BadCommand)) {
             throw RuntimeError("FTDI sync failed (expected: <%x %x> got: <%x %x>)",
                 MPSSE::BadCommandResp, MPSSE::BadCommand, back[0], back[1]);
