@@ -84,10 +84,30 @@ public:
         return r;
     }
     
+    static size_t _GetMaxPacketSize(USBDevice& dev) {
+        const auto configDesc = dev.getConfigDescriptor(0);
+        if (configDesc->bNumInterfaces < 1) throw RuntimeError("configuration descriptor has no interfaces");
+        const auto iface = configDesc->interface[0];
+        if (iface.num_altsetting < 1) throw RuntimeError("interface has no interfaces");
+        const auto ifaceDesc = iface.altsetting[0];
+        if (ifaceDesc.bNumEndpoints < 1) throw RuntimeError("interface descriptor has no endpoints");
+        return ifaceDesc.endpoint[0].wMaxPacketSize;
+    }
+    
+    static size_t _GetFlushThreshold(size_t maxPacketSize) {
+        // Flush 2 bytes before _cmds hits _maxPacketSize.
+        // This needs to be at least 2 bytes to account for the 2 extra MPSSE
+        // commands we send when flushing.
+        return maxPacketSize-2;
+    }
+    
     MSPInterfaceFTDI(uint8_t testPin, uint8_t rstPin, USBDevice&& dev) :
     _testPin(testPin),
     _rstPin(rstPin),
-    _dev(std::move(dev)) {
+    _maxPacketSize(_GetMaxPacketSize(dev)),
+    _flushThreshold(_GetFlushThreshold(_maxPacketSize)),
+    _dev(std::move(dev))
+    {
         _dev.open();
         _dev.usbReset();
         _dev.setEventChar(0, 0);
@@ -195,17 +215,18 @@ public:
     
     void sbwTestSet(bool test) override {
         _testSet(test ? _PinState::Out1 : _PinState::Out0);
+        _flush();
     }
     
     void sbwTestPulse() override {
         _testSet(_PinState::Out0);
         _testSet(_PinState::Out1);
-        // These commands need to be atomic, so flush if needed
-        _flushIfNeeded();
+        _flush();
     }
     
     void sbwRstSet(bool rst) override {
         _rstSet(rst ? _PinState::Out1 : _PinState::Out0);
+        _flush();
     }
     
 //    void sbwPins(PinState test, PinState rst) override {
@@ -251,12 +272,13 @@ public:
 //    RST::Write(tclk);
 //    TEST::Write(1);
     
-    void _flushIfNeeded() {
-        // If we're over the threshold, flush outstanding commands
-        if (_cmds.size() > _FTDIBufferFlushThreshold) {
-            _flush();
-        }
-    }
+//    void _flushPoint() {
+//        // If we're over the flush threshold, flush outstanding commands
+//        if (_cmds.size() > _flushThreshold) {
+//            _flush();
+//        }
+//        _flushCmdLen = _cmds.size();
+//    }
     
     void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
         // Write TMS
@@ -283,45 +305,100 @@ public:
             _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
         }
         
-        // These commands need to be atomic, so flush if needed
-        _flushIfNeeded();
+        _flush();
     }
     
-    void _flush() {
-        if (_cmds.empty()) return; // Short-circuit if there aren't any commands to flush
+    // _Swap(): Swap `len` elements in vector `a`, at offset `off`, with the entire vector `b`.
+    // As a convenience, `off+len` can extend past the end of `a`, in which case
+    // `len` will be clipped so that `off+len` is the end of `a`.
+    template <typename T>
+    void _Swap(std::vector<T>& a, size_t off, size_t len, std::vector<T>& b) {
+        len = std::min(len, a.size()-off); // Allow `off+len` to extend past the end of `a`
         
-        // Append BadCommand+SendImmediate commands, in order to:
-        //   - guarantee that data is available to read, and therefore the queued commands
-        //     have been flushed
-        //   - validate that we're operating properly by checking the respone we expect:
-        //     {MPSSE::BadCommandResp, MPSSE::BadCommand}
-        //   - force the response data to be sent immediately
-        _cmds.push_back(MPSSE::BadCommand);
-        _cmds.push_back(MPSSE::SendImmediate);
+        assert(off <= a.size());
+        assert(len <= a.size()-off);
         
-        // Logic error if our commands are larger than FTDI's buffer capacity
-        assert(_cmds.size() <= _FTDIBufferCapacity);
+        const size_t aOldSize = a.size();
+        const size_t bOldSize = b.size();
+        const size_t aNewSize = aOldSize+bOldSize-len;
+        const size_t bNewSize = len;
         
-//        printf("MEOWMIX FTDI flushing %zu commands\n", _cmds.size());
+        if (aNewSize > aOldSize) {
+            a.resize(aNewSize);
+            // Shift all elements in `a` after off+len
+            std::move(a.begin()+off+len, a.begin()+aOldSize, a.begin()+off+bOldSize);
+        }
+        
+        if (bNewSize > bOldSize) b.resize(bNewSize);
+        
+        // Swap elements
+        std::swap_ranges(a.begin()+off, a.begin()+off+std::max(bNewSize,bOldSize), b.begin());
+        
+        if (aNewSize < aOldSize) {
+            // Shift all elements in `a` after off+len
+            std::move(a.begin()+off+len, a.begin()+aOldSize, a.begin()+off+bOldSize);
+        }
+        
+        a.resize(aNewSize);
+        b.resize(bNewSize);
+    }
+    
+    void _flush(bool required=false) {
+        // Short-circuit if the flush isn't required, and we're below the threshold
+        if (!required && _cmds.size()<=_flushThreshold) {
+            // Remember the last flush point
+            _flushCmdLen = _cmds.size();
+            _flushReadLen = _readLen;
+            return;
+        }
+        
+        // Short-circuit if there aren't any commands to flush
+        if (!_flushCmdLen) return;
+        assert(_cmds.size() >= _flushCmdLen);
+        assert(_readLen >= _flushReadLen);
+        
+        std::vector<uint8_t> extraCmds = {
+            MPSSE::BadCommand,
+            MPSSE::SendImmediate,
+        };
+        
+        const size_t extraCmdsLen = extraCmds.size();
+        const size_t writeLen = _flushCmdLen+extraCmdsLen;
+        
+//        printf("MEOWMIX FTDI flushing %zu commands (_flushThreshold=%zu, _maxPacketSize=%zu)\n",
+//            writeLen, _flushThreshold, _maxPacketSize);
+        
+        // Logic error if our commands are larger than FTDI's USB max packet size
+        assert(writeLen <= _maxPacketSize);
         
         // Write the commands
-        _dev.write(_cmds.data(), _cmds.size());
-        _cmds.clear();
+        _Swap(_cmds, _flushCmdLen, extraCmdsLen, extraCmds); // Swap the extra commands into the buffer
+        _dev.write(_cmds.data(), writeLen);
+        _Swap(_cmds, _flushCmdLen, extraCmdsLen, extraCmds); // Swap the extra commands out of the buffer
+        
+        // Shift remaining commands to the beginning of _cmds,
+        // resize _cmds, and update _flushCmdLen
+        std::move(_cmds.begin()+_flushCmdLen, _cmds.end(), _cmds.begin());
+        _cmds.resize(_cmds.size()-_flushCmdLen);
+        _flushCmdLen = _cmds.size();
+        
+//        printf("HALLABACK REMAINDER: %zu\n", _flushCmdLen);
         
         // Read expected amount of data into the end of `_readData`
         // We expect 2 extra bytes: {MPSSE::BadCommandResp, MPSSE::BadCommand}
         constexpr size_t ResponseExtraByteCount = 2;
-        const size_t readLen = _readLen+ResponseExtraByteCount;
+        const size_t readLen = _flushReadLen+ResponseExtraByteCount;
         const size_t off = _readData.size();
         _readData.resize(_readData.size() + readLen);
         _dev.read(_readData.data()+off, readLen);
-        _readLen = 0;
+        _readLen -= _flushReadLen;
+        _flushReadLen = _readLen;
         
         // Verify that the 2 extra response bytes are what we
         // expect: {MPSSE::BadCommandResp, MPSSE::BadCommand}
         const uint8_t* back = &(*(_readData.end()-ResponseExtraByteCount));
         if (!(back[0]==MPSSE::BadCommandResp && back[1]==MPSSE::BadCommand)) {
-            throw RuntimeError("FTDI sync failed (expected: <%x %x> got: <%x %x>)",
+            throw RuntimeError("FTDI sync failed (expected: <%x %x>, got: <%x %x>)",
                 MPSSE::BadCommandResp, MPSSE::BadCommand, back[0], back[1]);
         }
         
@@ -331,7 +408,7 @@ public:
     }
     
     void sbwRead(void* buf, size_t len) override {
-        _flush();
+        _flush(true);
         
         // Verify that the requested length isn't greater than
         // the amount of available data
@@ -459,6 +536,7 @@ private:
         }
         
         void read(void* data, size_t len) {
+//            printf("### HALLABACK read %zu\n", len);
             size_t off = 0;
             while (off < len) {
                 int ir = ftdi_read_data(&_ctx, (uint8_t*)data+off, len-off);
@@ -545,14 +623,14 @@ private:
 //        if (ir < 0) throw RuntimeError("%s: %s", errMsg, ftdi_get_error_string(&ctx));
 //    }
     
-    static constexpr size_t _FTDIBufferCapacity = 1024;
-//    static constexpr size_t _FTDIBufferFlushThreshold = (_FTDIBufferCapacity*15)/16;
-    static constexpr size_t _FTDIBufferFlushThreshold = 512;
-    
     const uint8_t _testPin = 0;
     const uint8_t _rstPin = 0;
+    const size_t _maxPacketSize = 0;
+    const size_t _flushThreshold = 0;
     _FTDIDevice _dev;
     std::vector<uint8_t> _cmds = {};
     std::vector<uint8_t> _readData = {};
+    size_t _flushCmdLen = 0;
+    size_t _flushReadLen = 0;
     size_t _readLen = 0;
 };

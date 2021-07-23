@@ -87,6 +87,13 @@ public:
         return desc;
     }
     
+    struct libusb_config_descriptor* getConfigDescriptor(uint8_t idx) {
+        struct libusb_config_descriptor* desc;
+        int ir = libusb_get_config_descriptor(_s.dev, 0, &desc);
+        _CheckErr(ir, "libusb_config_descriptor failed");
+        return desc;
+    }
+    
     operator bool() const { return _s.dev; }
     operator libusb_device*() const { return _s.dev; }
     operator libusb_device_handle*() const { return _s.devHandle; }
