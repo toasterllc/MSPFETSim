@@ -2291,7 +2291,7 @@ SBWShiftProxy<uint8_t> _hil_generic_Instr(uint8_t instruction)
         TMSL_TDIH();
         // JTAG FSM state = Shift-IR, Shiftin TDI (8 bit)
         return SBWShiftProxy<uint8_t>(this, instruction);
-    
+        // JTAG FSM state = Run-Test/Idle
     default:
         BAD_PROTO(gprotocol_id);
         return 0;
@@ -2758,143 +2758,83 @@ void _sbwioTclk(bool tms, bool tclk) {
 }
 
 uint64_t _read(uint8_t w) {
-    uint8_t b[8];
-    _msp.sbwRead(&b, w/8+(w%8?1:0));
+    uint8_t b[4];
+    assert(w <= sizeof(b));
+    _msp.sbwRead(b, w);
     
-    if (w == 8) {
-        return b[0]<<0;
-    } else if (w == 16) {
-        return b[0]<<8 | b[1]<<0;
-    } else if (w == 20) {
-        return b[0]<<12 | b[1]<<4 | ((b[2]<<0)&0x0F);
-    } else if (w == 32) {
-        return b[0]<<24 | b[1]<<16 | b[2]<<8 | b[3]<<0;
-    } else {
-        abort();
-    }
+         if (w == 1)    return                                 b[0]<<0  ;
+    else if (w == 2)    return                       b[0]<<8 | b[1]<<0  ;
+    else if (w == 3)    return            b[0]<<16 | b[1]<<8 | b[2]<<0  ;
+    else if (w == 4)    return b[0]<<24 | b[1]<<16 | b[2]<<8 | b[3]<<0  ;
+    else                abort(); // invalid width
 }
 
-void sbw_Shift(uint64_t Data, int16_t Bits)
-{
-    uint64_t MSB = 0x0000000000000000;
+//uint64_t _read(uint8_t w) {
+//    uint8_t b[8];
+//    _msp.sbwRead(&b, w/8+(w%8?1:0));
+//    
+//    if (w == 8) {
+//        return b[0]<<0;
+//    } else if (w == 16) {
+//        return b[0]<<8 | b[1]<<0;
+//    } else if (w == 20) {
+//        return b[0]<<12 | b[1]<<4 | ((b[2]<<0)&0x0F);
+//    } else if (w == 32) {
+//        return b[0]<<24 | b[1]<<16 | b[2]<<8 | b[3]<<0;
+//    } else {
+//        abort();
+//    }
+//}
 
-    switch(Bits)
-    {
-        case F_BYTE: MSB = 0x00000080;
-            break;
-        case F_WORD: MSB = 0x00008000;
-            break;
-        case F_ADDR: MSB = 0x00080000;
-            break;
-        case F_LONG: MSB = 0x80000000;
-            break;
-        case F_LONG_LONG: MSB = 0x8000000000000000;
-            break;
-        default: // this is an unsupported format
-            abort();
+void sbw_Shift(uint64_t data, uint16_t width) {
+    // <- Shift-DR
+    for (uint64_t msb=(UINT64_C(1)<<(width-1)); msb; msb>>=1) {
+        const bool tms = (msb & 1); // Last bit requires TMS=1
+        const bool tdi = data&msb;
+        _sbwio(tms, tdi);
     }
-    do
-    {
-        if ((MSB & 1) == 1)                       // Last bit requires TMS=1
-        {
-            if(Data & MSB)
-            {
-                TMSH_TDIH();
-            }
-            else
-            {
-                TMSH_TDIL();
-            }
-        }
-        else
-        {
-            if(Data & MSB)
-            {
-                TMSL_TDIH();
-            }
-            else
-            {
-                TMSL_TDIL();
-            }
-        }
-    }
-    while(MSB >>= 1);
-
-    if (TCLK_saved)
-    {
-        TMSH_TDIH();
-        TMSL_TDIH();
-    }
-    else
-    {
-        TMSH_TDIL();
-        TMSL_TDIL();
-    }
+    // <- Exit1-DR
+    
+    // Return to Run-Test/Idle state
+    _sbwio(1, TCLK_saved);
+    _sbwio(0, TCLK_saved);
 }
 
-uint64_t sbw_Shift_R(uint64_t Data, int16_t Bits)
-{
-    uint64_t MSB = 0x0000000000000000;
-
-    switch(Bits)
-    {
-        case F_BYTE: MSB = 0x00000080;
-            break;
-        case F_WORD: MSB = 0x00008000;
-            break;
-        case F_ADDR: MSB = 0x00080000;
-            break;
-        case F_LONG: MSB = 0x80000000;
-            break;
-        case F_LONG_LONG: MSB = 0x8000000000000000;
-            break;
-        default: // this is an unsupported format
-            abort();
+uint64_t sbw_Shift_R(uint64_t data, uint16_t width) {
+    // <- Shift-DR
+    for (uint64_t msb=(UINT64_C(1)<<(width-1)); msb; msb>>=1) {
+        const bool tms = (msb & 1); // Last bit requires TMS=1
+        const bool tdi = data&msb;
+        _sbwio_r(tms, tdi);
     }
-    do
-    {
-        if ((MSB & 1) == 1)                       // Last bit requires TMS=1
-        {
-            if(Data & MSB)
-            {
-                TMSH_TDIH_TDOrd();
-            }
-            else
-            {
-                TMSH_TDIL_TDOrd();
-            }
-        }
-        else
-        {
-            if(Data & MSB)
-            {
-                TMSL_TDIH_TDOrd();
-            }
-            else
-            {
-                TMSL_TDIL_TDOrd();
-            }
-        }
+    // <- Exit1-DR
+    
+    // Return to Run-Test/Idle state
+    // If we're reading a 20-bit address, read 4 extra dummy bits so we have
+    // 3 full bytes of data enqueued (24 bits instead of 20 bits)
+    switch (width) {
+    case F_ADDR:
+        _sbwio_r(1, TCLK_saved);
+        _sbwio_r(0, TCLK_saved);
+        // <- Run-Test/Idle
+        // 2 extra cycles in the Run-Test/Idle state to read 2 more bits
+        _sbwio_r(0, TCLK_saved);
+        _sbwio_r(0, TCLK_saved);
+        break;
+    default:
+        _sbwio(1, TCLK_saved);
+        _sbwio(0, TCLK_saved);
+        // <- Run-Test/Idle
+        break;
     }
-    while(MSB >>= 1);
-
-    if (TCLK_saved)
-    {
-        TMSH_TDIH();
-        TMSL_TDIH();
-    }
-    else
-    {
-        TMSH_TDIL();
-        TMSL_TDIL();
-    }
-    uint64_t TDOvalue = _read(Bits);
+    
+    uint64_t tdo = _read((width+7)/8);
     // de-scramble upper 4 bits if it was a 20bit shift
-    if(Bits == F_ADDR)
-    {
-        TDOvalue = ((TDOvalue >> 4) | (TDOvalue << 16)) & 0x000FFFFF;
+    if (width == F_ADDR) {
+        tdo = ((tdo>>4) | (tdo<<16)) & 0xFFFFF;
+        printf("MEOWMIX %08x\n", (uint32_t)tdo);
     }
-    return(TDOvalue);
+    return tdo;
 }
 
 void _flush() {
