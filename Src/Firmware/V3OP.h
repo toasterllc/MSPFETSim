@@ -650,11 +650,6 @@ int16_t V3OP_SetLoop(uint8_t *payload_incl_addr, uint8_t flags)
 //! \return 0
 int16_t V3OP_Rx (uint8_t *str)
 {
-    #warning REMOVE ME
-    if (_edt_Distinct_Methods_HAL.Instr) {
-        cntrl_sig_capture();
-    }
-    
     uint8_t tmp_char;
     uint16_t call_addr;
     int16_t ret_value = -1;

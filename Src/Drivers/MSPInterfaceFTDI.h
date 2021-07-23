@@ -198,8 +198,8 @@ public:
     }
     
     void sbwTestPulse() override {
-        sbwTestSet(0);
-        sbwTestSet(1);
+        _testSet(_PinState::Out0);
+        _testSet(_PinState::Out1);
         // These commands need to be atomic, so flush if needed
         _flushIfNeeded();
     }
@@ -302,7 +302,7 @@ public:
         // Logic error if our commands are larger than FTDI's buffer capacity
         assert(_cmds.size() <= _FTDIBufferCapacity);
         
-        printf("MEOWMIX FTDI flushing %zu commands\n", _cmds.size());
+//        printf("MEOWMIX FTDI flushing %zu commands\n", _cmds.size());
         
         // Write the commands
         _dev.write(_cmds.data(), _cmds.size());
@@ -546,7 +546,8 @@ private:
 //    }
     
     static constexpr size_t _FTDIBufferCapacity = 1024;
-    static constexpr size_t _FTDIBufferFlushThreshold = (_FTDIBufferCapacity*15)/16;
+//    static constexpr size_t _FTDIBufferFlushThreshold = (_FTDIBufferCapacity*15)/16;
+    static constexpr size_t _FTDIBufferFlushThreshold = 512;
     
     const uint8_t _testPin = 0;
     const uint8_t _rstPin = 0;
