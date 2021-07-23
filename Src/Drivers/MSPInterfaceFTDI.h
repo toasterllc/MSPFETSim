@@ -200,6 +200,7 @@ public:
     void sbwTestPulse() override {
         sbwTestSet(0);
         sbwTestSet(1);
+        // These commands need to be atomic, so flush if needed
         _flushIfNeeded();
     }
     
@@ -282,6 +283,7 @@ public:
             _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
         }
         
+        // These commands need to be atomic, so flush if needed
         _flushIfNeeded();
     }
     
@@ -296,8 +298,6 @@ public:
         //   - force the response data to be sent immediately
         _cmds.push_back(MPSSE::BadCommand);
         _cmds.push_back(MPSSE::SendImmediate);
-        
-//        printf("MEOWMIX writing %zu commands\n", _cmds.size());
         
         // Logic error if our commands are larger than FTDI's buffer capacity
         assert(_cmds.size() <= _FTDIBufferCapacity);
@@ -543,13 +543,12 @@ private:
 //    }
     
     static constexpr size_t _FTDIBufferCapacity = 1024;
-    static constexpr size_t _FTDIBufferFlushThreshold = (_FTDIBufferCapacity*3)/4;
+    static constexpr size_t _FTDIBufferFlushThreshold = (_FTDIBufferCapacity*15)/16;
     
     const uint8_t _testPin = 0;
     const uint8_t _rstPin = 0;
     _FTDIDevice _dev;
     std::vector<uint8_t> _cmds = {};
     std::vector<uint8_t> _readData = {};
-    size_t _flushOff = 0;
     size_t _readLen = 0;
 };

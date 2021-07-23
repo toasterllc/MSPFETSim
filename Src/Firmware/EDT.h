@@ -143,12 +143,7 @@ uint64_t SetReg8_64Bits(uint64_t data, uint16_t loopCount, uint16_t PG)
 
 // JTAG instruction register access
 SBWShiftProxy<uint8_t> cntrl_sig_low_byte()        { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_LOW_BYTE);    }
-//SBWShiftProxy<uint8_t> cntrl_sig_capture()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_CAPTURE);     }
-SBWShiftProxy<uint8_t> cntrl_sig_capture()         {
-    const uint8_t jtagID = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_CAPTURE);
-    printf("JTAG ID: %x\n", jtagID);
-    return jtagID;
-}
+SBWShiftProxy<uint8_t> cntrl_sig_capture()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_CAPTURE);     }
 SBWShiftProxy<uint8_t> cntrl_sig_high_byte()       { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_HIGH_BYTE);   }
 SBWShiftProxy<uint8_t> cntrl_sig_16bit()           { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_16BIT);       }
 SBWShiftProxy<uint8_t> cntrl_sig_release()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_RELEASE);     }
