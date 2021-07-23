@@ -170,11 +170,11 @@ public:
 //    }
     
     void _handleUSBXferData(VirtualUSBDevice::Xfer&& xfer) {
-//        printf("_handleUSBXferData: <");
-//        for (size_t i=0; i<xfer.len; i++) {
-//            printf(" %02x", xfer.data[i]);
-//        }
-//        printf(" >\n\n");
+        printf("_handleUSBXferData: <");
+        for (size_t i=0; i<xfer.len; i++) {
+            printf(" %02x", xfer.data[i]);
+        }
+        printf(" >\n\n");
         
         _msgs.push_back({});
         _Msg& msg = _msgs.back();

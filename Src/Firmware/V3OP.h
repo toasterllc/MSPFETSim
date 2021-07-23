@@ -678,6 +678,7 @@ int16_t V3OP_Rx (uint8_t *str)
         BIOS_LedOn(BIOS_LED_MODE);
         bios_wb_control_ = 1;
     }
+//    printf("MEOWMIX CMD: %x\n", str[MESSAGE_CMDTYP_POS]);
     if(str[MESSAGE_CMDTYP_POS] == CMDTYP_EXECUTE) // bypass CMDTYP_EXECUTE at switch instruction
     {
         if(v30p_stream_flags_ & MESSAGE_NEW_MSG)
@@ -707,6 +708,17 @@ int16_t V3OP_Rx (uint8_t *str)
             #endif
             if(call_addr < (*hal_infos_V3OP_).hal_size)
             {
+                if (_edt_Distinct_Methods_HAL.Instr)
+                {
+                    cntrl_sig_capture();
+                }
+                
+                printf("MEOWMIX call_addr: %d (ID_SingleStepXv2: %d)\n", call_addr, ID_SingleStepXv2);
+                
+                if (call_addr == ID_SingleStepXv2) {
+                    printf("MEOWMIX ID_SingleStepXv2\n");
+                }
+                
                 pCallAddr = (HalFuncInOut)(*hal_ptr_)[call_addr].function;
                 if(pCallAddr != NULL)
                 {

@@ -94,7 +94,8 @@ public:
         
         _dev.setBitmode(BITMODE_RESET, 0);
         _dev.setBitmode(BITMODE_MPSSE, 0);
-//        _dev.setLatencyTimer(1);
+        _dev.setLatencyTimer(1); // Improves performance significantly
+        // TODO: does setting the baud rate apply to MPSSE?
 //        _dev.setBaudRate(1<<21);
         
         // TODO: these commands aren't all supported by all hardware
@@ -197,9 +198,9 @@ public:
     }
     
     void sbwTestPulse() override {
-        _flushIfNeeded();
         sbwTestSet(0);
         sbwTestSet(1);
+        _flushIfNeeded();
     }
     
     void sbwRstSet(bool rst) override {
@@ -249,11 +250,14 @@ public:
 //    RST::Write(tclk);
 //    TEST::Write(1);
     
-    
+    void _flushIfNeeded() {
+        // If we're over the threshold, flush outstanding commands
+        if (_cmds.size() > _FTDIBufferFlushThreshold) {
+            _flush();
+        }
+    }
     
     void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
-        _flushIfNeeded();
-        
         // Write TMS
         {
             _rstSet(tms ? _PinState::Out1 : _PinState::Out0);
@@ -277,29 +281,50 @@ public:
             _testSet(_PinState::Out1);
             _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
         }
-    }
-    
-    void _flushIfNeeded() {
-        if (_cmds.size() >= 768) {
-            _flush();
-        }
+        
+        _flushIfNeeded();
     }
     
     void _flush() {
         if (_cmds.empty()) return; // Short-circuit if there aren't any commands to flush
         
-        // Append a 'SendImmediate' command, so the FTDI chip sends data back immediately
+        // Append BadCommand+SendImmediate commands, in order to:
+        //   - guarantee that data is available to read, and therefore the queued commands
+        //     have been flushed
+        //   - validate that we're operating properly by checking the respone we expect:
+        //     {MPSSE::BadCommandResp, MPSSE::BadCommand}
+        //   - force the response data to be sent immediately
+        _cmds.push_back(MPSSE::BadCommand);
         _cmds.push_back(MPSSE::SendImmediate);
+        
+//        printf("MEOWMIX writing %zu commands\n", _cmds.size());
+        
+        // Logic error if our commands are larger than FTDI's buffer capacity
+        assert(_cmds.size() <= _FTDIBufferCapacity);
         
         // Write the commands
         _dev.write(_cmds.data(), _cmds.size());
         _cmds.clear();
         
         // Read expected amount of data into the end of `_readData`
+        // We expect 2 extra bytes: {MPSSE::BadCommandResp, MPSSE::BadCommand}
+        const size_t readLen = _readLen+2;
         const size_t off = _readData.size();
-        _readData.resize(_readData.size() + _readLen);
-        _dev.read(_readData.data()+off, _readLen);
+        _readData.resize(_readData.size() + readLen);
+        _dev.read(_readData.data()+off, readLen);
         _readLen = 0;
+        
+        // Verify that the 2 extra response bytes are what we
+        // expect: {MPSSE::BadCommandResp, MPSSE::BadCommand}
+        const uint8_t* back = &(*(_readData.end()-2));
+        if (!(back[0]==MPSSE::BadCommandResp && back[1]==MPSSE::BadCommand)) {
+            throw RuntimeError("FTDI sync failed (expected: <%x %x> got: <%x %x>)",
+                MPSSE::BadCommandResp, MPSSE::BadCommand, back[0], back[1]);
+        }
+        
+        // Remove 2 extra response bytes
+        _readData.pop_back();
+        _readData.pop_back();
     }
     
     void sbwRead(void* buf, size_t len) override {
@@ -517,10 +542,14 @@ private:
 //        if (ir < 0) throw RuntimeError("%s: %s", errMsg, ftdi_get_error_string(&ctx));
 //    }
     
+    static constexpr size_t _FTDIBufferCapacity = 1024;
+    static constexpr size_t _FTDIBufferFlushThreshold = (_FTDIBufferCapacity*3)/4;
+    
     const uint8_t _testPin = 0;
     const uint8_t _rstPin = 0;
     _FTDIDevice _dev;
     std::vector<uint8_t> _cmds = {};
     std::vector<uint8_t> _readData = {};
+    size_t _flushOff = 0;
     size_t _readLen = 0;
 };

@@ -2787,6 +2787,7 @@ uint64_t _read(uint8_t w) {
 //}
 
 void sbw_Shift(uint64_t data, uint16_t width) {
+    // MSPProbeSim: custom implementation
     // <- Shift-DR
     for (uint64_t msb=(UINT64_C(1)<<(width-1)); msb; msb>>=1) {
         const bool tms = (msb & 1); // Last bit requires TMS=1
@@ -2801,6 +2802,7 @@ void sbw_Shift(uint64_t data, uint16_t width) {
 }
 
 uint64_t sbw_Shift_R(uint64_t data, uint16_t width) {
+    // MSPProbeSim: custom implementation
     // <- Shift-DR
     for (uint64_t msb=(UINT64_C(1)<<(width-1)); msb; msb>>=1) {
         const bool tms = (msb & 1); // Last bit requires TMS=1
@@ -2829,10 +2831,19 @@ uint64_t sbw_Shift_R(uint64_t data, uint16_t width) {
     }
     
     uint64_t tdo = _read((width+7)/8);
-    // de-scramble upper 4 bits if it was a 20bit shift
     if (width == F_ADDR) {
-        tdo = ((tdo>>4) | (tdo<<16)) & 0xFFFFF;
-        printf("MEOWMIX %08x\n", (uint32_t)tdo);
+        // For 20-bit addresses, scramble the result because the rest of
+        // the TI codebase expects addresses to be scrambled for some
+        // reason. When the caller unscrambles our result, they get the
+        // value we started with, [1b]:
+        // 
+        //      [1a]        [1b]        [2]         [3]
+        //   0xABCDEF -> 0x0ABCDE -> 0x0EABCD -> 0x0ABCDE
+        // 
+        // As shown above, we read [1a], remove the bottom 4 dummy bits
+        // to get [1b] (see comment above), scramble and return [2], and
+        // the caller de-scrambles to get [3].
+        tdo = ((tdo&0x0000F0)<<12) | ((tdo&0xFFFF00)>>8);
     }
     return tdo;
 }
