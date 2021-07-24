@@ -53,7 +53,7 @@ MSPFETSim leaves a minimal interface for drivers to implement in order to add su
     - Perform a Spy-bi-wire IO cycle
 
 - `void sbwRead(void* buf, size_t len);`
-    - Retrieve data previously stored via sbwIO()
+    - Retrieve data previously stored via `sbwIO()`
 
 
 
