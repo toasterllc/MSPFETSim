@@ -215,6 +215,7 @@ public:
     void _testPulse(bool tdoRead) {
         // If we're reading: pulse TEST [0,1] and read RST on rising edge
         if (tdoRead) {
+            // TODO: create new MPSSE:: command
             _cmds.push_back(0x22);
             _cmds.push_back(0x00);
             _readLen++;
@@ -222,6 +223,7 @@ public:
         // If we're not reading, just pulse TEST [0,1] (this also writes
         // TDI, but that's a nop since TDI is an input)
         } else {
+            // TODO: create new MPSSE:: command
             _cmds.push_back(0x12);
             _cmds.push_back(0x00);
             _cmds.push_back(0x00);
