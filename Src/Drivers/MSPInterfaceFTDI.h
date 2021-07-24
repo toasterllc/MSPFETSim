@@ -449,8 +449,8 @@ private:
         USBDevice _usbDev;
     };
     
-    static constexpr uint8_t _TestPin   = 1<<0; // FTDI's TCK
-    static constexpr uint8_t _RstPin    = 1<<2; // FTDI's TDO
+    static constexpr uint8_t _TestPin   = 1<<0; // FTDI TCK (orange on C232HM cable)
+    static constexpr uint8_t _RstPin    = 1<<2; // FTDI TDO (green on C232HM cable)
     const size_t _maxPacketSize = 0;
     const size_t _flushThreshold = 0;
     _FTDIDevice _dev;
