@@ -24,13 +24,6 @@ public:
     
     // Copy constructor: not allowed
     USBDevice(const USBDevice& x) = delete;
-//    // Copy constructor: use copy assignment operator
-//    USBDevice(const USBDevice& x) : USBDevice() { *this = x; }
-//    // Copy assignment operator
-//    USBDevice& operator=(const USBDevice& x) {
-//        _setDev(x.dev);
-//        return *this;
-//    }
     // Move constructor: use move assignment operator
     USBDevice(USBDevice&& x) { *this = std::move(x); }
     // Move assignment operator
@@ -123,21 +116,6 @@ private:
         close();
         _setDev(nullptr);
     }
-    
-//    void _reset() {
-//        close();
-//    }
-    
-//    void _setDevHandle(libusb_device_handle* devHandle) {
-//        libusb_close(_s.dev);
-//        _s.dev = nullptr;
-//        
-//        if (_s.devHandle) 
-//        if (dev) libusb_ref_device(dev);
-//        if (_dev) libusb_unref_device(_dev);
-//        _dev = dev;
-//        _s.devHandle = devHandle;
-//    }
     
     struct {
         libusb_device* dev = nullptr;

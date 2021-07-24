@@ -32,20 +32,6 @@ public:
         }
         
         Main();
-        
-//        ResetFirmware();
-//        BIOS_InitCom();
-//        
-//        for (;;) {
-//            // While V3OP_Scheduler has work to do (return=true), let it run for many iterations
-//            // before checking for USB data (without blocking).
-//            // When V3OP_Scheduler out of work (return=false), wait indefinitely for USB data.
-//            bool serviced = true;
-//            for (int i=0; i<100 && serviced; i++) {
-//                serviced = V3OP_Scheduler();
-//            }
-//            _dequeueUSBRequest(serviced ? 1ms : 0ms);
-//        }
     }
     
     void stop() {
@@ -60,8 +46,6 @@ public:
         uint8_t data[512];
         size_t len = 0;
     };
-    
-//    using _Rep = _Msg;
     
     void _dequeueUSBRequest(std::chrono::milliseconds timeout=std::chrono::milliseconds::max()) {
         auto xfer = _usb.read(timeout);
@@ -163,12 +147,6 @@ public:
 //        _usb.reply(msg, nullptr, 0);
     }
     
-//    void _handleInXfer(VirtualUSBDevice::Xfer&& xfer) {
-//        _inXfers.push_back(std::move(xfer));
-//        // If a reply is already available, send it now
-//        _replyIfPossible();
-//    }
-    
     void _handleUSBXferData(VirtualUSBDevice::Xfer&& xfer) {
         printf("_handleUSBXferData: <");
         for (size_t i=0; i<xfer.len; i++) {
@@ -189,36 +167,12 @@ public:
     
     void _writeReply(const void* data, size_t len) {
         _usb.write(CDC0_INEP_ADDR, data, len);
-//        _reps.push_back({});
-//        _Rep& rep = _reps.back();
-//        
-//        assert(sizeof(rep.data) >= len);
-//        memcpy(rep.data, data, len);
-//        rep.len = len;
-//        
-//        // If the host requested data, send it now
-//        _replyIfPossible();
     }
-    
-//    void _replyIfPossible() {
-//        // Match in-xfers with replies, and call `_usb.reply()` with the pairs,
-//        // until we run out of one (or both)
-//        while (!_inXfers.empty() && !_reps.empty()) {
-//            VirtualUSBDevice::Xfer& xfer = _inXfers.front();
-//            _Rep& rep = _reps.front();
-//            _usb.reply(xfer, rep.data, rep.len);
-//            
-//            _inXfers.pop_front();
-//            _reps.pop_front();
-//        }
-//    }
     
     MSPDebugDriver& _msp;
     VirtualUSBDevice _usb;
     
     std::deque<_Msg> _msgs = {}; // Messages host->device
-//    std::deque<_Rep> _reps; // Replies device->host
-//    std::deque<VirtualUSBDevice::Xfer> _inXfers; // USB host requests for data from device
     
     static const inline USB::DeviceDescriptor* _DeviceDescriptor =
         (const USB::DeviceDescriptor*)Descriptor::abromDeviceDescriptor;
