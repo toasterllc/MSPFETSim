@@ -32,7 +32,7 @@ MSPFETSim has these hardware drivers:
         - FT2232H
         - FT4232H
     
-    - Supports the C232HM cable
+    - Supports the [FTDI C232HM](https://ftdichip.com/products/c232hm-ddhsl-0-2/) cable
         - TCK (orange) <-> MSP TEST
         - TDO (green) <-> MSP RST
 
@@ -40,7 +40,7 @@ MSPFETSim has these hardware drivers:
 
 # Writing New Drivers
 
-MSPFETSim leaves a minimal interface for drivers to implement in order to add support for new debug probe hardware. This driver interface, declared in `MSPDebugDriver.h`, consists of 5 functions with semantics that amount to toggling IO pins:
+MSPFETSim leaves a minimal interface for drivers to implement in order to add support for new debug probe hardware. This driver interface, declared in `MSPDebugDriver.h`, consists of 5 functions with semantics that amount to toggling the `TEST` and `RST` pins:
 
     void sbwTestSet(bool val);
     void sbwRstSet(bool val);
