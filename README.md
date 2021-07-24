@@ -44,15 +44,19 @@ MSPFETSim leaves a minimal interface for drivers to implement in order to add su
 
 - `void sbwTestSet(bool val);`
 - `void sbwRstSet(bool val);`
+
 Set the output value of a pin
 
 - `void sbwTestPulse();`
+
 Pulse TEST=[0,1]
 
 - `void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead);`
+
 Perform a Spy-bi-wire IO cycle
 
 - `void sbwRead(void* buf, size_t len);`
+
 Retrieve data previously stored via sbwIO()
 
 
