@@ -4,19 +4,19 @@
 #include "VirtualUSBDevice.h"
 #include "Drivers/MSPDebugDriver.h"
 
-class MSPProbeSim {
+class MSPFETSim {
 public:
-    MSPProbeSim(MSPDebugDriver& msp) :
+    MSPFETSim(MSPDebugDriver& msp) :
     _msp(msp),
     _usb(_usbDeviceInfo) {
     }
     
     // Copy constructor: illegal
-    MSPProbeSim(const MSPProbeSim& x) = delete;
-    MSPProbeSim& operator=(const MSPProbeSim& x) = delete;
+    MSPFETSim(const MSPFETSim& x) = delete;
+    MSPFETSim& operator=(const MSPFETSim& x) = delete;
     // Move constructor: illegal
-    MSPProbeSim(MSPProbeSim&& x) = delete;
-    MSPProbeSim& operator=(MSPProbeSim&& x) = delete;
+    MSPFETSim(MSPFETSim&& x) = delete;
+    MSPFETSim& operator=(MSPFETSim&& x) = delete;
     
     void run() {
         try {

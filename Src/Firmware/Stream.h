@@ -93,9 +93,9 @@
 // function numbers in "zero function(s) in HAL modul" must start at 0xFF and count downward
 #endif // HAL_STREAM
 
-typedef int16_t (MSPProbeSim::*FuncInOut)  (uint16_t id);
+typedef int16_t (MSPFETSim::*FuncInOut)  (uint16_t id);
 
-// MSPProbeSim: Moved to Types.h
+// MSPFETSim: Moved to Types.h
 //#ifndef HAL_REC
 //#define HAL_REC
 //struct _HalRec_

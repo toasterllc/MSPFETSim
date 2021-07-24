@@ -1,4 +1,4 @@
-#include "MSPProbeSim.h"
+#include "MSPFETSim.h"
 #include "Drivers/MSPDebugDriver.h"
 #include "Drivers/MSPDebugDriverDummy.h"
 #include "Drivers/MSPDebugDriverMDC.h"
@@ -26,7 +26,7 @@ std::unique_ptr<MSPDebugDriver> CreateDriver() {
 int main(int argc, const char* argv[]) {
     try {
         auto msp = CreateDriver();
-        MSPProbeSim probeSim(*msp);
+        MSPFETSim probeSim(*msp);
         probeSim.run();
     
     } catch (const std::exception& e) {

@@ -18,7 +18,7 @@ const uint16_t hil_versionCmp_ = MSP_FET_HIL_VERSION_CMP;
 const uint32_t hil_signature_ = HIL_SIGNATURE;
 //#pragma required=hil_signature_
 
-// MSPProbeSim: not sure what this value is supposed to be
+// MSPFETSim: not sure what this value is supposed to be
 const HilInitFunc hil_Start_UP_ = MEMBER_FN_PTR(_hil_startUp);
 
 
@@ -2787,7 +2787,7 @@ uint64_t _read(uint8_t w) {
 //}
 
 void sbw_Shift(uint64_t data, uint16_t width) {
-    // MSPProbeSim: custom implementation
+    // MSPFETSim: custom implementation
     // <- Shift-DR
     for (uint64_t msb=(UINT64_C(1)<<(width-1)); msb; msb>>=1) {
         const bool tms = (msb & 1); // Last bit requires TMS=1
@@ -2802,7 +2802,7 @@ void sbw_Shift(uint64_t data, uint16_t width) {
 }
 
 uint64_t sbw_Shift_R(uint64_t data, uint16_t width) {
-    // MSPProbeSim: custom implementation
+    // MSPFETSim: custom implementation
     // <- Shift-DR
     for (uint64_t msb=(UINT64_C(1)<<(width-1)); msb; msb>>=1) {
         const bool tms = (msb & 1); // Last bit requires TMS=1

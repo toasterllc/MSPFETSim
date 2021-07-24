@@ -1,4 +1,4 @@
-NAME=MSPProbeSim
+NAME=MSPFETSim
 OBJECTS=Src/main.o
 
 CXX      = g++

@@ -472,7 +472,7 @@ REQUIRED(armConfigSettings)
 #define __data20
 #endif
 
-#define MACRO(x)  {ID_##x, &MSPProbeSim::_hal_##x },
+#define MACRO(x)  {ID_##x, &MSPFETSim::_hal_##x },
 HalRec hal_functions_default_[HAL_FUNCTIONS_DEFAULT_SIZE] =
 {
     MACRO(Zero)
@@ -596,7 +596,7 @@ void *ResetFirmware(struct stream_funcs* stream_adr, uint32_t device_flags, uint
        // check if we have a valid hil layer programmed into our tool
         if(hil_signature_ == 0xF00DF00D && hil_Start_UP_ && v3opHilCrcOk)
         {
-            // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtCommen`
+            // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtCommen`
             // INIT HIL layer
 //            HilInitGetEdtCommenFunc hilEdtCom = NULL;
 //            // set pointer to edt commen functions
@@ -3076,11 +3076,11 @@ const uint16_t sizeLoopFll = (uint16_t)(sizeof(loopFll)/sizeof(*loopFll));
 //    }
 //#endif
 
-uint32_t (MSPProbeSim::*ReadCounterRegsFunc)() = nullptr;
-void (MSPProbeSim::*WriteRegFunc)(int16_t, uint32_t) = nullptr;
-void (MSPProbeSim::*SetPCFunc)(uint32_t) = nullptr;
-void (MSPProbeSim::*WriteRamFunc)(uint16_t, const uint16_t*, uint16_t) = nullptr;
-void (MSPProbeSim::*ReadRamFunc)(uint16_t, uint16_t*, uint16_t) = nullptr;
+uint32_t (MSPFETSim::*ReadCounterRegsFunc)() = nullptr;
+void (MSPFETSim::*WriteRegFunc)(int16_t, uint32_t) = nullptr;
+void (MSPFETSim::*SetPCFunc)(uint32_t) = nullptr;
+void (MSPFETSim::*WriteRamFunc)(uint16_t, const uint16_t*, uint16_t) = nullptr;
+void (MSPFETSim::*ReadRamFunc)(uint16_t, uint16_t*, uint16_t) = nullptr;
 HalFuncInOut SyncFunc = nullptr;
 
 void readFromRam(uint16_t address, uint16_t* buffer, uint16_t numWords)
@@ -3412,66 +3412,66 @@ int16_t findFllSettings(uint16_t jtagBug)
 
 HAL_FUNCTION(_hal_GetDcoFrequency)
 {
-    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegisters;
-    WriteRegFunc = &MSPProbeSim::writeRegister;
-    SetPCFunc = &MSPProbeSim::setPC;
-    WriteRamFunc = &MSPProbeSim::writeToRam;
-    ReadRamFunc = &MSPProbeSim::readFromRam;
+    ReadCounterRegsFunc = &MSPFETSim::readCounterRegisters;
+    WriteRegFunc = &MSPFETSim::writeRegister;
+    SetPCFunc = &MSPFETSim::setPC;
+    WriteRamFunc = &MSPFETSim::writeToRam;
+    ReadRamFunc = &MSPFETSim::readFromRam;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContext;
     return findDcoSettings(0);
 }
 
 HAL_FUNCTION(_hal_GetDcoFrequencyJtag)
 {
-    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegisters;
-    WriteRegFunc = &MSPProbeSim::writeRegister;
-    SetPCFunc = &MSPProbeSim::setPCJtag;
-    WriteRamFunc = &MSPProbeSim::writeToRam;
-    ReadRamFunc = &MSPProbeSim::readFromRam;
+    ReadCounterRegsFunc = &MSPFETSim::readCounterRegisters;
+    WriteRegFunc = &MSPFETSim::writeRegister;
+    SetPCFunc = &MSPFETSim::setPCJtag;
+    WriteRamFunc = &MSPFETSim::writeToRam;
+    ReadRamFunc = &MSPFETSim::readFromRam;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContext;
     return findDcoSettings(1);
 }
 
 HAL_FUNCTION(_hal_GetDcoFrequencyX)
 {
-    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegistersX;
-    WriteRegFunc = &MSPProbeSim::writeRegisterX;
-    SetPCFunc = &MSPProbeSim::setPCX;
-    WriteRamFunc = &MSPProbeSim::writeToRamX;
-    ReadRamFunc = &MSPProbeSim::readFromRamX;
+    ReadCounterRegsFunc = &MSPFETSim::readCounterRegistersX;
+    WriteRegFunc = &MSPFETSim::writeRegisterX;
+    SetPCFunc = &MSPFETSim::setPCX;
+    WriteRamFunc = &MSPFETSim::writeToRamX;
+    ReadRamFunc = &MSPFETSim::readFromRamX;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContextX;
     return findDcoSettings(0);
 }
 
 HAL_FUNCTION(_hal_GetFllFrequency)
 {
-    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegisters;
-    WriteRegFunc = &MSPProbeSim::writeRegister;
-    SetPCFunc = &MSPProbeSim::setPC;
-    WriteRamFunc = &MSPProbeSim::writeToRam;
-    ReadRamFunc = &MSPProbeSim::readFromRam;
+    ReadCounterRegsFunc = &MSPFETSim::readCounterRegisters;
+    WriteRegFunc = &MSPFETSim::writeRegister;
+    SetPCFunc = &MSPFETSim::setPC;
+    WriteRamFunc = &MSPFETSim::writeToRam;
+    ReadRamFunc = &MSPFETSim::readFromRam;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContext;
     return findFllSettings(0);
 }
 
 HAL_FUNCTION(_hal_GetFllFrequencyJtag)
 {
-    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegisters;
-    WriteRegFunc = &MSPProbeSim::writeRegister;
-    SetPCFunc = &MSPProbeSim::setPCJtag;
-    WriteRamFunc = &MSPProbeSim::writeToRam;
-    ReadRamFunc = &MSPProbeSim::readFromRam;
+    ReadCounterRegsFunc = &MSPFETSim::readCounterRegisters;
+    WriteRegFunc = &MSPFETSim::writeRegister;
+    SetPCFunc = &MSPFETSim::setPCJtag;
+    WriteRamFunc = &MSPFETSim::writeToRam;
+    ReadRamFunc = &MSPFETSim::readFromRam;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContext;
     return findFllSettings(1);
 }
 
 HAL_FUNCTION(_hal_GetFllFrequencyX)
 {
-    ReadCounterRegsFunc = &MSPProbeSim::readCounterRegistersX;
-    WriteRegFunc = &MSPProbeSim::writeRegisterX;
-    SetPCFunc = &MSPProbeSim::setPCX;
-    WriteRamFunc = &MSPProbeSim::writeToRamX;
-    ReadRamFunc = &MSPProbeSim::readFromRamX;
+    ReadCounterRegsFunc = &MSPFETSim::readCounterRegistersX;
+    WriteRegFunc = &MSPFETSim::writeRegisterX;
+    SetPCFunc = &MSPFETSim::setPCX;
+    WriteRamFunc = &MSPFETSim::writeToRamX;
+    ReadRamFunc = &MSPFETSim::readFromRamX;
     SyncFunc = HAL_SyncJtag_Conditional_SaveContextX;
     return findFllSettings(0);
 }
@@ -3573,7 +3573,7 @@ HAL_FUNCTION(_hal_GetInterfaceMode)
         }
         IHIL_SetProtocol(protocol);
         #ifdef MSP_FET
-            // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+            // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //            HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //            hilEdtDis(&_edt_Distinct_Methods_HAL);
             _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -3655,7 +3655,7 @@ HAL_FUNCTION(_hal_GetInterfaceModeArm)
 
         IHIL_SetProtocol(protocol);
         #ifdef MSP_FET
-            // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+            // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //            HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //            hilEdtDis(&_edt_Distinct_Methods_HAL);
             _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -4040,7 +4040,7 @@ HAL_FUNCTION(_hal_HilCommand)
             IHIL_SetProtocol(dataLow);
 
             {
-                // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+                // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //                HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //                hilEdtDis(&_edt_Distinct_Methods_HAL);
                 _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -4271,7 +4271,7 @@ HAL_FUNCTION(_hal_MagicPattern)
     IHIL_SetProtocol(protocol);
 #if defined(eZ_FET) || defined(MSP_FET)
     {
-        // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+        // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //        hilEdtDis(&_edt_Distinct_Methods_HAL);
         _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -4329,7 +4329,7 @@ HAL_FUNCTION(_hal_MagicPattern)
 #ifdef MSP_FET
         if (protocol == SPYBIWIRE_MSP_FET)
         {
-            // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+            // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //            HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //            hilEdtDis(&_edt_Distinct_Methods_HAL);
             _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -5004,7 +5004,7 @@ typedef enum ETMode
 //#pragma inline=forced
 uint32_t getTimeStamp()
 {
-    // MSPProbeSim: disable EnergyTrace stuff
+    // MSPFETSim: disable EnergyTrace stuff
     UNIMP_FN();
     return 0;
 //    uint32_t TimeStamp = 0;
@@ -5028,7 +5028,7 @@ uint32_t getTimeStamp()
 //#pragma inline=forced
 uint32_t getIMeasure()
 {
-    // MSPProbeSim: disable EnergyTrace stuff
+    // MSPFETSim: disable EnergyTrace stuff
     UNIMP_FN();
     return 0;
 //    uint32_t IMeasure = 0;
@@ -5098,7 +5098,7 @@ HAL_FUNCTION(_hal_PollJStateRegEt8)
 
     buffer[currentIndex].eventID = 8;
 
-    // MSPProbeSim: disable timer-related stuff
+    // MSPFETSim: disable timer-related stuff
 //    while(TA0R > 0xFFA0 || TA0R  < 2)
 //    {
 //        IHIL_Delay_1us(3);
@@ -5311,7 +5311,7 @@ int16_t PollJStateReg(uint16_t JStateVersion)
 
         buffer[currentIndex].eventID = 7;
 
-        // MSPProbeSim: disable timer-related stuff
+        // MSPFETSim: disable timer-related stuff
 //        while(TA0R > 0xFFA0 || TA0R  < 2)
 //        {
 //            IHIL_Delay_1us(3);
@@ -5616,7 +5616,7 @@ HAL_FUNCTION(_hal_Psa)
     int16_t ret_value = 0;
 
 #if defined(eZ_FET) || defined(MSP_FET)
-    // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+    // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //    hilEdtDis(&_edt_Distinct_Methods_HAL);
     _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -5696,7 +5696,7 @@ HAL_FUNCTION(_hal_PsaX)
     int16_t ret_value = 0;
 
 #if defined(eZ_FET) || defined(MSP_FET)
-    // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+    // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //    hilEdtDis(&_edt_Distinct_Methods_HAL);
     _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -5774,7 +5774,7 @@ HAL_FUNCTION(_hal_PsaXv2)
     StreamSafe stream_tmp;
 
 #if defined(eZ_FET) || defined(MSP_FET)
-    // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+    // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //    hilEdtDis(&_edt_Distinct_Methods_HAL);
     _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -8151,7 +8151,7 @@ HAL_FUNCTION(_hal_StartJtag)
         return(ret_value);
     }
 
-    // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+    // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //    HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //    hilEdtDis(&_edt_Distinct_Methods_HAL);
     _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -8251,7 +8251,7 @@ HAL_FUNCTION(_hal_StartJtagActivationCode)
 
 #if defined(eZ_FET) || defined(MSP_FET)
     {
-        // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+        // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //        hilEdtDis(&_edt_Distinct_Methods_HAL);
         _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -9861,7 +9861,7 @@ HAL_FUNCTION(_hal_UnlockC092)
      IHIL_SetProtocol(0); // C092 can just operrate in SBW4 Mode
 #if defined(eZ_FET) || defined(MSP_FET)
     {
-        // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+        // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //        hilEdtDis(&_edt_Distinct_Methods_HAL);
         _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);
@@ -9943,7 +9943,7 @@ HAL_FUNCTION(_hal_UnlockDeviceXv2)
      IHIL_SetProtocol(protocol); // this is jsut for debug must be changed
 #if defined(eZ_FET) || defined(MSP_FET)
     {
-        // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
+        // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtDistinct`
 //        HilInitGetEdtDistinctFunc hilEdtDis = (HilInitGetEdtDistinctFunc)0x1880;
 //        hilEdtDis(&_edt_Distinct_Methods_HAL);
         _hil_getEdtDistinct(&_edt_Distinct_Methods_HAL);

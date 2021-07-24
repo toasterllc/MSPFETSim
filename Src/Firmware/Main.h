@@ -11,7 +11,7 @@
 #define long    BADTYPE
 
 // static variables/functions aren't allowed since the entirety of firmware
-// exists within the MSPProbeSim class, and class instances shouldn't share
+// exists within the MSPFETSim class, and class instances shouldn't share
 // variables, while functions should only affect their respective instances.
 // Globals should just be member variables, and static functions should just
 // be normal functions.
@@ -29,8 +29,8 @@ int16_t debuggerOff = 0;
 
 struct LOOP_INFOS
 {
-    void (MSPProbeSim::*Scheduler)(void);
-    void (MSPProbeSim::*UsbLoop)(void);
+    void (MSPFETSim::*Scheduler)(void);
+    void (MSPFETSim::*UsbLoop)(void);
 };
 typedef struct LOOP_INFOS LOOP_INFOS_t;
 

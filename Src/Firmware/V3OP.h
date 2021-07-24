@@ -243,7 +243,7 @@ edt_common_methods_t  _edt_Common_Methods_V3OP = {};
 //typedef void (*HilInitGetEdtCommenFunc)(edt_common_methods_t* edt_commen); // * hal_size, void * stream_adr)
 //HilInitGetEdtCommenFunc hilEdtCom = NULL;
 
-typedef int16_t (MSPProbeSim::*HalFpgaUpdateFunc)(void);// FPGA update function
+typedef int16_t (MSPFETSim::*HalFpgaUpdateFunc)(void);// FPGA update function
 
 int16_t _dummy_int16_tOutVoidIn(void) {return 0;}
 void _dummy_voidOutVoidIn(void){};
@@ -327,7 +327,7 @@ void V3OP_HwReset(void)
 }
 
 //#pragma optimize = low
-// MSPProbeSim: renamed to not conflict with HAL.h `HAL_Zero` define
+// MSPFETSim: renamed to not conflict with HAL.h `HAL_Zero` define
 int16_t HAL_Zero_V3OP(uint8_t *data)
 {
     int16_t ret_value = 0;
@@ -498,7 +498,7 @@ void V3OP_KillAllLoops(void)
     {
         if(v3op_loop_array_[i].indata != NULL)
         {
-            // MSPProbeSim: shouldn't be free'd because it's not malloc'd (.indata is assigned to `tempInData`)
+            // MSPFETSim: shouldn't be free'd because it's not malloc'd (.indata is assigned to `tempInData`)
 //            free(v3op_loop_array_[i].indata);
         }
         v3op_loop_array_[i].indata = NULL;
@@ -548,7 +548,7 @@ int16_t V3OP_KillLoop(uint8_t msg_id)
         {
             if(v3op_loop_array_[i].indata != NULL)
             {
-                // MSPProbeSim: shouldn't be free'd because it's not malloc'd (.indata is assigned to `tempInData`)
+                // MSPFETSim: shouldn't be free'd because it's not malloc'd (.indata is assigned to `tempInData`)
 //                free(v3op_loop_array_[i].indata);
             }
             v3op_loop_array_[i].indata = NULL;
@@ -1011,7 +1011,7 @@ int16_t V3OP_HalInterfaceInit(void)
     // call startup of HIL layer
     CALL_MEMBER_FN_PTR(hilInit)();
     
-    // MSPProbeSim: not sure what this craziness is, but its result is calling `_hil_getEdtCommen`
+    // MSPFETSim: not sure what this craziness is, but its result is calling `_hil_getEdtCommen`
 //    HilInitGetEdtCommenFunc hilEdtCom = (HilInitGetEdtCommenFunc)0x18A0;
 //    hilEdtCom(&_edt_Common_Methods_V3OP);
     _hil_getEdtCommen(&_edt_Common_Methods_V3OP);
@@ -1031,7 +1031,7 @@ int16_t V3OP_HalInterfaceInit(void)
     IccMonitor_setHilIterface(&_edt_Common_Methods_V3OP);
     CALL_MEMBER_FN_PTR(comInfos_.comSetHil)(&_edt_Common_Methods_V3OP);
 
-    // MSPProbeSim: disable 'IccMonitor_Process' because it doesn't apply to the simulator
+    // MSPFETSim: disable 'IccMonitor_Process' because it doesn't apply to the simulator
     // and causes us to do busy work that isn't necessary
 //    if(hal_ptr_ != NULL)
 //    {
@@ -1178,7 +1178,7 @@ void V3OP_Scheduler(void)
                 {
                     if(STREAM_out_init(v3op_loop_array_[loop_array_counter].msg_id, v3op_loop_array_[loop_array_counter].msg_type) >= 0)
                     {
-                        // MSPProbeSim: we added a null check for `payload` here (before dereferencing
+                        // MSPFETSim: we added a null check for `payload` here (before dereferencing
                         // payload[0] to calculate `payloadLen`), since .indata can be null if there's
                         // no payload. Guessing the real MSPFET is reading garbage in this case, but
                         // not crashing because 0x0 is a valid address.
@@ -1351,7 +1351,7 @@ uint16_t calculateCrc(uint16_t sum, uint16_t *adress, uint32_t segmentLength)
 
 uint16_t V3OP_GetHilCrc()
 {
-    // MSPProbeSim: Determined empirically by printing `expectedHilCrc` in UpdateManagerFet.cpp
+    // MSPFETSim: Determined empirically by printing `expectedHilCrc` in UpdateManagerFet.cpp
     return 0x6153;
 }
 
@@ -1363,25 +1363,25 @@ uint16_t V3OP_GetHalFpgaCrc()
 
 uint16_t V3OP_GetHalCrc()
 {
-    // MSPProbeSim: Determined empirically by printing `expectedHalCrc` in UpdateManagerFet.cpp
+    // MSPFETSim: Determined empirically by printing `expectedHalCrc` in UpdateManagerFet.cpp
     return 0xF70B;
 }
 
 uint16_t V3OP_GetCoreCrc()
 {
-    // MSPProbeSim: Determined empirically by printing `expectedCoreCrc` in UpdateManagerFet.cpp
+    // MSPFETSim: Determined empirically by printing `expectedCoreCrc` in UpdateManagerFet.cpp
     return 0x7aaa;
 }
 
 uint16_t V3OP_GetDcdcCrc()
 {
-    // MSPProbeSim: Determined empirically by printing `expectedDcdcCrc` in UpdateManagerFet.cpp
+    // MSPFETSim: Determined empirically by printing `expectedDcdcCrc` in UpdateManagerFet.cpp
     return 0xF66F;
 }
 
 uint16_t V3OP_GetComChannelCrc()
 {
-    // MSPProbeSim: Determined empirically by printing `expectedFetComChannelCRC` in UpdateManagerFet.cpp
+    // MSPFETSim: Determined empirically by printing `expectedFetComChannelCRC` in UpdateManagerFet.cpp
     return 0x8457;
 }
 
@@ -1654,7 +1654,7 @@ int16_t dcdc_Restart(uint16_t fetType_)
 //#pragma optimize = low
 int16_t dcdc_SetVcc(uint16_t vcc)
 {
-    // MSPProbeSim: pretend to work
+    // MSPFETSim: pretend to work
     return 0;
 }
 
@@ -1677,7 +1677,7 @@ int16_t dcdc_Calibrate(uint16_t resistors[5], uint16_t resCount, uint16_t vcc)
 //#pragma optimize = low
 int16_t dcdc_getSubMcuVersion()
 {
-    // MSPProbeSim: Determined empirically by printing `expectedDcdcSubMcuVersion` in UpdateManagerFet.cpp
+    // MSPFETSim: Determined empirically by printing `expectedDcdcSubMcuVersion` in UpdateManagerFet.cpp
     return 0x0034;
 }
 
