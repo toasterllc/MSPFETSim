@@ -2,7 +2,7 @@
 #include <climits>
 #include <chrono>
 #include "VirtualUSBDevice.h"
-#include "MSPDebugDriver.h"
+#include "Drivers/MSPDebugDriver.h"
 
 class MSPProbeSim {
 public:

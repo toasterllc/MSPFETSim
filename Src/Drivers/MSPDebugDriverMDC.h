@@ -1,14 +1,14 @@
 #pragma once
+
+#if __has_include("../../MDC/Code/STM32/Shared/STLoaderTypes.h")
+
 #include <libusb-1.0/libusb.h>
-
-#if __has_include ("../../MDC/Code/STM32/Shared/STLoaderTypes.h")
-#include "../../MDC/Code/STM32/Shared/STLoaderTypes.h"
-#define MSPDebugDriverMDCExists 1
-
-#include "RuntimeError.h"
 #include "MSPDebugDriver.h"
+#include "RuntimeError.h"
 #include "Defer.h"
 #include "USBDevice.h"
+#include "../../MDC/Code/STM32/Shared/STLoaderTypes.h"
+#define MSPDebugDriverMDCExists 1
 
 class MSPDebugDriverMDC : public MSPDebugDriver {
 public:
@@ -95,4 +95,4 @@ private:
     }
 };
 
-#endif
+#endif // __has_include("../../MDC/Code/STM32/Shared/STLoaderTypes.h")

@@ -1,5 +1,6 @@
 #pragma once
 #include <libftdi1/ftdi.h>
+#include "MSPDebugDriver.h"
 #include "USBDevice.h"
 
 class MSPDebugDriverFTDI : public MSPDebugDriver {

@@ -1,5 +1,5 @@
 #include "MSPProbeSim.h"
-#include "MSPDebugDriver.h"
+#include "Drivers/MSPDebugDriver.h"
 #include "Drivers/MSPDebugDriverDummy.h"
 #include "Drivers/MSPDebugDriverMDC.h"
 #include "Drivers/MSPDebugDriverFTDI.h"

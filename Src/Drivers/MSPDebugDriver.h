@@ -2,7 +2,7 @@
 
 class MSPDebugDriver {
 public:
-    virtual ~MSPDebugDriver() = 0;
+    virtual ~MSPDebugDriver() {}
     
     // sbwTestSet() / sbwRstSet(): Set output value of a pin
     virtual void sbwTestSet(bool val) = 0;
