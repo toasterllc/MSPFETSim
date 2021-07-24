@@ -42,6 +42,7 @@ LOOP_INFOS_t loopInfos_ =
 
 void Main(void)
 {
+    // MSPFETSIM: no watchdog
 //    WDTCTL = WDTPW + WDTHOLD;       // Stop watchdog timer
 //
 //    if(!V3OP_SystemOk())
@@ -49,14 +50,17 @@ void Main(void)
 //        WDTCTL = 0;
 //    }
 
+    // MSPFETSIM: these functions would end up being empty after
+    // removing hardware-specific stuff
 //    init_BiosPorts();
 //    init_Clock();
 
     BIOS_LedOff(BIOS_LED_MODE);
     BIOS_LedOn(BIOS_LED_POWER);
 
-    // Initialize USB and enable various events
-    USB_init();
+    // MSPFETSIM: we only implement the USBCDC_ USB functions
+//    // Initialize USB and enable various events
+//    USB_init();
 //    WORD USBEVIE = kUSB_VbusOnEvent+kUSB_VbusOffEvent+kUSB_dataReceivedEvent+kUSB_UsbSuspendEvent+kUSB_UsbResumeEvent+kUSB_UsbResetEvent;
 //    USB_setEnabledEvents(USBEVIE);
 //    // See if we're already attached physically to USB, and if so, connect to it
