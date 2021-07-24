@@ -42,17 +42,17 @@ MSPFETSim has these hardware drivers:
 
 MSPFETSim leaves a minimal interface for drivers to implement in order to add support for new debug probe hardware. This driver interface, declared in `MSPDebugDriver.h`, consists of 5 functions with semantics that amount to toggling the `TEST` and `RST` pins:
 
-`void sbwTestSet(bool val);`
-`void sbwRstSet(bool val);`
+- `void sbwTestSet(bool val);`
+- `void sbwRstSet(bool val);`
 Set the output value of a pin
 
-`void sbwTestPulse();`
+- `void sbwTestPulse();`
 Pulse TEST=[0,1]
 
-`void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead);`
+- `void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead);`
 Perform a Spy-bi-wire IO cycle
 
-`void sbwRead(void* buf, size_t len);`
+- `void sbwRead(void* buf, size_t len);`
 Retrieve data previously stored via sbwIO()
 
 
