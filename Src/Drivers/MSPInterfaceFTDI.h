@@ -106,6 +106,7 @@ public:
     _flushThreshold(_GetFlushThreshold(_maxPacketSize)),
     _dev(std::move(dev))
     {
+        _dev.setInterface(INTERFACE_A);
         _dev.open();
         _dev.usbReset();
         _dev.setEventChar(0, 0);
@@ -423,8 +424,8 @@ public:
         const size_t off = _readData.size();
         _readData.resize(_readData.size() + readLen);
         
-        printf("[FTDI] reading %zu bytes (_flushReadLen=%zu, _readLen=%zu)\n",
-            readLen-ResponseExtraByteCount, _flushReadLen, _readLen);
+//        printf("[FTDI] reading %zu bytes (_flushReadLen=%zu, _readLen=%zu)\n",
+//            readLen-ResponseExtraByteCount, _flushReadLen, _readLen);
         
         _dev.read(_readData.data()+off, readLen);
         _readLen -= _flushReadLen;
@@ -450,52 +451,13 @@ public:
         // the amount of available data
         assert(len*8 <= _readData.size());
         
-//        const size_t tmpBufLen = len*8;
-//        auto tmpBufUnique = std::make_unique<uint8_t[]>(tmpBufLen);
-//        uint8_t* tmpBuf = tmpBufUnique.get();
-//        _dev.read(tmpBuf, tmpBufLen);
-        
-        // Read every 8th byte, which contains all 8 shifted bits
-        printf("Read data (available=%zu, read len=%zu):\n", _readData.size(), len);
-        for (size_t i=0; i<_readData.size(); i++) {
-            printf("[%zu] %02x\n", i, _readData[i]);
-        }
-        printf("\n\n\n");
-        
         uint8_t* buf8 = (uint8_t*)buf;
         for (size_t i=7; i<len*8; i+=8) {
-//            printf("Read data: 0x%x\n", _readData[i]);
             *buf8 = _readData[i];
             buf8++;
         }
         
-//        for (size_t ireadData=0, ibit=0, ibuf=0; ireadData<len*8; ireadData++) {
-//            printf("Read data: 0x%x\n", _readData[ireadData]);
-//            const bool bit = _readData[ireadData] & 0x1; // We read one bit at a time (via _testPulse()), which FTDI puts at bit 0
-//            buf8[ibuf] <<= 1;
-//            buf8[ibuf] |= bit;
-//            ibit++;
-//            if (ibit == 8) {
-//                ibuf++;
-//                ibit = 0;
-//            }
-//        }
-        
         _readData.erase(_readData.begin(), _readData.begin()+len*8);
-        
-//        uint8_t* buf8 = (uint8_t*)buf;
-//        for (size_t ibit=0, ibyte=0, byteLen=0; ibit<tmpBufLen; ibit++) {
-//            const bool bit = tmpBuf[ibit] & _RstPin;
-//            buf8[ibyte] <<= 1;
-//            buf8[ibyte] |= bit;
-//            byteLen++;
-//            if (byteLen == 8) {
-//                ibyte++;
-//                byteLen = 0;
-//            }
-//        }
-//        
-//        _readLen -= len;
     }
     
 private:
@@ -527,37 +489,9 @@ private:
             ftdi_deinit(&_ctx);
         }
         
-//        void setInterface(uint8_t mode, uint8_t pinDirs) {
-//            int ir = ftdi_set_bitmode(&_ctx, pinDirs, mode);
-//            _checkErr(ir, "setBitmode failed");
-//        }
-        
         void open() {
-//            int ir = ftdi_set_interface(&_ctx, INTERFACE_A);
-//            if (ir) {
-//                abort();
-//            }
-//            
-//            // If `device` wasn't specified, use the first one with the default VID/PID
-//            struct ftdi_device_list* devices = NULL;
-//            int devicesCount = ftdi_usb_find_all(&_ctx, &devices, 0x403, 0x6014);
-//            if (devicesCount < 1) {
-//                abort();
-//            }
-//            
-//            // Open FTDI USB device
-//            ir = ftdi_usb_open_dev(&_ctx, devices[0].dev);
-//            if (ir) {
-//                abort();
-//            }
-            
             int ir = ftdi_usb_open_dev(&_ctx, _usbDev);
             _checkErr(ir, "ftdi_usb_open_dev failed");
-            
-//            printf("OPENED\n");
-//            
-//            ir = ftdi_tcioflush(&_ctx);
-//            _checkErr(ir, "ftdi_tcioflush failed");
         }
         
         void close() {
@@ -568,6 +502,11 @@ private:
         void usbReset() {
             int ir = ftdi_usb_reset(&_ctx);
             _checkErr(ir, "ftdi_usb_reset failed");
+        }
+        
+        void setInterface(enum ftdi_interface iface) {
+            int ir = ftdi_set_interface(&_ctx, iface);
+            _checkErr(ir, "ftdi_set_interface failed");
         }
         
         void setBitmode(uint8_t mode, uint8_t pinDirs) {
@@ -590,7 +529,6 @@ private:
             while (off < len) {
                 int ir = ftdi_read_data(&_ctx, (uint8_t*)data+off, len-off);
                 _checkErr(ir, "ftdi_read_data failed");
-//                printf("ftdi_read_data returned: %d\n", ir);
                 off += ir;
             }
         }
@@ -613,64 +551,14 @@ private:
             _checkErr(ir, "ftdi_set_event_char failed");
         }
         
-//        operator bool() const { return _s.dev; }
-//        operator libusb_device*() const { return _s.dev; }
-//        operator libusb_device_handle*() const { return _s.devHandle; }
-        
     private:
         void _checkErr(int ir, const char* errMsg) {
             if (ir < 0) throw RuntimeError("%s: %s", errMsg, ftdi_get_error_string(&_ctx));
         }
         
-//        void _reset() {
-//            
-//        }
-//        
-    //    void _reset() {
-    //        close();
-    //    }
-        
-    //    void _setDevHandle(libusb_device_handle* devHandle) {
-    //        libusb_close(_s.dev);
-    //        _s.dev = nullptr;
-    //        
-    //        if (_s.devHandle) 
-    //        if (dev) libusb_ref_device(dev);
-    //        if (_dev) libusb_unref_device(_dev);
-    //        _dev = dev;
-    //        _s.devHandle = devHandle;
-    //    }
-        
-//        struct {
-//            struct ftdi_context ctx;
-//            USBDevice usbDev;
-//        } _s;
-        
         struct ftdi_context _ctx = {};
         USBDevice _usbDev;
     };
-    
-//    static struct ftdi_context _FTDIContextCreate() {
-//        struct ftdi_context ctx;
-//        int ir = ftdi_init(&ctx);
-//        _checkErr(ir, "ftdi_init failed");
-//        return ctx;
-//    }
-    
-    
-//    static libusb_context* _FTDICtx = nullptr;
-//    
-//    static void _FTDICtxCreate() {
-//        static std::once_flag Once;
-//        std::call_once(Once, [](){
-//            int ir = ftdi_init(&_FTDICtx);
-//            _checkErr(ir, "ftdi_init failed");
-//        });
-//    }
-    
-//    static void _checkErr(struct ftdi_context& ctx, int ir, const char* errMsg) {
-//        if (ir < 0) throw RuntimeError("%s: %s", errMsg, ftdi_get_error_string(&ctx));
-//    }
     
     static constexpr uint8_t _TestPin   = 1<<0; // FTDI's TCK
     static constexpr uint8_t _RstPin    = 1<<2; // FTDI's TDO
