@@ -145,38 +145,9 @@ uint64_t SetReg8_64Bits(uint64_t data, uint16_t loopCount, uint16_t PG)
 SBWShiftProxy<uint8_t> cntrl_sig_low_byte()        { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_LOW_BYTE);    }
 //SBWShiftProxy<uint8_t> cntrl_sig_capture()         { return CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_CAPTURE);     }
 
-#pragma push_macro("static")
-#undef static
-
-static inline uint8_t LoopCmd1[] = {0x0f, 0x8a, 0x1e, 0x00, 0x51, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00};
-static inline uint8_t LoopCmd2[] = {0x0f, 0x8a, 0x18, 0x00, 0x4b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00};
-static inline uint8_t LoopCmd3[] = {0x07, 0x8a, 0x1d, 0x00, 0x0a, 0x00, 0x80, 0x00};
-
-#pragma pop_macro("static")
-
-bool meowmixLatched = false;
 SBWShiftProxy<uint8_t> cntrl_sig_capture()         {
     const uint8_t jtagID = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_CAPTURE);
     printf("JTAG ID: %x\n", jtagID);
-    
-    if (jtagID==0x98 && !meowmixLatched) {
-//        {
-//            V3OP_SetLoop(LoopCmd1, 0);
-//        }
-//        
-//        {
-//            V3OP_SetLoop(LoopCmd2, 0);
-//        }
-//        
-//        {
-//            V3OP_SetLoop(LoopCmd3, 0);
-//        }
-        
-        printf("MEOWMIX INSTALLED LOOPS\n");
-        meowmixLatched = true;
-    }
-    
-    
     return jtagID;
 }
 

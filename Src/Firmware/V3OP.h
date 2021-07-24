@@ -595,10 +595,6 @@ int16_t V3OP_SetLoop(uint8_t *payload_incl_addr, uint8_t flags)
     }
     if(i < V3OP_LOOP_ARRAY_COUNT)   // free slot found
     {
-//        if ((*(uint16_t*)&payload_incl_addr[MESSAGE_EXECUTE_CALL_ADDR_POS]) == ID_PollJStateRegFR57xx) {
-//            printf("MEOWMIX BLOCKING LOOP FOR ID_PollJStateRegFR57xx\n");
-//            return 1;
-//        }
         if(payload_incl_addr[0] >= MESSAGE_EXECUTE_PAYLOAD_POS)
         {
             payload_size = payload_incl_addr[0]+1;

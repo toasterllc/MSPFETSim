@@ -5004,6 +5004,7 @@ typedef enum ETMode
 //#pragma inline=forced
 uint32_t getTimeStamp()
 {
+    // MSPProbeSim: disable EnergyTrace stuff
     UNIMP_FN();
     return 0;
 //    uint32_t TimeStamp = 0;
@@ -5027,6 +5028,7 @@ uint32_t getTimeStamp()
 //#pragma inline=forced
 uint32_t getIMeasure()
 {
+    // MSPProbeSim: disable EnergyTrace stuff
     UNIMP_FN();
     return 0;
 //    uint32_t IMeasure = 0;
@@ -5525,8 +5527,6 @@ uint16_t LPMx5_DEVICE_STATE  = ACTIVE;       // Assume device starts in Wake-up 
 */
 HAL_FUNCTION(_hal_PollJStateRegFR57xx)
 {
-    return 0;
-    printf("MEOWMIX _hal_PollJStateRegFR57xx\n");
     int16_t RetState = HALERR_UNDEFINED_ERROR;
 
     volatile uint8_t state = LPM5_MODE;
@@ -10131,7 +10131,6 @@ HAL_FUNCTION(_hal_WaitForDebugHaltArm)
 
 HAL_FUNCTION(_hal_WaitForEem)
 {
-    printf("MEOWMIX _hal_WaitForEem\n");
     int16_t RetState = HALERR_UNDEFINED_ERROR;
     uint32_t lMask = 0;
     uint16_t sGenCtrl = 0, lOut = 0;

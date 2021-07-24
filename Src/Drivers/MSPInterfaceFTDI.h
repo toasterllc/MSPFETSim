@@ -117,20 +117,18 @@ public:
         // TODO: does setting the baud rate apply to MPSSE?
 //        _dev.setBaudRate(1<<21);
         
-        // TODO: these commands aren't all supported by all hardware
-        {
-            constexpr uint8_t initCmd[] = {
-//                MPSSE::DisableClkDivideBy5,        // Use 60MHz master clock
-//                MPSSE::DisableAdaptiveClocking,    // Disable adaptive clocking
-//                MPSSE::Disable3PhaseDataClocking,  // Disable three-phase clocking
-//                MPSSE::DisconnectTDITDOLoopback,   // Disable loopback
-//                MPSSE::SetClkDivisor, 0, 0,         // Set TCK frequency to 6MHz
-                MPSSE::SetClkDivisor, 14, 0,        // Set TCK frequency to 400kHz
-            };
-            
-            _dev.write(initCmd, sizeof(initCmd));
-        }
+        constexpr uint8_t initCmd[] = {
+//            MPSSE::SetClkDivisor, 0, 0,         // Set TCK frequency to 6MHz
+            MPSSE::SetClkDivisor, 14, 0,        // Set TCK frequency to 400kHz
+//            MPSSE::SetClkDivisor, 29, 0,        // Set TCK frequency to 200kHz
+//            MPSSE::SetClkDivisor, 59, 0,        // Set TCK frequency to 100kHz
+//            MPSSE::SetClkDivisor, 119, 0,       // Set TCK frequency to 50kHz
+        };
         
+        _dev.write(initCmd, sizeof(initCmd));
+        
+        // TODO: in the future we should use ftdi_tcioflush(), but that's only available in
+        // TODO: the latest libftdi, and we don't want to require that yet
         // Clear our receive buffer
         // For some reason this needs to happen after our first write,
         // otherwise we don't receive anything.
@@ -142,14 +140,8 @@ public:
             if (!ir) break;
         }
         
-        {
-            constexpr uint8_t initCmd[] = {
-                MPSSE::BadCommand,
-            };
-            _dev.write(initCmd, sizeof(initCmd));
-        }
-        
         // Synchronize with FTDI by sending a bad command and ensuring we get the expected error
+        _dev.write(&MPSSE::BadCommand, 1);
         uint8_t resp[2];
         _dev.read(resp, sizeof(resp));
         if (!(resp[0]==MPSSE::BadCommandResp && resp[1]==MPSSE::BadCommand))
@@ -164,6 +156,8 @@ public:
     ~MSPInterfaceFTDI() {}
     
     struct MPSSE {
+        static constexpr uint8_t ClockBitsOutPosEdgeMSB     = 0x12;
+        static constexpr uint8_t ClockBitsInPosEdgeMSB      = 0x22;
         static constexpr uint8_t SetDataBitsL               = 0x80;
         static constexpr uint8_t ReadDataBitsL              = 0x81;
         static constexpr uint8_t SetDataBitsH               = 0x82;
@@ -216,16 +210,14 @@ public:
     void _testPulse(bool tdoRead) {
         // If we're reading: pulse TEST [0,1] and read RST on rising edge
         if (tdoRead) {
-            // TODO: create new MPSSE:: command
-            _cmds.push_back(0x22);
+            _cmds.push_back(MPSSE::ClockBitsInPosEdgeMSB);
             _cmds.push_back(0x00);
             _readLen++;
         
         // If we're not reading, just pulse TEST [0,1] (this also writes
         // TDI, but that's a nop since TDI is an input)
         } else {
-            // TODO: create new MPSSE:: command
-            _cmds.push_back(0x12);
+            _cmds.push_back(MPSSE::ClockBitsOutPosEdgeMSB);
             _cmds.push_back(0x00);
             _cmds.push_back(0x00);
         }
@@ -352,7 +344,7 @@ public:
     
     // _Swap(): Swap `len` elements in vector `a`, at offset `off`, with the entire vector `b`.
     // As a convenience, `off+len` can extend past the end of `a`, in which case
-    // `len` will be clipped so that `off+len` is the end of `a`.
+    // `len` will be clamped so that `off+len` is at the end of `a`.
     template <typename T>
     void _Swap(std::vector<T>& a, size_t off, size_t len, std::vector<T>& b) {
         len = std::min(len, a.size()-off); // Allow `off+len` to extend past the end of `a`
@@ -408,8 +400,8 @@ public:
         const size_t extraCmdsLen = extraCmds.size();
         const size_t writeLen = _flushCmdLen+extraCmdsLen;
         
-        printf("MEOWMIX FTDI flushing %zu commands (_flushThreshold=%zu, _maxPacketSize=%zu)\n",
-            writeLen, _flushThreshold, _maxPacketSize);
+//        printf("[FTDI] flushing %zu commands (_flushThreshold=%zu, _maxPacketSize=%zu)\n",
+//            writeLen, _flushThreshold, _maxPacketSize);
         
         // Logic error if our commands are larger than FTDI's USB max packet size
         assert(writeLen <= _maxPacketSize);
@@ -425,8 +417,6 @@ public:
         _cmds.resize(_cmds.size()-_flushCmdLen);
         _flushCmdLen = _cmds.size();
         
-//        printf("HALLABACK REMAINDER: %zu\n", _flushCmdLen);
-        
         // Read expected amount of data into the end of `_readData`
         // We expect 2 extra bytes: {MPSSE::BadCommandResp, MPSSE::BadCommand}
         constexpr size_t ResponseExtraByteCount = 2;
@@ -434,7 +424,7 @@ public:
         const size_t off = _readData.size();
         _readData.resize(_readData.size() + readLen);
         
-        printf("MEOWMIX FTDI reading %zu bytes (_flushReadLen=%zu, _readLen=%zu)\n",
+        printf("[FTDI] reading %zu bytes (_flushReadLen=%zu, _readLen=%zu)\n",
             readLen-ResponseExtraByteCount, _flushReadLen, _readLen);
         
         _dev.read(_readData.data()+off, readLen);
@@ -597,7 +587,6 @@ private:
         }
         
         void read(void* data, size_t len) {
-//            printf("### HALLABACK read %zu\n", len);
             size_t off = 0;
             while (off < len) {
                 int ir = ftdi_read_data(&_ctx, (uint8_t*)data+off, len-off);
