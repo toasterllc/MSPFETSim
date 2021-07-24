@@ -4,11 +4,11 @@ class MSPDebugDriver {
 public:
     virtual ~MSPDebugDriver() {}
     
-    // sbwTestSet() / sbwRstSet(): Set output value of a pin
+    // sbwTestSet() / sbwRstSet(): Sets the output value of a pin
     virtual void sbwTestSet(bool val) = 0;
     virtual void sbwRstSet(bool val) = 0;
     
-    // sbwTestPulse(): Pulse Test pin ->0->1
+    // sbwTestPulse(): Pulse TEST=[0,1]
     //   Semantically this is identical to: sbwTestSet(0), sbwTestSet(1), but the timing
     //   of this operation is critical, so the driver must ensure that the duration of
     //   the low (0) state is short enough (<7us) to prevent the MSP430 from exiting SBW

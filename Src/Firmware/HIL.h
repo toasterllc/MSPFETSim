@@ -1045,8 +1045,7 @@ void _hil_EntrySequences_RstHigh_SBW() {
     _msp.sbwTestSet(1);
     _hil_Delay_1ms(100);
     
-    // TEST pulse 1->0->1
-    // (Use a SBW IO cycle to pulse TEST)
+    // Pulse TEST=[0,1]
     _msp.sbwTestPulse();
     _hil_Delay_1ms(5);
 }
@@ -1072,8 +1071,7 @@ void _hil_EntrySequences_RstLow_SBW() {
     _msp.sbwRstSet(1);
     _hil_Delay_1ms(5);
     
-    // TEST pulse 1->0->1
-    // (Use a SBW IO cycle to pulse TEST)
+    // Pulse TEST=[0,1]
     _msp.sbwTestPulse();
     _hil_Delay_1ms(5);
 }
