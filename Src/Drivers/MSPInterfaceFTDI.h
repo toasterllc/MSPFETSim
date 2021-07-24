@@ -85,6 +85,7 @@ public:
     }
     
     static size_t _GetMaxPacketSize(USBDevice& dev) {
+        return 1024;
         const auto configDesc = dev.getConfigDescriptor(0);
         if (configDesc->bNumInterfaces < 1) throw RuntimeError("configuration descriptor has no interfaces");
         const auto iface = configDesc->interface[0];
