@@ -463,7 +463,8 @@ public:
         
         uint8_t* buf8 = (uint8_t*)buf;
         for (size_t ireadData=0, ibit=0, ibuf=0; ireadData<len*8; ireadData++) {
-            const bool bit = _readData[ireadData] & _RstPin;
+            printf("Read data: 0x%x\n", _readData[ireadData]);
+            const bool bit = _readData[ireadData] & 0x1; // We read one bit at a time (via _testPulse()), which FTDI puts at bit 0
             buf8[ibuf] <<= 1;
             buf8[ibuf] |= bit;
             ibit++;
