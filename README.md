@@ -58,10 +58,10 @@ In theory MSPFETSim should support any MSP430 supported by the real MSP-FET hard
 
 Flashing and general debugging (with both TI CCS and mspdebug) has been verified working with:
 
-    - MSP430G2452
-    - MSP430G2553
-    - MSP430FR2433
-    - MSP430FR2422
+- MSP430G2452
+- MSP430G2553
+- MSP430FR2433
+- MSP430FR2422
 
 
 
@@ -75,10 +75,10 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 
 
 # Caveats
-    - Requires specific tilib version
-    - Programming flash works by accident-ish
-        - If flash verification matches are we good? Or is it possible that the write still
-          wasn't performed well even if it verifies correctly?
+- Requires specific tilib version
+- Programming flash works by accident-ish
+    - If flash verification matches are we good? Or is it possible that the write still
+      wasn't performed well even if it verifies correctly?
 
 
 
@@ -86,8 +86,7 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 
 
 # Development Philosophy
-    - Minimal driver interface
-    - Make copy/paste from tilib easy
-    - Not trying to clean up tilib
-        - Large and messy codebase
+- Make copy/paste from tilib easy
+- Not trying to clean up tilib
+    - Large and messy codebase
 
