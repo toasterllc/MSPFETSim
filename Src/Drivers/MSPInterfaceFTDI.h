@@ -5,51 +5,6 @@
 class MSPInterfaceFTDI : public MSPInterface {
 public:
     
-//    static int ftdi_usb_find_all_ours(struct ftdi_context *ftdi, struct ftdi_device_list **devlist, int vendor, int product)
-//    {
-//        struct ftdi_device_list **curdev;
-//        libusb_device *dev;
-//        libusb_device **devs;
-//        int count = 0;
-//        int i = 0;
-//        
-//        libusb_init(&ftdi->usb_ctx);
-//        
-//        if (libusb_get_device_list(ftdi->usb_ctx, &devs) < 0)
-//            abort();
-//        
-//        curdev = devlist;
-//        *curdev = NULL;
-//
-//        while ((dev = devs[i++]) != NULL)
-//        {
-//            struct libusb_device_descriptor desc;
-//
-//            if (libusb_get_device_descriptor(dev, &desc) < 0)
-//                abort();
-//
-//            if (((vendor || product) &&
-//                    desc.idVendor == vendor && desc.idProduct == product) ||
-//                    (!(vendor || product) &&
-//                     (desc.idVendor == 0x403) && (desc.idProduct == 0x6001 || desc.idProduct == 0x6010
-//                                                  || desc.idProduct == 0x6011 || desc.idProduct == 0x6014
-//                                                  || desc.idProduct == 0x6015)))
-//            {
-//                *curdev = (struct ftdi_device_list*)malloc(sizeof(struct ftdi_device_list));
-//                if (!*curdev)
-//                    abort();
-//
-//                (*curdev)->next = NULL;
-//                (*curdev)->dev = dev;
-//                libusb_ref_device(dev);
-//                curdev = &(*curdev)->next;
-//                count++;
-//            }
-//        }
-//        libusb_free_device_list(devs,1);
-//        return count;
-//    }
-    
     static std::vector<USBDevice> GetDevices() {
 //        auto vers = ftdi_get_library_version();
 //        printf("libftdi version:\n");
@@ -114,6 +69,7 @@ public:
         _dev.setBitmode(BITMODE_RESET, 0);
         _dev.setBitmode(BITMODE_MPSSE, 0);
         _dev.setLatencyTimer(1); // Improves performance significantly
+        
         // TODO: does setting the baud rate apply to MPSSE?
 //        _dev.setBaudRate(1<<21);
         
@@ -238,88 +194,33 @@ public:
         _flush();
     }
     
-//    void sbwPins(PinState test, PinState rst) override {
-//        const PinState t0 = (test!=PinState::Pulse01 ? test : PinState::Out0);
-//        const PinState r0 = (rst !=PinState::Pulse01 ? rst  : PinState::Out0);
-//        const PinState t1 = (test!=PinState::Pulse01 ? test : PinState::Out1);
-//        const PinState r1 = (rst !=PinState::Pulse01 ? rst  : PinState::Out1);
-//        
-//        _pinsSet(t0, r0);
-//        _pinsSet(t1, r1);
-//        
-////        if (pulse) {
-////            // TODO: flush existing commands if we're pulsing, to ensure that these commands are atomically received, otherwise the pulse signal could be stretched
-////        }
-////        
-////        
-////        const uint8_t dir =
-////            (test!=PinState::In ? _TestPin : 0) |
-////            ( rst!=PinState::In ? _RstPin  : 0) ;
-////        
-////        const uint8_t val0 =
-////            (test==PinState::Out1 ? _TestPin : 0) |
-////            ( rst==PinState::Out1 ? _RstPin  : 0) ;
-////        
-////        _cmds.push_back(MPSSE::SetDataBitsL);
-////        _cmds.push_back(val0); // Value
-////        _cmds.push_back(dir); // Direction
-////        
-////        if (pulse) {
-////            const uint8_t val1 =
-////                (test==PinState::Out1||test==PinState::Pulse01 ? _TestPin : 0) |
-////                ( rst==PinState::Out1|| rst==PinState::Pulse01 ? _RstPin  : 0) ;
-////            
-////            _cmds.push_back(MPSSE::SetDataBitsL);
-////            _cmds.push_back(val1); // Value
-////            _cmds.push_back(dir); // Direction
-////        }
-//    }
-    
-//    RST::Write(tms);
-//    TEST::Write(0);
-//    tdo = RST::Read();
-//    RST::Write(tclk);
-//    TEST::Write(1);
-    
-//    void _flushPoint() {
-//        // If we're over the flush threshold, flush outstanding commands
-//        if (_cmds.size() > _flushThreshold) {
-//            _flush();
-//        }
-//        _flushCmdLen = _cmds.size();
-//    }
-    
-//    void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
-//        // Write TMS
-//        {
-//            _rstSet(tms ? _PinState::Out1 : _PinState::Out0);
-//            _testSet(_PinState::Out0);
-//            _rstSet(tclk ? _PinState::Out1 : _PinState::Out0);
-//            _testSet(_PinState::Out1);
-//        }
-//        
-//        // Write TDI
-//        {
-//            _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
-//            _testSet(_PinState::Out0);
-//            _testSet(_PinState::Out1);
-//            _rstSet(_PinState::In);
-//        }
-//        
-//        // Read TDO
-//        {
-//            _testSet(_PinState::Out0);
-//            if (tdoRead) _read();
-//            _testSet(_PinState::Out1);
-//            _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
-//        }
-//        
-//        _flush();
-//    }
-    
     void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) {
         // Write TMS
         {
+            // This TMS sequence is the trickiest part of this driver, purely
+            // because MSP430 requires that TCLK be restored during the
+            // low-phase of TEST (SBWTCK).
+            // 
+            // Unfortunately there's no way to do that with the MPSSE clocking
+            // command set (eg ClockBitsOutPosEdgeMSB). This is because the MPSSE
+            // clocking commands only allow TDO to be read or TDI to be written.
+            // Since RST=TDO, it can only be read by the clocking commands, and
+            // therefore we have to manually bit-bang the pins.
+            // 
+            // The problem with bit-banging the pins is that the low phase of TEST
+            // (SBWTCK) is timing critical; if it's too long (>7us), the MSP430 will
+            // exit the SBW debug mode. Therefore we go to great lengths to ensure
+            // that the commands written to FTDI will be handled 'atomically'. To do
+            // so, the flush scheme:
+            // 
+            //   - groups commands so that the TEST=[0,1] sequence doesn't get split
+            //     up (implemented by having all MSPInterface functions call _flush()
+            //     after enqueueing their commands), and
+            //   
+            //   - ensures that it never writes a set of commands larger than the
+            //     FTDI's USB max packet length, to ensure that they'll be delivered
+            //     as one packet.
+            //
             _rstSet(tms ? _PinState::Out1 : _PinState::Out0);
             _testSet(_PinState::Out0);
             _rstSet(tclk ? _PinState::Out1 : _PinState::Out0);
@@ -407,12 +308,15 @@ public:
         assert(writeLen <= _maxPacketSize);
         
         // Write the commands
-        _Swap(_cmds, _flushCmdLen, extraCmdsLen, extraCmds); // Swap the extra commands into the buffer
+        // We use _Swap() to temporarily replace the last 2 commands in _cmds with `extraCmds`.
+        // This is a little gross, but it beats copying the whole buffer or calling
+        // _dev.write() twice.
+        _Swap(_cmds, _flushCmdLen, extraCmdsLen, extraCmds);
         _dev.write(_cmds.data(), writeLen);
-        _Swap(_cmds, _flushCmdLen, extraCmdsLen, extraCmds); // Swap the extra commands out of the buffer
+        _Swap(_cmds, _flushCmdLen, extraCmdsLen, extraCmds);
         
-        // Shift remaining commands to the beginning of _cmds,
-        // resize _cmds, and update _flushCmdLen
+        // Shift remaining commands to the beginning of _cmds, resize _cmds,
+        // and update _flushCmdLen
         std::move(_cmds.begin()+_flushCmdLen, _cmds.end(), _cmds.begin());
         _cmds.resize(_cmds.size()-_flushCmdLen);
         _flushCmdLen = _cmds.size();
@@ -468,21 +372,7 @@ private:
         _usbDev(std::move(usbDev)) {
             int ir = ftdi_init(&_ctx);
             _checkErr(ir, "ftdi_init failed");
-            
-//            ftdi_set_interface(&_ctx, INTERFACE_ANY);
         }
-        
-//        // Copy constructor: not allowed
-//        _FTDIDevice(const _FTDIDevice& x) = delete;
-//        // Move constructor: use move assignment operator
-//        _FTDIDevice(_FTDIDevice&& x) { *this = std::move(x); }
-//        // Move assignment operator
-//        _FTDIDevice& operator=(_FTDIDevice&& x) {
-//            _reset();
-//            _s = x._s;
-//            x._s = {};
-//            return *this;
-//        }
         
         ~_FTDIDevice() {
             close();
