@@ -1,11 +1,14 @@
 #pragma once
 #include <libusb-1.0/libusb.h>
+
+#if __has_include ("../../MDC/Code/STM32/Shared/STLoaderTypes.h")
+#include "../../MDC/Code/STM32/Shared/STLoaderTypes.h"
+#define MSPInterfaceMDCExists 1
+
 #include "RuntimeError.h"
 #include "MSPInterface.h"
 #include "Defer.h"
 #include "USBDevice.h"
-#include "../../MDC/Code/STM32/Shared/STLoaderTypes.h"
->>>>>>> ffcc230... Add USBDevice class. Started work on FTDI driver.:Src/Drivers/STMBridge.h
 
 class MSPInterfaceMDC : public MSPInterface {
 public:
@@ -25,21 +28,6 @@ public:
         _dev.open();
         _dev.claimInterface(_USBInterfaceIdx);
     }
-    
-//    // Copy constructor: not allowed
-//    MSPInterfaceMDC(const MSPInterfaceMDC& x) = delete;
-//    // Move constructor: use move assignment operator
-//    MSPInterfaceMDC(MSPInterfaceMDC&& x) { *this = std::move(x); }
-//    // Move assignment operator
-//    MSPInterfaceMDC& operator=(MSPInterfaceMDC&& x) {
-//        _s = x._s;
-//        x._s = {};
-//        return *this;
-//    }
-//    
-//    ~MSPInterfaceMDC() {
-//        _reset();
-//    }
     
     void sbwTestSet(bool val) {
         _cmds.emplace_back(STLoader::MSPDebugCmd::TestSet, val);
@@ -105,25 +93,6 @@ private:
         struct libusb_device_descriptor desc = dev.getDeviceDescriptor();
         return desc.idVendor==0x0483 && desc.idProduct==0xDF11;
     }
-    
-//    template <typename T>
-//    void _bulkXfer(uint8_t ep, T* data, size_t len) {
-//        int xferLen = 0;
-//        int ir = libusb_bulk_transfer(_dev, ep, (uint8_t*)data, (int)len, &xferLen, 0);
-//        _CheckUSBErr(ir, "libusb_bulk_transfer failed");
-//        if ((size_t)xferLen != len)
-//            throw RuntimeError("libusb_bulk_transfer short transfer (tried: %zu, got: %zu)", len, (size_t)xferLen);
-//    }
-    
-//    void _checkUSBXferErr(int ir, int xferLen, size_t expectedXferLen) {
-//        if (ir < 0) throw RuntimeError("libusb_bulk_transfer failed: %s", libusb_error_name(ir));
-//        if ((size_t)xferLen != sizeof(status))
-//            throw RuntimeError("libusb_bulk_transfer short transfer (tried: %zu, got: %zu)", expectedXferLen, (size_t)xferLen);
-//    }
-//    
-//    void _waitOrThrow(const char* errMsg) {
-//        STLoader::Status status = STLoader::Status::Error;
-//        _bulkXfer(STLoader::Endpoints::DataIn, &status, sizeof(status));
-//        if (status != STLoader::Status::OK) throw RuntimeError("%s: status=%d", errMsg, ir);
-//    }
 };
+
+#endif
