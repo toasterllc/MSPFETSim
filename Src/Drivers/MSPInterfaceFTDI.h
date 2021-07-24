@@ -101,9 +101,7 @@ public:
         return maxPacketSize-2;
     }
     
-    MSPInterfaceFTDI(uint8_t testPin, uint8_t rstPin, USBDevice&& dev) :
-    _testPin(testPin),
-    _rstPin(rstPin),
+    MSPInterfaceFTDI(USBDevice&& dev) :
     _maxPacketSize(_GetMaxPacketSize(dev)),
     _flushThreshold(_GetFlushThreshold(_maxPacketSize)),
     _dev(std::move(dev))
@@ -125,7 +123,8 @@ public:
 //                MPSSE::DisableAdaptiveClocking,    // Disable adaptive clocking
 //                MPSSE::Disable3PhaseDataClocking,  // Disable three-phase clocking
 //                MPSSE::DisconnectTDITDOLoopback,   // Disable loopback
-                MPSSE::SetClkDivisor, 0, 0,         // Set TCK frequency to 6MHz
+//                MPSSE::SetClkDivisor, 0, 0,         // Set TCK frequency to 6MHz
+                MPSSE::SetClkDivisor, 14, 0,        // Set TCK frequency to 400kHz
             };
             
             _dev.write(initCmd, sizeof(initCmd));
@@ -154,6 +153,11 @@ public:
         _dev.read(resp, sizeof(resp));
         if (!(resp[0]==MPSSE::BadCommandResp && resp[1]==MPSSE::BadCommand))
             throw RuntimeError("FTDI sync failed (expected: <%x %x> got: <%x %x>)", MPSSE::BadCommandResp, MPSSE::BadCommand, resp[0], resp[1]);
+        
+        // Configure pins
+        // They need to default to the output state because our internal functions (eg _testPulse())
+        // assume that's the state of the pins, and otherwise they won't work.
+        _pinsSet(_PinState::Out1, _PinState::Out1);
     }
     
     ~MSPInterfaceFTDI() {}
@@ -188,12 +192,12 @@ public:
         _rstState = r;
         
         const uint8_t dir =
-            (t!=_PinState::In ? _testPin : 0) |
-            (r!=_PinState::In ? _rstPin  : 0) ;
+            (t!=_PinState::In ? _TestPin : 0) |
+            (r!=_PinState::In ? _RstPin  : 0) ;
         
         const uint8_t val =
-            (t==_PinState::Out1 ? _testPin : 0) |
-            (r==_PinState::Out1 ? _rstPin  : 0) ;
+            (t==_PinState::Out1 ? _TestPin : 0) |
+            (r==_PinState::Out1 ? _RstPin  : 0) ;
         
         _cmds.push_back(MPSSE::SetDataBitsL);
         _cmds.push_back(val); // Value
@@ -208,9 +212,20 @@ public:
         _pinsSet(_testState, r);
     }
     
-    void _read() {
-        _cmds.push_back(MPSSE::ReadDataBitsL);
-        _readLen++;
+    void _testPulse(bool tdoRead) {
+        // If we're reading: pulse TEST [0,1] and read RST on rising edge
+        if (tdoRead) {
+            _cmds.push_back(0x22);
+            _cmds.push_back(0x00);
+            _readLen++;
+        
+        // If we're not reading, just pulse TEST [0,1] (this also writes
+        // TDI, but that's a nop since TDI is an input)
+        } else {
+            _cmds.push_back(0x12);
+            _cmds.push_back(0x00);
+            _cmds.push_back(0x00);
+        }
     }
     
     void sbwTestSet(bool test) override {
@@ -219,8 +234,7 @@ public:
     }
     
     void sbwTestPulse() override {
-        _testSet(_PinState::Out0);
-        _testSet(_PinState::Out1);
+        _testPulse(false);
         _flush();
     }
     
@@ -244,12 +258,12 @@ public:
 ////        
 ////        
 ////        const uint8_t dir =
-////            (test!=PinState::In ? _testPin : 0) |
-////            ( rst!=PinState::In ? _rstPin  : 0) ;
+////            (test!=PinState::In ? _TestPin : 0) |
+////            ( rst!=PinState::In ? _RstPin  : 0) ;
 ////        
 ////        const uint8_t val0 =
-////            (test==PinState::Out1 ? _testPin : 0) |
-////            ( rst==PinState::Out1 ? _rstPin  : 0) ;
+////            (test==PinState::Out1 ? _TestPin : 0) |
+////            ( rst==PinState::Out1 ? _RstPin  : 0) ;
 ////        
 ////        _cmds.push_back(MPSSE::SetDataBitsL);
 ////        _cmds.push_back(val0); // Value
@@ -257,8 +271,8 @@ public:
 ////        
 ////        if (pulse) {
 ////            const uint8_t val1 =
-////                (test==PinState::Out1||test==PinState::Pulse01 ? _testPin : 0) |
-////                ( rst==PinState::Out1|| rst==PinState::Pulse01 ? _rstPin  : 0) ;
+////                (test==PinState::Out1||test==PinState::Pulse01 ? _TestPin : 0) |
+////                ( rst==PinState::Out1|| rst==PinState::Pulse01 ? _RstPin  : 0) ;
 ////            
 ////            _cmds.push_back(MPSSE::SetDataBitsL);
 ////            _cmds.push_back(val1); // Value
@@ -280,7 +294,35 @@ public:
 //        _flushCmdLen = _cmds.size();
 //    }
     
-    void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
+//    void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
+//        // Write TMS
+//        {
+//            _rstSet(tms ? _PinState::Out1 : _PinState::Out0);
+//            _testSet(_PinState::Out0);
+//            _rstSet(tclk ? _PinState::Out1 : _PinState::Out0);
+//            _testSet(_PinState::Out1);
+//        }
+//        
+//        // Write TDI
+//        {
+//            _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
+//            _testSet(_PinState::Out0);
+//            _testSet(_PinState::Out1);
+//            _rstSet(_PinState::In);
+//        }
+//        
+//        // Read TDO
+//        {
+//            _testSet(_PinState::Out0);
+//            if (tdoRead) _read();
+//            _testSet(_PinState::Out1);
+//            _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
+//        }
+//        
+//        _flush();
+//    }
+    
+    void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) {
         // Write TMS
         {
             _rstSet(tms ? _PinState::Out1 : _PinState::Out0);
@@ -292,16 +334,13 @@ public:
         // Write TDI
         {
             _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
-            _testSet(_PinState::Out0);
-            _testSet(_PinState::Out1);
+            _testPulse(false);
             _rstSet(_PinState::In);
         }
         
         // Read TDO
         {
-            _testSet(_PinState::Out0);
-            if (tdoRead) _read();
-            _testSet(_PinState::Out1);
+            _testPulse(true);
             _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
         }
         
@@ -344,12 +383,13 @@ public:
     }
     
     void _flush(bool required=false) {
-        // Short-circuit if the flush isn't required, and we're below the threshold
-        if (!required && _cmds.size()<=_flushThreshold) {
+        if (_cmds.size() <= _flushThreshold) {
             // Remember the last flush point
             _flushCmdLen = _cmds.size();
             _flushReadLen = _readLen;
-            return;
+            
+            // Short-circuit if the flush isn't required, and we're below the threshold
+            if (!required) return;
         }
         
         // Short-circuit if there aren't any commands to flush
@@ -365,8 +405,8 @@ public:
         const size_t extraCmdsLen = extraCmds.size();
         const size_t writeLen = _flushCmdLen+extraCmdsLen;
         
-//        printf("MEOWMIX FTDI flushing %zu commands (_flushThreshold=%zu, _maxPacketSize=%zu)\n",
-//            writeLen, _flushThreshold, _maxPacketSize);
+        printf("MEOWMIX FTDI flushing %zu commands (_flushThreshold=%zu, _maxPacketSize=%zu)\n",
+            writeLen, _flushThreshold, _maxPacketSize);
         
         // Logic error if our commands are larger than FTDI's USB max packet size
         assert(writeLen <= _maxPacketSize);
@@ -421,7 +461,7 @@ public:
         
         uint8_t* buf8 = (uint8_t*)buf;
         for (size_t ireadData=0, ibit=0, ibuf=0; ireadData<len*8; ireadData++) {
-            const bool bit = _readData[ireadData] & _rstPin;
+            const bool bit = _readData[ireadData] & _RstPin;
             buf8[ibuf] <<= 1;
             buf8[ibuf] |= bit;
             ibit++;
@@ -435,7 +475,7 @@ public:
         
 //        uint8_t* buf8 = (uint8_t*)buf;
 //        for (size_t ibit=0, ibyte=0, byteLen=0; ibit<tmpBufLen; ibit++) {
-//            const bool bit = tmpBuf[ibit] & _rstPin;
+//            const bool bit = tmpBuf[ibit] & _RstPin;
 //            buf8[ibyte] <<= 1;
 //            buf8[ibyte] |= bit;
 //            byteLen++;
@@ -623,8 +663,8 @@ private:
 //        if (ir < 0) throw RuntimeError("%s: %s", errMsg, ftdi_get_error_string(&ctx));
 //    }
     
-    const uint8_t _testPin = 0;
-    const uint8_t _rstPin = 0;
+    static constexpr uint8_t _TestPin   = 1<<0; // FTDI's TCK
+    static constexpr uint8_t _RstPin    = 1<<2; // FTDI's TDO
     const size_t _maxPacketSize = 0;
     const size_t _flushThreshold = 0;
     _FTDIDevice _dev;
