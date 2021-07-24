@@ -164,13 +164,13 @@ public:
     }
     
     void _testPulse(bool tdoRead) {
-        // If we're reading: pulse TEST [0,1] and read RST on rising edge
+        // If we're reading: pulse TEST=[0,1] and read RST on rising edge
         if (tdoRead) {
             _cmds.push_back(MPSSE::ClockBitsInPosEdgeMSB);
             _cmds.push_back(0x00);
             _readLen++;
         
-        // If we're not reading, just pulse TEST [0,1] (this also writes
+        // If we're not reading, just pulse TEST=[0,1] (this also writes
         // TDI, but that's a nop since TDI is an input)
         } else {
             _cmds.push_back(MPSSE::ClockBitsOutPosEdgeMSB);
@@ -213,8 +213,8 @@ public:
             // that the commands written to FTDI will be handled 'atomically'. To do
             // so, the flush scheme:
             // 
-            //   - groups commands so that the TEST=[0,1] sequence doesn't get split
-            //     up (implemented by having all MSPInterface functions call _flush()
+            //   - groups commands so that the TEST=[0,1] pulse doesn't get split up
+            //     (implemented by having all MSPInterface functions call _flush()
             //     after enqueueing their commands), and
             //   
             //   - ensures that it never writes a set of commands larger than the
@@ -283,13 +283,13 @@ public:
             // Remember the last flush point
             _flushCmdLen = _cmds.size();
             _flushReadLen = _readLen;
-            
-            // Short-circuit if the flush isn't required, and we're below the threshold
-            if (!required) return;
         }
         
+        // Short-circuit if the flush isn't required, and we're below the threshold
+        if (!required && (_cmds.size() <= _flushThreshold)) return;
         // Short-circuit if there aren't any commands to flush
         if (!_flushCmdLen) return;
+        
         assert(_cmds.size() >= _flushCmdLen);
         assert(_readLen >= _flushReadLen);
         
@@ -351,8 +351,7 @@ public:
     void sbwRead(void* buf, size_t len) override {
         _flush(true);
         
-        // Verify that the requested length isn't greater than
-        // the amount of available data
+        // Logic error if the requested length exceeds available data
         assert(len*8 <= _readData.size());
         
         uint8_t* buf8 = (uint8_t*)buf;
