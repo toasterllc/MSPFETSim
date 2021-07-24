@@ -1,7 +1,7 @@
 #pragma once
-#include "MSPInterface.h"
+#include "MSPDebugDriver.h"
 
-class MSPInterfaceDummy : public MSPInterface {
+class MSPDebugDriverDummy : public MSPDebugDriver {
     void sbwTestSet(bool val) {
         printf("sbwTestSet(%d)\n", val);
     }

@@ -2,11 +2,11 @@
 #include <climits>
 #include <chrono>
 #include "VirtualUSBDevice.h"
-#include "MSPInterface.h"
+#include "MSPDebugDriver.h"
 
 class MSPProbeSim {
 public:
-    MSPProbeSim(MSPInterface& msp) :
+    MSPProbeSim(MSPDebugDriver& msp) :
     _msp(msp),
     _usb(_usbDeviceInfo) {
     }
@@ -213,7 +213,7 @@ public:
 //        }
 //    }
     
-    MSPInterface& _msp;
+    MSPDebugDriver& _msp;
     VirtualUSBDevice _usb;
     
     std::deque<_Msg> _msgs = {}; // Messages host->device

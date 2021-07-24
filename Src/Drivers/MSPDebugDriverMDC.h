@@ -3,14 +3,14 @@
 
 #if __has_include ("../../MDC/Code/STM32/Shared/STLoaderTypes.h")
 #include "../../MDC/Code/STM32/Shared/STLoaderTypes.h"
-#define MSPInterfaceMDCExists 1
+#define MSPDebugDriverMDCExists 1
 
 #include "RuntimeError.h"
-#include "MSPInterface.h"
+#include "MSPDebugDriver.h"
 #include "Defer.h"
 #include "USBDevice.h"
 
-class MSPInterfaceMDC : public MSPInterface {
+class MSPDebugDriverMDC : public MSPDebugDriver {
 public:
     
     static std::vector<USBDevice> GetDevices() {
@@ -23,7 +23,7 @@ public:
         return r;
     }
     
-    MSPInterfaceMDC(USBDevice&& dev) : _dev(std::move(dev)) {
+    MSPDebugDriverMDC(USBDevice&& dev) : _dev(std::move(dev)) {
         assert(_dev);
         _dev.open();
         _dev.claimInterface(_USBInterfaceIdx);

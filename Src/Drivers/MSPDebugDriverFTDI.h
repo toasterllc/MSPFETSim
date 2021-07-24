@@ -2,7 +2,7 @@
 #include <libftdi1/ftdi.h>
 #include "USBDevice.h"
 
-class MSPInterfaceFTDI : public MSPInterface {
+class MSPDebugDriverFTDI : public MSPDebugDriver {
 public:
     
     static std::vector<USBDevice> GetDevices() {
@@ -56,7 +56,7 @@ public:
         return maxPacketSize-2;
     }
     
-    MSPInterfaceFTDI(USBDevice&& dev) :
+    MSPDebugDriverFTDI(USBDevice&& dev) :
     _maxPacketSize(_GetMaxPacketSize(dev)),
     _flushThreshold(_GetFlushThreshold(_maxPacketSize)),
     _dev(std::move(dev))
@@ -109,7 +109,7 @@ public:
         _pinsSet(_PinState::Out1, _PinState::Out1);
     }
     
-    ~MSPInterfaceFTDI() {}
+    ~MSPDebugDriverFTDI() {}
     
     struct MPSSE {
         static constexpr uint8_t ClockBitsOutPosEdgeMSB     = 0x12;
@@ -214,7 +214,7 @@ public:
             // so, the flush scheme:
             // 
             //   - groups commands so that the TEST=[0,1] pulse doesn't get split up
-            //     (implemented by having all MSPInterface functions call _flush()
+            //     (implemented by having all MSPDebugDriver functions call _flush()
             //     after enqueueing their commands), and
             //   
             //   - ensures that it never writes a set of commands larger than the

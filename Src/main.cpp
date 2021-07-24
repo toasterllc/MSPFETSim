@@ -1,31 +1,31 @@
 #include "MSPProbeSim.h"
-#include "MSPInterface.h"
-#include "Drivers/MSPInterfaceDummy.h"
-#include "Drivers/MSPInterfaceMDC.h"
-#include "Drivers/MSPInterfaceFTDI.h"
+#include "MSPDebugDriver.h"
+#include "Drivers/MSPDebugDriverDummy.h"
+#include "Drivers/MSPDebugDriverMDC.h"
+#include "Drivers/MSPDebugDriverFTDI.h"
 
-std::unique_ptr<MSPInterface> CreateMSPInterface() {
+std::unique_ptr<MSPDebugDriver> CreateDriver() {
     // Dummy
-//    return std::make_unique<MSPInterfaceDummy>();
+//    return std::make_unique<MSPDebugDriverDummy>();
     
     // MDC
-#if MSPInterfaceMDCExists
-    auto devices = MSPInterfaceMDC::GetDevices();
+#if MSPDebugDriverMDCExists
+    auto devices = MSPDebugDriverMDC::GetDevices();
     if (devices.empty()) throw RuntimeError("no matching USB devices");
     if (devices.size() > 1) throw RuntimeError("more than one matching USB device");
-    return std::make_unique<MSPInterfaceMDC>(std::move(devices[0]));
+    return std::make_unique<MSPDebugDriverMDC>(std::move(devices[0]));
 #endif
     
 //    // FTDI
-//    auto devices = MSPInterfaceFTDI::GetDevices();
+//    auto devices = MSPDebugDriverFTDI::GetDevices();
 //    if (devices.empty()) throw RuntimeError("no matching FTDI devices");
 //    if (devices.size() > 1) throw RuntimeError("more than one matching FTDI device");
-//    return std::make_unique<MSPInterfaceFTDI>(std::move(devices[0]));
+//    return std::make_unique<MSPDebugDriverFTDI>(std::move(devices[0]));
 }
 
 int main(int argc, const char* argv[]) {
     try {
-        auto msp = CreateMSPInterface();
+        auto msp = CreateDriver();
         MSPProbeSim probeSim(*msp);
         probeSim.run();
     
