@@ -3,5 +3,5 @@
 *.a
 *.gch
 *.xcodeproj
-MSPProbeSim
+MSPFETSim
 .gdb_history
