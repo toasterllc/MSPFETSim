@@ -11,7 +11,7 @@ MSPFETSim only supports Spy-bi-wire (2 wire) debugging of target MSP430 devices.
 
 # Motivation
 
-This project was motivated by the need to flash/debug an MSP430 in a custom device via the device's normal USB port. An STM32 handles USB communication on this device, so the STM32 must also handle the MSP430 debugging.
+This project was motivated by the need to flash/debug a MSP430 in a custom device via the device's normal USB port. An STM32 handles USB communication on this device, so the STM32 must also handle the MSP430 debugging.
 
 With MSPFETSim, enabling flashing/debugging of the MSP430 on this device was accomplished by simply: (1) creating a new MSPFETSim driver to send GPIO toggling commands to the STM32, and (2) implementing GPIO-toggling commands on the STM2.
 
@@ -26,15 +26,15 @@ With MSPFETSim, enabling flashing/debugging of the MSP430 on this device was acc
 
 MSPFETSim has these hardware drivers:
 
-    - FTDI driver
-        - Supports MPSSE FTDI chips, such as:
-            - FT232H
-            - FT2232H
-            - FT4232H
-        
-        - Supports the C232HM cable
-            - Connect FTDI TCK (orange) <-> MSP TEST
-            - Connect FTDI TDO (green) <-> MSP RST
+- FTDI driver
+    - Supports MPSSE FTDI chips, such as:
+        - FT232H
+        - FT2232H
+        - FT4232H
+    
+    - Supports the C232HM cable
+        - TCK (orange) <-> MSP TEST
+        - TDO (green) <-> MSP RST
 
 
 
