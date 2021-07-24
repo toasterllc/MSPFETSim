@@ -342,7 +342,7 @@ public:
         
         // Read TDO
         {
-            _testPulse(true);
+            _testPulse(tdoRead);
             _rstSet(tdi ? _PinState::Out1 : _PinState::Out0);
         }
         
@@ -432,6 +432,10 @@ public:
         const size_t readLen = _flushReadLen+ResponseExtraByteCount;
         const size_t off = _readData.size();
         _readData.resize(_readData.size() + readLen);
+        
+        printf("MEOWMIX FTDI reading %zu bytes (_flushReadLen=%zu, _readLen=%zu)\n",
+            readLen-ResponseExtraByteCount, _flushReadLen, _readLen);
+        
         _dev.read(_readData.data()+off, readLen);
         _readLen -= _flushReadLen;
         _flushReadLen = _readLen;
@@ -461,18 +465,31 @@ public:
 //        uint8_t* tmpBuf = tmpBufUnique.get();
 //        _dev.read(tmpBuf, tmpBufLen);
         
-        uint8_t* buf8 = (uint8_t*)buf;
-        for (size_t ireadData=0, ibit=0, ibuf=0; ireadData<len*8; ireadData++) {
-            printf("Read data: 0x%x\n", _readData[ireadData]);
-            const bool bit = _readData[ireadData] & 0x1; // We read one bit at a time (via _testPulse()), which FTDI puts at bit 0
-            buf8[ibuf] <<= 1;
-            buf8[ibuf] |= bit;
-            ibit++;
-            if (ibit == 8) {
-                ibuf++;
-                ibit = 0;
-            }
+        // Read every 8th byte, which contains all 8 shifted bits
+        printf("Read data (available=%zu, read len=%zu):\n", _readData.size(), len);
+        for (size_t i=0; i<_readData.size(); i++) {
+            printf("[%zu] %02x\n", i, _readData[i]);
         }
+        printf("\n\n\n");
+        
+        uint8_t* buf8 = (uint8_t*)buf;
+        for (size_t i=7; i<len*8; i+=8) {
+//            printf("Read data: 0x%x\n", _readData[i]);
+            *buf8 = _readData[i];
+            buf8++;
+        }
+        
+//        for (size_t ireadData=0, ibit=0, ibuf=0; ireadData<len*8; ireadData++) {
+//            printf("Read data: 0x%x\n", _readData[ireadData]);
+//            const bool bit = _readData[ireadData] & 0x1; // We read one bit at a time (via _testPulse()), which FTDI puts at bit 0
+//            buf8[ibuf] <<= 1;
+//            buf8[ibuf] |= bit;
+//            ibit++;
+//            if (ibit == 8) {
+//                ibuf++;
+//                ibit = 0;
+//            }
+//        }
         
         _readData.erase(_readData.begin(), _readData.begin()+len*8);
         
