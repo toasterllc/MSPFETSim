@@ -65,18 +65,18 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 # Building / Usage
 
 ### Install Depedencies
-sudo apt install libudev-dev
-sudo apt install libusb-1.0-0-dev
-sudo apt install libftdi1-dev
+    sudo apt install libudev-dev
+    sudo apt install libusb-1.0-0-dev
+    sudo apt install libftdi1-dev
 
 ### Clone Repository
-git clone --recurse-submodules git@github.com:heytoaster/MSPFETSim.git
+    git clone --recurse-submodules git@github.com:heytoaster/MSPFETSim.git
 
 ### Build and Run
-cd MSPFETSim
-make
-sudo modprobe vhci-hcd
-sudo ./MSPFETSim
+    cd MSPFETSim
+    make
+    sudo modprobe vhci-hcd
+    sudo ./MSPFETSim
 
 
 # Caveats
