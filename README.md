@@ -13,7 +13,7 @@ MSPFETSim currently supports Linux.
 
 This project was motivated by the need to flash/debug a MSP430 in a custom device via the device's normal USB port. A STM32 handles USB communication on this device, so the STM32 also needed to handle the MSP430 debugging.
 
-With MSPFETSim, enabling flashing/debugging of the MSP430 on this device was accomplished by simply: (1) creating a new MSPFETSim driver to send GPIO toggling commands to the STM32, and (2) implementing GPIO-toggling commands on the STM2.
+With MSPFETSim, enabling flashing/debugging of the MSP430 on this device was accomplished by simply: (1) creating a new MSPFETSim driver to send GPIO toggling commands to the STM32, and (2) implementing GPIO-toggling commands on the STM32.
 
 
 # Supported Debug Probe Hardware
@@ -74,20 +74,29 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 
 ### Disable ModemManager
 
-Because the MSP-FET appears to the host as a modem, the ModemManager daemon may attempt to probe the device. This behavior needs to be disabled for correct MSPFETSim operation:
+Because the MSP-FET appears to the host as a modem, the ModemManager daemon may attempt to probe the device. This behavior needs to be disabled for correct operation:
 
     echo 'ATTRS{idVendor}=="2047", ATTRS{idProduct}=="0014", ENV{ID_MM_DEVICE_IGNORE}="1"' | sudo tee /etc/udev/rules.d/42-mspfetsim.rules > /dev/null
     sudo udevadm control -R
 
 TI Code Composer Studio will also do this, so it may not be necessary if you've installed TI CCS.
 
-### Build and Run
+### Build
+
     cd MSPFETSim
     make
+
+### Run
+
+Load the virtual host controller kernel module (necessary to create virtual USB devices):
+
     sudo modprobe vhci-hcd
+
+Make sure your FTDI-based debug probe is plugged in, and finally run MSPFETSim:
+
     sudo ./MSPFETSim
 
-At this point `lsusb` should list a MSP-FET device (`Texas Instruments MSP Tools Driver`), and MSP430 debug tools should see a MSP-FET attached to the system.
+At this point `lsusb` should list a MSP-FET device (`Texas Instruments MSP Tools Driver`), and your MSP430 debug tools should see a MSP-FET attached to the system.
 
 
 # Tips
