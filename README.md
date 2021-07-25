@@ -16,12 +16,6 @@ This project was motivated by the need to flash/debug a MSP430 in a custom devic
 With MSPFETSim, enabling flashing/debugging of the MSP430 on this device was accomplished by simply: (1) creating a new MSPFETSim driver to send GPIO toggling commands to the STM32, and (2) implementing GPIO-toggling commands on the STM2.
 
 
-
-
-
-
-
-
 # Supported Debug Probe Hardware
 
 MSPFETSim has these hardware drivers:
@@ -35,7 +29,6 @@ MSPFETSim has these hardware drivers:
     - Supports the [FTDI C232HM](https://ftdichip.com/products/c232hm-ddhsl-0-2/) cable
         - TCK (orange) <-> MSP TEST
         - TDO (green) <-> MSP RST
-
 
 
 # Writing New Drivers
@@ -56,9 +49,6 @@ Adding support for new debug probe hardware requires implementing a minimal driv
     - Retrieve data previously stored via `sbwIO()`
 
 
-
-
-
 # Supported MSP430 Devices
 
 In theory MSPFETSim should support any MSP430 supported by the real MSP-FET hardware, but in practice there are surely bugs and unimplemented functionality.
@@ -72,34 +62,19 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 - MSP430I2041
 
 
-
-
 # Installation / Usage
-
-
-
-
-
 
 
 # Caveats
 
-- MSPFETSim is highly dependent on the version of the MSP Debug Stack/libmsp430.so that's being used to talk to it.
-    - MSPFETSim is currently compatible with:
-        - MSP Debug Stack version 3.15.1.001
-        
-    - If your debug software (such as TI CCS or mspdebug) says that it needs to update the version of firmware used by the MSP-FET, it's likely because it's using an incompatible version of `libmsp430.so`
+- MSPFETSim is highly dependent on the version of the MSP Debug Stack/`libmsp430.so` that's being used to talk to it.
+    - MSPFETSim is currently known to be compatible with:
+        - MSP Debug Stack version 3.15.1.001 (as noted in `revisions.txt`)
+        - Code Composer Studio version 10.4.0.00006 (as noted in Help > About Code Composer Studio)
+    
+    - If your debug software (such as TI CCS or mspdebug) says that it needs to update the version of firmware used by the MSP-FET, it's likely because it's using an incompatible version of `libmsp430.so`. Try using the versions specified above.
 
-
-that's coupled with needs to be closesly paired Requires specific tilib version
-- MSPFETSim doesn't support any of the VCC toggling features
-- Programming flash works by accident-ish
-    - If flash verification matches are we good? Or is it possible that the write still
-      wasn't performed well even if it verifies correctly?
-
-
-
-
+- Programming flash-based (ie non-FRAM devices) devices correctly requires strobing the `TEST` signal within a certain frequency range. Although the FTDI driver sets its clock frequency to be in this range, and flashing with MSPFETSim appears to work correctly on the tested hardware (see Supported MSP430 Devices section), adherence to this requirement hasn't been thoroughly investigated yet.
 
 
 # Development Philosophy
