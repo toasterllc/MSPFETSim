@@ -72,20 +72,27 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 ### Clone Repository
     git clone --recurse-submodules git@github.com:heytoaster/MSPFETSim.git
 
+### Disable ModemManager
+
+Because the MSP-FET appears to the host as a modem, the ModemManager daemon may attempt to probe the device. This behavior needs to be disabled for correct MSPFETSim operation:
+
+    echo 'ATTRS{idVendor}=="2047", ATTRS{idProduct}=="0014", ENV{ID_MM_DEVICE_IGNORE}="1"' | sudo tee /etc/udev/rules.d/42-mspfetsim.rules > /dev/null
+    sudo udevadm control -R
+
+TI Code Composer Studio will also do this, so it may not be necessary if you've installed TI CCS.
+
 ### Build and Run
     cd MSPFETSim
     make
     sudo modprobe vhci-hcd
     sudo ./MSPFETSim
 
-At this point `lsusb` should list a `Texas Instruments MSP Tools Driver` device, and software tools should see an MSP-FET attached to the system.
+At this point `lsusb` should list a MSP-FET device (`Texas Instruments MSP Tools Driver`), and MSP430 debug tools should see a MSP-FET attached to the system.
 
 
 # Tips
 
 - If you're using MSPFETSim from a virtual machine like VirtualBox, USB performance can be improved by configuring the VM to use a USB 3.0 (xHCI) controller.
-
-- Disable ModemManager?
 
 
 # Caveats
