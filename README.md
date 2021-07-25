@@ -6,12 +6,12 @@ MSPFETSim instantiates a simulated USB device, which appears to the host system 
 
 MSPFETSim only supports Spy-bi-wire (2 wire) debugging of target MSP430 devices. JTAG (4 wire) support is technically feasible but unimplemented.
 
-MSPFETSim currently only supports Linux.
+MSPFETSim currently supports Linux.
 
 
 # Motivation
 
-This project was motivated by the need to flash/debug a MSP430 in a custom device via the device's normal USB port. An STM32 handles USB communication on this device, so the STM32 must also handle the MSP430 debugging.
+This project was motivated by the need to flash/debug a MSP430 in a custom device via the device's normal USB port. A STM32 handles USB communication on this device, so the STM32 must also handle the MSP430 debugging.
 
 With MSPFETSim, enabling flashing/debugging of the MSP430 on this device was accomplished by simply: (1) creating a new MSPFETSim driver to send GPIO toggling commands to the STM32, and (2) implementing GPIO-toggling commands on the STM2.
 
