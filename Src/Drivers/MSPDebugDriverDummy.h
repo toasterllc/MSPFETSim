@@ -10,6 +10,10 @@ class MSPDebugDriverDummy : public MSPDebugDriver {
         printf("sbwRstSet(%d)\n", val);
     }
     
+    void sbwTestPulse() {
+        printf("sbwTestPulse()\n");
+    }
+    
     void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
         printf("sbwIO(%d %d %d %d)\n", tms, tclk, tdi, tdoRead);
     }

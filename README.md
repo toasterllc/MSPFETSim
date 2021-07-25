@@ -74,7 +74,7 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 
 
 
-# Installation
+# Installation / Usage
 
 
 
@@ -83,7 +83,16 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 
 
 # Caveats
-- Requires specific tilib version
+
+- MSPFETSim is highly dependent on the version of the MSP Debug Stack/libmsp430.so that's being used to talk to it.
+    - MSPFETSim is currently compatible with:
+        - MSP Debug Stack version 3.15.1.001
+        
+    - If your debug software (such as TI CCS or mspdebug) says that it needs to update the version of firmware used by the MSP-FET, it's likely because it's using an incompatible version of `libmsp430.so`
+
+
+that's coupled with needs to be closesly paired Requires specific tilib version
+- MSPFETSim doesn't support any of the VCC toggling features
 - Programming flash works by accident-ish
     - If flash verification matches are we good? Or is it possible that the write still
       wasn't performed well even if it verifies correctly?

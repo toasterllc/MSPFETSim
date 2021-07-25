@@ -10,6 +10,8 @@
 #include "../../MDC/Code/STM32/Shared/STLoaderTypes.h"
 #define MSPDebugDriverMDCExists 1
 
+// This driver is for a custom device and isn't generally useful, however
+// it may be instructive as an example of a simple MSPFETSim driver.
 class MSPDebugDriverMDC : public MSPDebugDriver {
 public:
     
@@ -29,15 +31,15 @@ public:
         _dev.claimInterface(_USBInterfaceIdx);
     }
     
-    void sbwTestSet(bool val) {
+    void sbwTestSet(bool val) override {
         _cmds.emplace_back(STLoader::MSPDebugCmd::TestSet, val);
     }
     
-    void sbwRstSet(bool val) {
+    void sbwRstSet(bool val) override {
         _cmds.emplace_back(STLoader::MSPDebugCmd::RstSet, val);
     }
     
-    void sbwTestPulse() {
+    void sbwTestPulse() override {
         _cmds.emplace_back(STLoader::MSPDebugCmd::TestPulse);
     }
     
