@@ -69,7 +69,7 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 
 - MSPFETSim is highly dependent on the version of the MSP Debug Stack/`libmsp430.so` that's being used to talk to it.
     - MSPFETSim is currently known to be compatible with:
-        - MSP Debug Stack version 3.15.1.001 (as noted in `revisions.txt`)
+        - MSP Debug Stack/`libmsp430.so` version 3.15.1.001 (as noted in `revisions.txt`)
         - Code Composer Studio version 10.4.0.00006 (as noted in Help > About Code Composer Studio)
     
     - If your debug software (such as TI CCS or mspdebug) says that it needs to update the version of firmware used by the MSP-FET, it's likely because it's using an incompatible version of `libmsp430.so`. Try using the versions specified above.
