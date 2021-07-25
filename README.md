@@ -40,7 +40,7 @@ MSPFETSim has these hardware drivers:
 
 # Writing New Drivers
 
-MSPFETSim leaves a minimal interface for drivers to implement in order to add support for new debug probe hardware. This driver interface, declared in `MSPDebugDriver.h`, consists of 5 functions with semantics that amount to toggling the `TEST` and `RST` pins:
+Adding support for new debug probe hardware requires implementing a minimal driver interface. This driver interface, declared in `MSPDebugDriver.h`, consists of 5 functions with semantics that amount to toggling the `TEST` and `RST` pins:
 
 - `void sbwTestSet(bool val);`
 - `void sbwRstSet(bool val);`
