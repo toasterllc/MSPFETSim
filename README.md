@@ -62,7 +62,21 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 - MSP430I2041
 
 
-# Installation / Usage
+# Building / Usage
+
+### Install Depedencies
+sudo apt install libudev-dev
+sudo apt install libusb-1.0-0-dev
+sudo apt install libftdi1-dev
+
+### Clone Repository
+git clone --recurse-submodules git@github.com:heytoaster/MSPFETSim.git
+
+### Build and Run
+cd MSPFETSim
+make
+sudo modprobe vhci-hcd
+sudo ./MSPFETSim
 
 
 # Caveats
@@ -74,7 +88,7 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
     
     - If your debug software (such as TI CCS or mspdebug) says that it needs to update the version of firmware used by the MSP-FET, it's probably using an incompatible version of `libmsp430.so`. Try using the versions specified above.
 
-- Programming flash-based (ie non-FRAM devices) devices correctly requires strobing the `TEST` signal within a certain frequency range. Although the FTDI driver sets its clock frequency to be in this range, and flashing with MSPFETSim has been tested on the listed hardware (see Supported MSP430 Devices section), adherence to this requirement hasn't been thoroughly investigated.
+- Programming flash-based (ie non-FRAM devices) devices correctly requires strobing the `TEST` signal within a certain frequency range. Although the MSPFETSim FTDI driver sets its clock frequency to be in this range, and flashing with MSPFETSim has been tested on the listed hardware (see Supported MSP430 Devices section), adherence to this requirement hasn't been thoroughly investigated.
 
 
 # Development Philosophy
