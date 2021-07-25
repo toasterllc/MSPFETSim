@@ -78,7 +78,7 @@ MSPFETSim was developed and tested on Ubuntu 20.04.1.
 ### Clone Repository
     git clone --recurse-submodules git@github.com:heytoaster/MSPFETSim.git
 
-### Disable ModemManager
+### Disable ModemManager Probing
 
 Because the MSP-FET appears to the host as a modem, the ModemManager daemon may attempt to probe the device. For correct operation, a rule needs to be created to disable this behavior:
 
