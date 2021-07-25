@@ -143,8 +143,6 @@ public:
         default:
             throw RuntimeError("invalid endpoint: %02x", xfer.ep);
         }
-        
-//        _usb.reply(msg, nullptr, 0);
     }
     
     void _handleUSBXferData(VirtualUSBDevice::Xfer&& xfer) {
