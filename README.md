@@ -62,12 +62,18 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 - MSP430I2041
 
 
-## Usage
+## Requirements
 
-### Install Depedencies
+MSPFETSim supports Linux and requires these packages:
+
     sudo apt install libudev-dev
     sudo apt install libusb-1.0-0-dev
     sudo apt install libftdi1-dev
+
+MSPFETSim was developed and tested on Ubuntu 20.04.1.
+
+
+## Usage
 
 ### Clone Repository
     git clone --recurse-submodules git@github.com:heytoaster/MSPFETSim.git
