@@ -117,7 +117,5 @@ At this point `lsusb` should list a MSP-FET device (`Texas Instruments MSP Tools
 
 
 ## Development Philosophy
-- Make copy/paste from tilib easy
-- Not trying to clean up tilib
-    - Large and messy codebase
 
+MSPFETSim reuses much of the real MSP-FET firmware to avoid the need to re-implement a MSP430 debugger. As TI adds support for new MSP430 devices, MSPFETSim will need to be updated to reflect the changes made to the MSP-FET firmware. To minimize this maintenance burden, as much of the MSP-FET firmware has been copy-pasted as possible, so that the changes made to the MSP-FET firmware can be easily ported to MSPFETSim. The repository also maintains a clean separation between MSP-FET firmware and the rest of MSPFETSim by storing the firmware in Src/Firmware.
