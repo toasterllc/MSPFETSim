@@ -6,7 +6,7 @@ MSPFETSim instantiates a simulated USB device, which appears to the host system 
 
 MSPFETSim only supports Spy-bi-wire (2 wire) debugging of target MSP430 devices. JTAG (4 wire) support is technically feasible but unimplemented.
 
-
+MSPFETSim currently only supports Linux.
 
 
 # Motivation
@@ -69,6 +69,7 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 - MSP430G2553
 - MSP430FR2433
 - MSP430FR2422
+- MSP430I2041
 
 
 
