@@ -80,7 +80,7 @@ MSPFETSim was developed and tested on Ubuntu 20.04.1.
 
 ### Disable ModemManager
 
-Because the MSP-FET appears to the host as a modem, the ModemManager daemon may attempt to probe the device. This behavior needs to be disabled for correct operation:
+Because the MSP-FET appears to the host as a modem, the ModemManager daemon may attempt to probe the device. For correct operation, a rule needs to be created to disable this behavior:
 
     echo 'ATTRS{idVendor}=="2047", ATTRS{idProduct}=="0014", ENV{ID_MM_DEVICE_IGNORE}="1"' | sudo tee /etc/udev/rules.d/42-mspfetsim.rules > /dev/null
     sudo udevadm control -R
