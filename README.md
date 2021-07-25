@@ -78,6 +78,15 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
     sudo modprobe vhci-hcd
     sudo ./MSPFETSim
 
+At this point `lsusb` should list a `Texas Instruments MSP Tools Driver` device, and software tools should see an MSP-FET attached to the system.
+
+
+# Tips
+
+- If you're using MSPFETSim from a virtual machine like VirtualBox, USB performance can be improved by configuring the VM to use a USB 3.0 (xHCI) controller.
+
+- Disable ModemManager?
+
 
 # Caveats
 
