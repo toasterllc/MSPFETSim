@@ -111,7 +111,7 @@ At this point `lsusb` should list a MSP-FET device (`Texas Instruments MSP Tools
         - MSP Debug Stack/`libmsp430.so` version 3.15.1.001 (as noted in MSPDS's `revisions.txt`)
         - Code Composer Studio version 10.4.0.00006 (as noted in Help > About Code Composer Studio)
     
-    - If your debug software (such as TI CCS or mspdebug) says that it needs to update the version of firmware used by the MSP-FET, it's probably using an incompatible version of `libmsp430.so`. Try using the versions specified above.
+    - If your debug software (such as TI CCS or mspdebug) says that it needs to update the MSP-FET's firmware, it's probably using an incompatible version of `libmsp430.so`. Try using the versions specified above.
 
 - Programming flash-based (ie non-FRAM devices) devices correctly requires strobing the `TEST` signal within a certain frequency range. Although the MSPFETSim FTDI driver sets its clock frequency to be in this range, and flashing with MSPFETSim has been tested on the listed hardware (see Supported MSP430 Devices section), adherence to this requirement hasn't been thoroughly investigated.
 
