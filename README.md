@@ -35,18 +35,10 @@ MSPFETSim has these hardware drivers:
 
 Adding support for new debug probe hardware requires implementing a minimal driver interface. This driver interface, declared in `MSPDebugDriver.h`, consists of 5 functions with semantics that amount to toggling the MSP430's `TEST` and `RST` pins:
 
-- `void sbwTestSet(bool val);`
-- `void sbwRstSet(bool val);`
-    - Set the output value of a pin
-
-- `void sbwTestPulse();`
-    - Pulse TEST=[0,1]
-
-- `void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead);`
-    - Perform a Spy-bi-wire IO cycle
-
-- `void sbwRead(void* buf, size_t len);`
-    - Retrieve data previously stored via `sbwIO()`
+- `void sbwTestSet(bool val)` and `void sbwRstSet(bool val)`: Set the output value of a pin
+- `void sbwTestPulse()`: Pulse TEST=[0,1]
+- `void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead)`: Perform a Spy-bi-wire IO cycle
+- `void sbwRead(void* buf, size_t len)`: Retrieve data previously stored via `sbwIO()`
 
 
 ## Supported MSP430 Devices
