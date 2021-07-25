@@ -37,14 +37,16 @@ In theory MSPFETSim should support any MSP430 supported by the real MSP-FET hard
 
 Flashing and general debugging (with both TI CCS and mspdebug) has been verified working with:
 
+- MSP430FR2422
+- MSP430FR2433
 - MSP430G2452
 - MSP430G2553
-- MSP430FR2433
-- MSP430FR2422
 - MSP430I2041
 
 
-## Host Requirements
+## Usage
+
+### Host Requirements
 
 MSPFETSim supports Linux and requires these packages:
 
@@ -53,9 +55,6 @@ MSPFETSim supports Linux and requires these packages:
     sudo apt install libftdi1-dev
 
 MSPFETSim was developed and tested on Ubuntu 20.04.1.
-
-
-## Usage
 
 ### Clone Repository
     git clone --recurse-submodules git@github.com:heytoaster/MSPFETSim.git
@@ -116,4 +115,4 @@ Adding support for new debug probe hardware requires implementing a minimal driv
 
 ## Development Notes
 
-As TI adds support for new MSP430 devices, MSPFETSim will need to be updated to reflect the changes made to the MSP-FET firmware. To minimize this maintenance burden, as much of the MSP-FET firmware has been copy-pasted as possible, so that the changes made to the MSP-FET firmware can be easily ported to MSPFETSim. The repository also stores firmware separately in Src/Firmware to maintain a clean divide between MSP-FET firmware and the rest of MSPFETSim.
+As TI adds support for new MSP430 devices, MSPFETSim will need to be updated to reflect the changes made to the MSP-FET firmware. To minimize this maintenance burden, as much of the MSP-FET firmware has been copy-pasted as possible, so that future changes to the MSP-FET firmware can be easily ported to MSPFETSim. This repository also stores firmware separately in Src/Firmware to maintain a clean divide between MSP-FET firmware and the rest of MSPFETSim.
