@@ -62,7 +62,7 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
 - MSP430I2041
 
 
-# Building / Usage
+# Usage
 
 ### Install Depedencies
     sudo apt install libudev-dev
