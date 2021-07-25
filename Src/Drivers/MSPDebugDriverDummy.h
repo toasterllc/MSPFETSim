@@ -19,6 +19,6 @@ class MSPDebugDriverDummy : public MSPDebugDriver {
     }
     
     void sbwRead(void* buf, size_t len) override {
-        printf("sbwRead(%p, %zu)\n", buf, len);
+        printf("sbwRead(%p %zu)\n", buf, len);
     }
 };
