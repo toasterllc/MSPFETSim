@@ -74,7 +74,7 @@ Flashing and general debugging (with both TI CCS and mspdebug) has been verified
     
     - If your debug software (such as TI CCS or mspdebug) says that it needs to update the version of firmware used by the MSP-FET, it's likely because it's using an incompatible version of `libmsp430.so`. Try using the versions specified above.
 
-- Programming flash-based (ie non-FRAM devices) devices correctly requires strobing the `TEST` signal within a certain frequency range. Although the FTDI driver sets its clock frequency to be in this range, and flashing with MSPFETSim appears to work correctly on the tested hardware (see Supported MSP430 Devices section), adherence to this requirement hasn't been thoroughly investigated yet.
+- Programming flash-based (ie non-FRAM devices) devices correctly requires strobing the `TEST` signal within a certain frequency range. Although the FTDI driver sets its clock frequency to be in this range, and flashing with MSPFETSim has been tested on the listed hardware (see Supported MSP430 Devices section), adherence to this requirement hasn't been thoroughly investigated.
 
 
 # Development Philosophy
