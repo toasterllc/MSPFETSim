@@ -92,7 +92,7 @@ At this point `lsusb` should list a `Texas Instruments MSP Tools Driver` device,
 
 - MSPFETSim is highly dependent on the version of the MSP Debug Stack/`libmsp430.so` that's being used to talk to it.
     - MSPFETSim is currently known to be compatible with:
-        - MSP Debug Stack/`libmsp430.so` version 3.15.1.001 (as noted in `revisions.txt`)
+        - MSP Debug Stack/`libmsp430.so` version 3.15.1.001 (as noted in MSPDS's `revisions.txt`)
         - Code Composer Studio version 10.4.0.00006 (as noted in Help > About Code Composer Studio)
     
     - If your debug software (such as TI CCS or mspdebug) says that it needs to update the version of firmware used by the MSP-FET, it's probably using an incompatible version of `libmsp430.so`. Try using the versions specified above.
