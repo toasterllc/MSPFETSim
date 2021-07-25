@@ -4,7 +4,7 @@
 #include "Drivers/MSPDebugDriverMDC.h"
 #include "Drivers/MSPDebugDriverFTDI.h"
 
-std::unique_ptr<MSPDebugDriver> CreateDriver() {
+static std::unique_ptr<MSPDebugDriver> _CreateDriver() {
     // Dummy
 //    return std::make_unique<MSPDebugDriverDummy>();
     
@@ -25,7 +25,7 @@ std::unique_ptr<MSPDebugDriver> CreateDriver() {
 
 int main(int argc, const char* argv[]) {
     try {
-        auto msp = CreateDriver();
+        auto msp = _CreateDriver();
         MSPFETSim probeSim(*msp);
         probeSim.run();
     
