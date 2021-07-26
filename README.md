@@ -1,6 +1,6 @@
 ## Overview
 
-MSPFETSim simulates a [MSP-FET](https://www.ti.com/tool/MSP-FET) debug probe to allow generic hardware (like FTDI or STM32 chips) to be used to debug MSP430 targets. MSPFETSim runs a modified version of the real MSP-FET firmware published by TI as a part of the [MSP Debug Stack](https://www.ti.com/tool/MSPDS) package. By running the real firmware, MSPFETSim should (in theory) support any MSP430 chip that the real MSP-FET hardware supports.
+MSPFETSim simulates a [MSP-FET](https://www.ti.com/tool/MSP-FET) debug probe in software to allow generic hardware (like FTDI or STM32 chips) to be used to debug MSP430 targets. MSPFETSim runs a modified version of the real MSP-FET firmware published by TI as a part of the [MSP Debug Stack](https://www.ti.com/tool/MSPDS) package. By running the real firmware, MSPFETSim should (in theory) support any MSP430 chip that the real MSP-FET hardware supports.
 
 MSPFETSim instantiates a simulated USB device which appears to the host system as a real MSP-FET. This strategy means that MSPFETSim should work with existing tools that are compatible with the MSP-FET, such as [TI's Code Composer Studio](https://www.ti.com/tool/CCSTUDIO) or [mspdebug](https://github.com/dlbeer/mspdebug).
 
