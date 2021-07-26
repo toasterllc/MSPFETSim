@@ -205,8 +205,8 @@ public:
             // Unfortunately there's no way to do that with the MPSSE clocking
             // command set (eg ClockBitsOutPosEdgeMSB). This is because the MPSSE
             // clocking commands only allow TDO to be read or TDI to be written.
-            // Since RST=TDO, it can only be read by the clocking commands, and
-            // therefore we have to manually bit-bang the pins.
+            // Since RST=TDO, RST can only be read by the clocking commands, and
+            // therefore the only way to write RST is to manually bit-bang it.
             // 
             // The problem with bit-banging the pins is that the low phase of TEST
             // (SBWTCK) is timing critical; if it's too long (>7us), the MSP430 will
