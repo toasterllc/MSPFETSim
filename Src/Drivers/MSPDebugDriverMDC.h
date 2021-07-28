@@ -3,10 +3,10 @@
 #if __has_include("../../MDC/Code/STM32/Shared/STLoaderTypes.h")
 
 #include <libusb-1.0/libusb.h>
+#include "Toastbox/RuntimeError.h"
+#include "Toastbox/Defer.h"
+#include "Toastbox/USBDevice.h"
 #include "MSPDebugDriver.h"
-#include "RuntimeError.h"
-#include "Defer.h"
-#include "USBDevice.h"
 #include "../../MDC/Code/STM32/Shared/STLoaderTypes.h"
 #define MSPDebugDriverMDCExists 1
 
@@ -26,9 +26,6 @@ public:
     }
     
     MSPDebugDriverMDC(USBDevice&& dev) : _dev(std::move(dev)) {
-        assert(_dev);
-        _dev.open();
-        _dev.claimInterface(_USBInterfaceIdx);
     }
     
     void sbwTestSet(bool val) override {
@@ -65,22 +62,22 @@ public:
         };
         
         // Write the STLoader::Cmd
-        _dev.bulkWrite(STLoader::Endpoints::CmdOut, &cmd, sizeof(cmd));
+        _dev.write(STLoader::Endpoints::CmdOut, &cmd, sizeof(cmd));
         
         // Write the MSPDebugCmds
         if (_cmds.size()) {
-            _dev.bulkWrite(STLoader::Endpoints::DataOut, _cmds.data(), _cmds.size());
+            _dev.write(STLoader::Endpoints::DataOut, _cmds.data(), _cmds.size());
             _cmds.clear();
         }
         
         // Read back the queued data
         if (len) {
-            _dev.bulkRead(STLoader::Endpoints::DataIn, buf, len);
+            _dev.read(STLoader::Endpoints::DataIn, buf, len);
         }
         
         // Check our status
         STLoader::Status status = STLoader::Status::Error;
-        _dev.bulkRead(STLoader::Endpoints::DataIn, &status, sizeof(status));
+        _dev.read(STLoader::Endpoints::DataIn, &status, sizeof(status));
         if (status != STLoader::Status::OK) throw RuntimeError("MSPDebug commands failed");
     }
     
@@ -92,7 +89,7 @@ private:
     size_t _readLen = 0;
     
     static bool _DeviceMatches(USBDevice& dev) {
-        struct libusb_device_descriptor desc = dev.getDeviceDescriptor();
+        const USB::DeviceDescriptor desc = dev.deviceDescriptor();
         return desc.idVendor==0x0483 && desc.idProduct==0xDF11;
     }
 };

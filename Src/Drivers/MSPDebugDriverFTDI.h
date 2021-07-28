@@ -1,7 +1,7 @@
 #pragma once
 #include <libftdi1/ftdi.h>
 #include "MSPDebugDriver.h"
-#include "USBDevice.h"
+#include "Toastbox/USBDevice.h"
 
 class MSPDebugDriverFTDI : public MSPDebugDriver {
 public:
@@ -40,14 +40,9 @@ public:
         return r;
     }
     
-    static size_t _GetMaxPacketSize(USBDevice& dev) {
-        const auto configDesc = dev.getConfigDescriptor(0);
-        if (configDesc->bNumInterfaces < 1) throw RuntimeError("configuration descriptor has no interfaces");
-        const auto iface = configDesc->interface[0];
-        if (iface.num_altsetting < 1) throw RuntimeError("interface has no interfaces");
-        const auto ifaceDesc = iface.altsetting[0];
-        if (ifaceDesc.bNumEndpoints < 1) throw RuntimeError("interface descriptor has no endpoints");
-        return ifaceDesc.endpoint[0].wMaxPacketSize;
+    static size_t _GetMaxPacketSize(const USBDevice& dev) {
+        constexpr uint8_t EndpointAddr = 0x02;
+        return dev.maxPacketSize(EndpointAddr);
     }
     
     static size_t _GetFlushThreshold(size_t maxPacketSize) {
