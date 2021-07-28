@@ -74,7 +74,7 @@ public:
             throw RuntimeError("invalid request bmRequestType (RecipientInterface)");
         
         switch (req.bmRequestType&USB::RequestType::DirectionMask) {
-        case USB::RequestType::DirectionHostToDevice:
+        case USB::RequestType::DirectionOut:
             switch (req.bRequest) {
             case USB::CDC::Request::SET_LINE_CODING: {
                 if (payloadLen != sizeof(lineCoding))
@@ -112,7 +112,7 @@ public:
                 throw RuntimeError("invalid request (DirectionHostToDevice): %x", req.bRequest);
             }
         
-        case USB::RequestType::DirectionDeviceToHost:
+        case USB::RequestType::DirectionIn:
             switch (req.bRequest) {
             case USB::CDC::Request::GET_LINE_CODING: {
                 printf("GET_LINE_CODING\n");
