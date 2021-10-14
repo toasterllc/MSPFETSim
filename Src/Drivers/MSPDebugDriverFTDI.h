@@ -120,8 +120,8 @@ public:
         static constexpr uint8_t DisableClkDivideBy5        = 0x8A;
         static constexpr uint8_t Disable3PhaseDataClocking  = 0x8D;
         static constexpr uint8_t DisableAdaptiveClocking    = 0x97;
-        static constexpr uint8_t BadCommandResp             = 0xFA;
         static constexpr uint8_t BadCommand                 = 0xAB;
+        static constexpr uint8_t BadCommandResp             = 0xFA;
     };
     
     enum _PinState {

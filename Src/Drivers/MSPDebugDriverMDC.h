@@ -1,13 +1,13 @@
 #pragma once
 
-#if __has_include("../../MDC/Code/STM32/Shared/STLoaderTypes.h")
+#if __has_include("MDCDevice.h")
 
 #include <libusb-1.0/libusb.h>
 #include "Toastbox/RuntimeError.h"
 #include "Toastbox/Defer.h"
 #include "Toastbox/USBDevice.h"
 #include "MSPDebugDriver.h"
-#include "../../MDC/Code/STM32/Shared/STLoaderTypes.h"
+#include "MDCDevice.h"
 #define MSPDebugDriverMDCExists 1
 
 // This driver is for a custom device and isn't generally useful, however
@@ -26,22 +26,23 @@ public:
     }
     
     MSPDebugDriverMDC(USBDevice&& dev) : _dev(std::move(dev)) {
+        _dev.flushEndpoints();
     }
     
     void sbwTestSet(bool val) override {
-        _cmds.emplace_back(STLoader::MSPDebugCmd::TestSet, val);
+        _cmds.emplace_back(STM::MSPDebugCmd::TestSet, val);
     }
     
     void sbwRstSet(bool val) override {
-        _cmds.emplace_back(STLoader::MSPDebugCmd::RstSet, val);
+        _cmds.emplace_back(STM::MSPDebugCmd::RstSet, val);
     }
     
     void sbwTestPulse() override {
-        _cmds.emplace_back(STLoader::MSPDebugCmd::TestPulse);
+        _cmds.emplace_back(STM::MSPDebugCmd::TestPulse);
     }
     
     void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
-        _cmds.emplace_back(STLoader::MSPDebugCmd::SBWIO, tms, tclk, tdi, tdoRead);
+        _cmds.emplace_back(STM::MSPDebugCmd::SBWIO, tms, tclk, tdi, tdoRead);
         if (tdoRead) _readLen++;
     }
     
@@ -50,42 +51,15 @@ public:
         // Short-circuit if we don't have any commands, and we're not reading any data
         if (_cmds.empty() && !len) return;
         
-        // Write our MSPDebugCmds and read back the queued data
-        const STLoader::Cmd cmd = {
-            .op = STLoader::Op::MSPDebug,
-            .arg = {
-                .MSPDebug = {
-                    .writeLen = (uint32_t)_cmds.size(),
-                    .readLen = (uint32_t)len,
-                },
-            },
-        };
-        
-        // Write the STLoader::Cmd
-        _dev.write(STLoader::Endpoints::CmdOut, &cmd, sizeof(cmd));
-        
-        // Write the MSPDebugCmds
-        if (_cmds.size()) {
-            _dev.write(STLoader::Endpoints::DataOut, _cmds.data(), _cmds.size());
-            _cmds.clear();
-        }
-        
-        // Read back the queued data
-        if (len) {
-            _dev.read(STLoader::Endpoints::DataIn, buf, len);
-        }
-        
-        // Check our status
-        STLoader::Status status = STLoader::Status::Error;
-        _dev.read(STLoader::Endpoints::DataIn, &status, sizeof(status));
-        if (status != STLoader::Status::OK) throw RuntimeError("MSPDebug commands failed");
+        _dev.mspDebug(_cmds.data(), _cmds.size(), buf, len);
+        _cmds.clear();
     }
     
 private:
     static constexpr uint32_t _USBInterfaceIdx = 0;
     
-    USBDevice _dev;
-    std::vector<STLoader::MSPDebugCmd> _cmds = {};
+    MDCDevice _dev;
+    std::vector<STM::MSPDebugCmd> _cmds = {};
     size_t _readLen = 0;
     
     static bool _DeviceMatches(USBDevice& dev) {
@@ -94,4 +68,4 @@ private:
     }
 };
 
-#endif // __has_include("../../MDC/Code/STM32/Shared/STLoaderTypes.h")
+#endif // __has_include("MDCDevice.h")

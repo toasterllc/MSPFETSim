@@ -2,15 +2,15 @@
 #include "MSPDebugDriver.h"
 
 class MSPDebugDriverDummy : public MSPDebugDriver {
-    void sbwTestSet(bool val) {
+    void sbwTestSet(bool val) override {
         printf("sbwTestSet(%d)\n", val);
     }
     
-    void sbwRstSet(bool val) {
+    void sbwRstSet(bool val) override {
         printf("sbwRstSet(%d)\n", val);
     }
     
-    void sbwTestPulse() {
+    void sbwTestPulse() override {
         printf("sbwTestPulse()\n");
     }
     
