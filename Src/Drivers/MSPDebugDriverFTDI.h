@@ -5,6 +5,7 @@
 
 class MSPDebugDriverFTDI : public MSPDebugDriver {
 public:
+    using USBDevice = Toastbox::USBDevice;
     
     static std::vector<USBDevice> GetDevices() {
 //        auto vers = ftdi_get_library_version();
@@ -24,12 +25,12 @@ public:
         auto lock = std::unique_lock(FTDICtx.lock);
         if (!FTDICtx.ctx) {
             FTDICtx.ctx = ftdi_new();
-            if (!FTDICtx.ctx) throw RuntimeError("ftdi_new failed");
+            if (!FTDICtx.ctx) throw Toastbox::RuntimeError("ftdi_new failed");
         }
         
         struct ftdi_device_list* devs = nullptr;
         int ir = ftdi_usb_find_all(FTDICtx.ctx, &devs, 0, 0);
-        if (ir < 0) throw RuntimeError("ftdi_usb_find_all failed: %s", ftdi_get_error_string(FTDICtx.ctx));
+        if (ir < 0) throw Toastbox::RuntimeError("ftdi_usb_find_all failed: %s", ftdi_get_error_string(FTDICtx.ctx));
         Defer( if (devs) ftdi_list_free(&devs); );
         
         std::vector<USBDevice> r;
@@ -97,7 +98,7 @@ public:
         uint8_t resp[2];
         _dev.read(resp, sizeof(resp));
         if (!(resp[0]==MPSSE::BadCommandResp && resp[1]==MPSSE::BadCommand))
-            throw RuntimeError("FTDI sync failed (expected: <%x %x> got: <%x %x>)", MPSSE::BadCommandResp, MPSSE::BadCommand, resp[0], resp[1]);
+            throw Toastbox::RuntimeError("FTDI sync failed (expected: <%x %x> got: <%x %x>)", MPSSE::BadCommandResp, MPSSE::BadCommand, resp[0], resp[1]);
         
         // Configure pins
         // They need to default to the output state because our internal functions (eg _testPulse())
@@ -335,7 +336,7 @@ public:
         // expect: {MPSSE::BadCommandResp, MPSSE::BadCommand}
         const uint8_t* back = &(*(_readData.end()-ResponseExtraByteCount));
         if (!(back[0]==MPSSE::BadCommandResp && back[1]==MPSSE::BadCommand)) {
-            throw RuntimeError("FTDI sync failed (expected: <%x %x>, got: <%x %x>)",
+            throw Toastbox::RuntimeError("FTDI sync failed (expected: <%x %x>, got: <%x %x>)",
                 MPSSE::BadCommandResp, MPSSE::BadCommand, back[0], back[1]);
         }
         
@@ -428,7 +429,7 @@ private:
             int ir = ftdi_write_data(&_ctx, (const uint8_t*)data, len);
             _checkErr(ir, "ftdi_write_data failed");
             if ((size_t)ir != len)
-                throw RuntimeError("short write (attempted=%zu, wrote=%zu)", len, (size_t)ir);
+                throw Toastbox::RuntimeError("short write (attempted=%zu, wrote=%zu)", len, (size_t)ir);
         }
         
         void setEventChar(uint8_t eventch, uint8_t enable) {
@@ -438,7 +439,7 @@ private:
         
     private:
         void _checkErr(int ir, const char* errMsg) {
-            if (ir < 0) throw RuntimeError("%s: %s", errMsg, ftdi_get_error_string(&_ctx));
+            if (ir < 0) throw Toastbox::RuntimeError("%s: %s", errMsg, ftdi_get_error_string(&_ctx));
         }
         
         struct ftdi_context _ctx = {};

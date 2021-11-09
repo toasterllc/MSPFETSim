@@ -14,6 +14,7 @@
 // it may be instructive as an example of a simple MSPFETSim driver.
 class MSPDebugDriverMDC : public MSPDebugDriver {
 public:
+    using USBDevice = Toastbox::USBDevice;
     
     static std::vector<USBDevice> GetDevices() {
         std::vector<USBDevice> r;
@@ -25,9 +26,7 @@ public:
         return r;
     }
     
-    MSPDebugDriverMDC(USBDevice&& dev) : _dev(std::move(dev)) {
-        _dev.flushEndpoints();
-    }
+    MSPDebugDriverMDC(USBDevice&& dev) : _dev(std::move(dev)) {}
     
     void sbwTestSet(bool val) override {
         _cmds.emplace_back(STM::MSPDebugCmd::TestSet, val);
@@ -47,7 +46,7 @@ public:
     }
     
     void sbwRead(void* buf, size_t len) override {
-        if (len > _readLen) throw RuntimeError("too much data requested");
+        if (len > _readLen) throw Toastbox::RuntimeError("too much data requested");
         // Short-circuit if we don't have any commands, and we're not reading any data
         if (_cmds.empty() && !len) return;
         
@@ -63,7 +62,7 @@ private:
     size_t _readLen = 0;
     
     static bool _DeviceMatches(USBDevice& dev) {
-        const USB::DeviceDescriptor desc = dev.deviceDescriptor();
+        const Toastbox::USB::DeviceDescriptor desc = dev.deviceDescriptor();
         return desc.idVendor==0x0483 && desc.idProduct==0xDF11;
     }
 };

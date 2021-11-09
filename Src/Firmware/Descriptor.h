@@ -267,22 +267,22 @@ static const inline struct abromConfigurationDescriptorGroup abromConfigurationD
 
 };
 
-static const inline USB::ConfigurationDescriptor* configDescs[] = {
-    (USB::ConfigurationDescriptor*)&abromConfigurationDescriptorGroup,
+static const inline Toastbox::USB::ConfigurationDescriptor* configDescs[] = {
+    (Toastbox::USB::ConfigurationDescriptor*)&abromConfigurationDescriptorGroup,
 };
 
 /*-----------------------------------------------------------------------------+
 | String Descriptor                                                            |
 |-----------------------------------------------------------------------------*/
-static constexpr auto stringDesc0 = USB::SupportedLanguagesDescriptorMake({0x0409});
-static constexpr auto stringDesc1 = USB::StringDescriptorMake("Texas Instruments");        // Manufacturer
-static constexpr auto stringDesc2 = USB::StringDescriptorMake("MSP Tools Driver");         // Product
-static constexpr auto stringDesc3 = USB::StringDescriptorMake("MSPFETSim");              // Serial Number
-static constexpr auto stringDesc4 = USB::StringDescriptorMake("MSP430 USB");               // Configuration String
-static constexpr auto stringDesc5 = USB::StringDescriptorMake("MSP Debug Interface");      // Interface String
-static constexpr auto stringDesc6 = USB::StringDescriptorMake("MSP Application UART");     // Interface String
+static constexpr auto stringDesc0 = Toastbox::USB::SupportedLanguagesDescriptorMake({0x0409});
+static constexpr auto stringDesc1 = Toastbox::USB::StringDescriptorMake("Texas Instruments");       // Manufacturer
+static constexpr auto stringDesc2 = Toastbox::USB::StringDescriptorMake("MSP Tools Driver");        // Product
+static constexpr auto stringDesc3 = Toastbox::USB::StringDescriptorMake("MSPFETSim");               // Serial Number
+static constexpr auto stringDesc4 = Toastbox::USB::StringDescriptorMake("MSP430 USB");              // Configuration String
+static constexpr auto stringDesc5 = Toastbox::USB::StringDescriptorMake("MSP Debug Interface");     // Interface String
+static constexpr auto stringDesc6 = Toastbox::USB::StringDescriptorMake("MSP Application UART");    // Interface String
 
-static const inline USB::StringDescriptor* stringDescs[] = {
+static const inline Toastbox::USB::StringDescriptor* stringDescs[] = {
     &stringDesc0,
     &stringDesc1,
     &stringDesc2,

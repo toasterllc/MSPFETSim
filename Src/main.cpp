@@ -8,19 +8,19 @@ static std::unique_ptr<MSPDebugDriver> _CreateDriver() {
     // Dummy
 //    return std::make_unique<MSPDebugDriverDummy>();
     
-    // MDC
 #if MSPDebugDriverMDCExists
+    // MDC
     auto devices = MSPDebugDriverMDC::GetDevices();
-    if (devices.empty()) throw RuntimeError("no matching USB devices");
-    if (devices.size() > 1) throw RuntimeError("more than one matching USB device");
+    if (devices.empty()) throw Toastbox::RuntimeError("no matching USB devices");
+    if (devices.size() > 1) throw Toastbox::RuntimeError("more than one matching USB device");
     return std::make_unique<MSPDebugDriverMDC>(std::move(devices[0]));
-#endif
-    
+#else
     // FTDI
     auto devices = MSPDebugDriverFTDI::GetDevices();
-    if (devices.empty()) throw RuntimeError("no matching FTDI devices");
-    if (devices.size() > 1) throw RuntimeError("more than one matching FTDI device");
+    if (devices.empty()) throw Toastbox::RuntimeError("no matching FTDI devices");
+    if (devices.size() > 1) throw Toastbox::RuntimeError("more than one matching FTDI device");
     return std::make_unique<MSPDebugDriverFTDI>(std::move(devices[0]));
+#endif
 }
 
 int main(int argc, const char* argv[]) {

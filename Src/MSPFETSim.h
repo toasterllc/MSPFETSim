@@ -1,6 +1,8 @@
 #pragma once
 #include <climits>
 #include <chrono>
+#include "Toastbox/RuntimeError.h"
+#include "Toastbox/USB.h"
 #include "VirtualUSBDevice.h"
 #include "Drivers/MSPDebugDriver.h"
 
@@ -22,7 +24,7 @@ public:
         try {
             _usb.start();
         } catch (std::exception& e) {
-            throw RuntimeError(
+            throw Toastbox::RuntimeError(
                 "Failed to start VirtualUSBDevice: %s"                                  "\n"
                 "Make sure:"                                                            "\n"
                 "  - you're root"                                                       "\n"
@@ -60,6 +62,8 @@ public:
     }
     
     void _handleUSBXferEP0(VirtualUSBDevice::Xfer&& xfer) {
+        using namespace Toastbox;
+        
         const USB::SetupRequest req = xfer.setupReq;
         const uint8_t* payload = xfer.data.get();
         const size_t payloadLen = xfer.len;
@@ -67,18 +71,18 @@ public:
         
         // Verify that this request is a Class request
         if ((req.bmRequestType&USB::RequestType::TypeMask) != USB::RequestType::TypeClass)
-            throw RuntimeError("invalid request bmRequestType (TypeClass)");
+            throw Toastbox::RuntimeError("invalid request bmRequestType (TypeClass)");
         
         // Verify that this request is intended for the interface
         if ((req.bmRequestType&USB::RequestType::RecipientMask) != USB::RequestType::RecipientInterface)
-            throw RuntimeError("invalid request bmRequestType (RecipientInterface)");
+            throw Toastbox::RuntimeError("invalid request bmRequestType (RecipientInterface)");
         
         switch (req.bmRequestType&USB::RequestType::DirectionMask) {
         case USB::RequestType::DirectionOut:
             switch (req.bRequest) {
             case USB::CDC::Request::SET_LINE_CODING: {
                 if (payloadLen != sizeof(lineCoding))
-                    throw RuntimeError("SET_LINE_CODING: payloadLen doesn't match sizeof(USB::CDC::LineCoding)");
+                    throw Toastbox::RuntimeError("SET_LINE_CODING: payloadLen doesn't match sizeof(USB::CDC::LineCoding)");
                 
                 memcpy(&lineCoding, payload, sizeof(lineCoding));
                 lineCoding = {
@@ -109,7 +113,7 @@ public:
             }
             
             default:
-                throw RuntimeError("invalid request (DirectionHostToDevice): %x", req.bRequest);
+                throw Toastbox::RuntimeError("invalid request (DirectionHostToDevice): %x", req.bRequest);
             }
         
         case USB::RequestType::DirectionIn:
@@ -117,17 +121,17 @@ public:
             case USB::CDC::Request::GET_LINE_CODING: {
                 printf("GET_LINE_CODING\n");
                 if (payloadLen != sizeof(lineCoding))
-                    throw RuntimeError("SET_LINE_CODING: payloadLen doesn't match sizeof(USB::CDC::LineCoding)");
+                    throw Toastbox::RuntimeError("SET_LINE_CODING: payloadLen doesn't match sizeof(USB::CDC::LineCoding)");
                 _usb.write(USB::Endpoint::DefaultIn, &lineCoding, sizeof(lineCoding));
                 return;
             }
             
             default:
-                throw RuntimeError("invalid request (DirectionDeviceToHost): %x", req.bRequest);
+                throw Toastbox::RuntimeError("invalid request (DirectionDeviceToHost): %x", req.bRequest);
             }
         
         default:
-            throw RuntimeError("invalid request direction");
+            throw Toastbox::RuntimeError("invalid request direction");
         }
     }
     
@@ -141,7 +145,7 @@ public:
 //            printf("Endpoint CDC1_OUTEP_ADDR\n");
             break;
         default:
-            throw RuntimeError("invalid endpoint: %02x", xfer.ep);
+            throw Toastbox::RuntimeError("invalid endpoint: %02x", xfer.ep);
         }
     }
     
@@ -172,13 +176,13 @@ public:
     
     std::deque<_Msg> _msgs = {}; // Messages host->device
     
-    static const inline USB::DeviceDescriptor* _DeviceDescriptor =
-        (const USB::DeviceDescriptor*)Descriptor::abromDeviceDescriptor;
+    static const inline Toastbox::USB::DeviceDescriptor* _DeviceDescriptor =
+        (const Toastbox::USB::DeviceDescriptor*)Descriptor::abromDeviceDescriptor;
     
-    static const inline USB::ConfigurationDescriptor** _ConfigurationDescriptors = Descriptor::configDescs;
+    static const inline Toastbox::USB::ConfigurationDescriptor** _ConfigurationDescriptors = Descriptor::configDescs;
     static const inline size_t _ConfigurationDescriptorsCount = std::size(Descriptor::configDescs);
     
-    static const inline USB::StringDescriptor** _StringDescriptors = Descriptor::stringDescs;
+    static const inline Toastbox::USB::StringDescriptor** _StringDescriptors = Descriptor::stringDescs;
     static const inline size_t _StringDescriptorsCount = std::size(Descriptor::stringDescs);
     
     static const inline VirtualUSBDevice::Info _usbDeviceInfo = {
