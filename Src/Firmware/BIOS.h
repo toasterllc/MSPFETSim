@@ -1,3 +1,5 @@
+// EZFET: OK
+
 /* Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
@@ -311,13 +313,13 @@ void BIOS_InitSystem (void)
 //    TA1CCR0 = USB_MCLK_FREQ / (8 * 100) - 1;
 //    TA1CTL = TASSEL__SMCLK | ID__8 | MC__UP/*MC__CONTINOUS*/ | TACLR | TAIE;
 
-#ifdef eZ_FET
-    // LED assignments for eZ-FET
-    bios_leds_[0].addr = (uint8_t*)&P1OUT;
-    bios_leds_[0].bit = BIT2;
-    bios_leds_[1].addr = (uint8_t*)&P1OUT;
-    bios_leds_[1].bit = BIT3;
-#endif
+//#ifdef eZ_FET
+//    // LED assignments for eZ-FET
+//    bios_leds_[0].addr = (uint8_t*)&P1OUT;
+//    bios_leds_[0].bit = BIT2;
+//    bios_leds_[1].addr = (uint8_t*)&P1OUT;
+//    bios_leds_[1].bit = BIT3;
+//#endif
 
 //#ifdef MSP_FET
 //    // LED assignments for MSP-FET

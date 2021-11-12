@@ -1,3 +1,5 @@
+// EZFET: OK
+
 /* Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
@@ -118,12 +120,13 @@
 #define STREAM_getSharedVariable    (CALL_MEMBER_FN_PTR(_stream_Funcs.getSharedVariable))
 #define STREAM_deleteSharedVariable (CALL_MEMBER_FN_PTR(_stream_Funcs.deleteSharedVariable))
 
+#endif // HAL_STREAM
+
 #define STREAM_CORE_ZERO_VERSION    0x00
 #define STREAM_CORE_ZERO_MACRO_SIZE 0x01
 #define STREAM_CORE_ZERO_MACRO_ADDR 0x02
 #define STREAM_CORE_ZERO_PUC_RESET  0x03
 // function numbers in "zero function(s) in HAL modul" must start at 0xFF and count downward
-#endif // HAL_STREAM
 
 typedef int16_t (MSPFETSim::*FuncInOut)  (uint16_t id);
 

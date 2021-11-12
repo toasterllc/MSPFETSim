@@ -1,3 +1,5 @@
+// EZFET: OK
+
 /* Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
  *
  *

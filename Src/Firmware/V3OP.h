@@ -1,3 +1,5 @@
+// EZFET: OK
+
 /* Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
@@ -31,6 +33,7 @@
  */
 
 #pragma once
+#include <unistd.h>
 #include "BIOS.h"
 #include "Stream.h"
 #include "HAL.h"
@@ -1344,9 +1347,11 @@ int16_t V3OP_CoreFlashFunctionInit(uint8_t *payload)
         BIOS_LedOff(BIOS_LED_MODE);
         BIOS_LedOn(BIOS_LED_POWER);
         //~1.6 s delay
-        __delay_cycles(40000000);
+//        __delay_cycles(40000000);
+        usleep(1600000);
         IccMonitor_StartVoltageSupervision();
-        __delay_cycles(40000000);
+//        __delay_cycles(40000000);
+        usleep(1600000);
         ret_value = 1;
     }
     return(ret_value);

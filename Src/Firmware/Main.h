@@ -1,3 +1,5 @@
+// EZFET: OK
+
 /* Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
@@ -32,7 +34,10 @@
 
 #pragma once
 
-#define MSP_FET
+#include "Types.h"
+
+#define eZ_FET
+#define TOOL_ID eZ_FET_NO_DCDC
 
 // Make sure the C basic types aren't used.
 // They must be replaced by explicit-width types (eg uint16_t) to ensure

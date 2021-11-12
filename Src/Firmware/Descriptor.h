@@ -1,3 +1,5 @@
+// EZFET: OK
+
 /* Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
@@ -33,7 +35,7 @@
 #pragma once
 #include "USB.h"
 
-// We need to use static within this file
+// We need to use static within this file since the descriptors are shared with all instances of MSPFETSim
 #pragma push_macro("static")
 #undef static
 
