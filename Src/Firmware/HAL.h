@@ -10177,7 +10177,6 @@ HAL_FUNCTION(_hal_WaitForEem)
     uint16_t* syncWithRunVarAddress = 0;
 
     STREAM_get_word((uint16_t*)&lMask);
-    printf("[MEOWMIX:_hal_WaitForEem] lMask: 0x%04x\n", lMask);
 
     syncWithRunVarAddress = getTargetRunningVar();
     if(syncWithRunVarAddress)

@@ -150,11 +150,11 @@ public:
     }
     
     void _handleUSBXferData(VirtualUSBDevice::Xfer&& xfer) {
-        printf("HOST: <");
-        for (size_t i=0; i<xfer.len; i++) {
-            printf(" %02x", xfer.data[i]);
-        }
-        printf(" >\n\n");
+//        printf("HOST: <");
+//        for (size_t i=0; i<xfer.len; i++) {
+//            printf(" %02x", xfer.data[i]);
+//        }
+//        printf(" >\n\n");
         
         _msgs.push_back({});
         _Msg& msg = _msgs.back();
@@ -168,16 +168,12 @@ public:
     }
     
     void _writeReply(const void* data, size_t len) {
-        printf("DEVICE: <");
-        const uint8_t* dataU8 = (const uint8_t*)data;
-        for (size_t i=0; i<len; i++) {
-            printf(" %02x", dataU8[i]);
-        }
-        printf(" >\n\n");
-        
-        if (len == 8) {
-            printf("MEOWMIX 8\n");
-        }
+//        printf("DEVICE: <");
+//        const uint8_t* dataU8 = (const uint8_t*)data;
+//        for (size_t i=0; i<len; i++) {
+//            printf(" %02x", dataU8[i]);
+//        }
+//        printf(" >\n\n");
         
         _usb.write(CDC0_INEP_ADDR, data, len);
     }

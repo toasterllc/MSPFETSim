@@ -687,9 +687,7 @@ int16_t V3OP_Rx (uint8_t *str)
     //int16_t ret_value = 0x8000;
 	int16_t ret_value_tmp = 0;
     HalFuncInOut pCallAddr;
-    
-    printf("[MEOWMIX:V3OP_Rx] Got message ID: 0x%02x (command: 0x%02x)\n", str[MESSAGE_MSG_ID_POS], str[MESSAGE_CMDTYP_POS]);
-    
+
     if((bios_rx_record_.last_cmd_typ != str[MESSAGE_CMDTYP_POS]) || !(bios_rx_record_.last_msg_id & 0x80))
     {
       bios_rx_record_.last_cmd_typ = str[MESSAGE_CMDTYP_POS];
@@ -929,7 +927,6 @@ int16_t V3OP_Rx (uint8_t *str)
         }
         else
         {
-            printf("MEOWMIX EXCEPTION (str[MESSAGE_CMDTYP_POS], str[MESSAGE_MSG_ID_POS] = { 0x%x 0x%x })\n", str[MESSAGE_CMDTYP_POS], str[MESSAGE_MSG_ID_POS]);
             STREAM_out_init(str[MESSAGE_MSG_ID_POS], RESPTYP_EXCEPTION);
             STREAM_put_word(ret_value);
             // MSPFETSim: See comment above about why we need the explicit cast
@@ -1271,7 +1268,7 @@ void V3OP_Scheduler(void)
         while(rx_queu_counter_tmp != rx_queu_counter);
     }
     
-    printf("[V3OP_Scheduler] Serviced: %d\n", serviced);
+//    printf("[V3OP_Scheduler] Serviced: %d\n", serviced);
     
     // If we have work to do, check once for USB messages and continue the work.
     // If we don't have work to do, wait forever for a USB message.

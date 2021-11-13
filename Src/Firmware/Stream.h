@@ -321,11 +321,6 @@ uint8_t _stream_out_change_msg_id(uint8_t msg_id)
 //! \return always 0
 int16_t _stream_out_init(uint8_t msg_id, uint8_t res_type)
 {
-    printf("[STREAM::OUT_INIT]: %02x %02x\n", res_type, msg_id);
-    if (res_type==0x93 && msg_id==0x4e) {
-        printf("WAT\n");
-    }
-    
     while((bios_tx_record_.state[bios_tx_record_.active] & (BIOS_TX_BUSY | BIOS_TX_TO_SEND | BIOS_TX_WAIT_ON_ACK)) && (bios_global_timer_[BIOS_TIMER_TX].count > 1)) {
         _dequeueUSBRequest();
     }
@@ -418,8 +413,6 @@ int16_t _stream_flush(void)
         {
             bios_tx_record_.active = 0;
         }
-        
-//        printf("MEOWMIX BIOS_StartTx from flush\n");
         BIOS_StartTx();
     }
     return(0);
@@ -432,13 +425,6 @@ int16_t _stream_flush(void)
 //! \return status (error/ok) of function
 int16_t _stream_put_bytes(void *data, uint16_t size)
 {
-    const uint8_t* dataU8 = (const uint8_t*)data;
-    printf("[STREAM::PUT_BYTES] ");
-    for (size_t i=0; i<size; i++) {
-        printf("%02x ", dataU8[i]);
-    }
-    printf("\n");
-    
     uint16_t size_counter;
     uint8_t tmp_id;
     uint8_t tmp_type;

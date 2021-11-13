@@ -181,7 +181,7 @@ SBWShiftProxy<uint8_t> cntrl_sig_low_byte()        { return CALL_MEMBER_FN_PTR(_
 
 SBWShiftProxy<uint8_t> cntrl_sig_capture()         {
     const uint8_t jtagID = CALL_MEMBER_FN_PTR(_edt_Distinct_Methods_HAL.Instr)(IR_CNTRL_SIG_CAPTURE);
-    printf("JTAG ID: %x\n", jtagID);
+//    printf("JTAG ID: %x\n", jtagID);
     return jtagID;
 }
 
