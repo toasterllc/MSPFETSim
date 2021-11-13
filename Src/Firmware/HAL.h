@@ -10169,12 +10169,15 @@ HAL_FUNCTION(_hal_WaitForDebugHaltArm)
 HAL_FUNCTION(_hal_WaitForEem)
 {
     int16_t RetState = HALERR_UNDEFINED_ERROR;
-    uint32_t lMask = 0;
+    // MSPFETSim: lMask: for some reason, TI's version of lMask is 32-bits, even though it's only used as a 16-bit mask...
+    uint16_t lMask = 0;
+//    uint32_t lMask = 0;
     uint16_t sGenCtrl = 0, lOut = 0;
     uint16_t eventMask = 0;
     uint16_t* syncWithRunVarAddress = 0;
 
     STREAM_get_word((uint16_t*)&lMask);
+    printf("[MEOWMIX:_hal_WaitForEem] lMask: 0x%04x\n", lMask);
 
     syncWithRunVarAddress = getTargetRunningVar();
     if(syncWithRunVarAddress)

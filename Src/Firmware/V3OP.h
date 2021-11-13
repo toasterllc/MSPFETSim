@@ -687,7 +687,9 @@ int16_t V3OP_Rx (uint8_t *str)
     //int16_t ret_value = 0x8000;
 	int16_t ret_value_tmp = 0;
     HalFuncInOut pCallAddr;
-
+    
+    printf("[MEOWMIX:V3OP_Rx] Got message ID: 0x%02x (command: 0x%02x)\n", str[MESSAGE_MSG_ID_POS], str[MESSAGE_CMDTYP_POS]);
+    
     if((bios_rx_record_.last_cmd_typ != str[MESSAGE_CMDTYP_POS]) || !(bios_rx_record_.last_msg_id & 0x80))
     {
       bios_rx_record_.last_cmd_typ = str[MESSAGE_CMDTYP_POS];
@@ -927,6 +929,7 @@ int16_t V3OP_Rx (uint8_t *str)
         }
         else
         {
+            printf("MEOWMIX EXCEPTION (str[MESSAGE_CMDTYP_POS], str[MESSAGE_MSG_ID_POS] = { 0x%x 0x%x })\n", str[MESSAGE_CMDTYP_POS], str[MESSAGE_MSG_ID_POS]);
             STREAM_out_init(str[MESSAGE_MSG_ID_POS], RESPTYP_EXCEPTION);
             STREAM_put_word(ret_value);
             // MSPFETSim: See comment above about why we need the explicit cast
@@ -1228,7 +1231,7 @@ void V3OP_Scheduler(void)
                         // not crashing because 0x0 is a valid address.
                         uint8_t* payload = v3op_loop_array_[loop_array_counter].indata;
                         const size_t payloadLen = payload ? payload[0]-3 : 0;
-                        STREAM_internal_stream(payload, payloadLen, (uint8_t*)0x0001, 0, &stream_tmp);
+                        STREAM_internal_stream(&payload[MESSAGE_EXECUTE_PAYLOAD_POS], payloadLen, (uint8_t*)0x0001, 0, &stream_tmp);
                         if(CALL_MEMBER_FN_PTR(pCallAddr)(MESSAGE_NEW_MSG | MESSAGE_LAST_MSG) == 1)
                         {
                             STREAM_flush();
@@ -1398,7 +1401,7 @@ uint16_t calculateCrc(uint16_t sum, uint16_t *adress, uint32_t segmentLength)
 uint16_t V3OP_GetHilCrc()
 {
     // MSPFETSim: Determined empirically by printing `expectedHilCrc` in UpdateManagerFet.cpp
-    return 0x6153;
+    return 0x9277;
 }
 
 uint16_t V3OP_GetHalFpgaCrc()
@@ -1410,25 +1413,25 @@ uint16_t V3OP_GetHalFpgaCrc()
 uint16_t V3OP_GetHalCrc()
 {
     // MSPFETSim: Determined empirically by printing `expectedHalCrc` in UpdateManagerFet.cpp
-    return 0xF70B;
+    return 0x4626;
 }
 
 uint16_t V3OP_GetCoreCrc()
 {
     // MSPFETSim: Determined empirically by printing `expectedCoreCrc` in UpdateManagerFet.cpp
-    return 0x7aaa;
+    return 0x03b3;
 }
 
 uint16_t V3OP_GetDcdcCrc()
 {
     // MSPFETSim: Determined empirically by printing `expectedDcdcCrc` in UpdateManagerFet.cpp
-    return 0xF66F;
+    return 0x8d7b;
 }
 
 uint16_t V3OP_GetComChannelCrc()
 {
     // MSPFETSim: Determined empirically by printing `expectedFetComChannelCRC` in UpdateManagerFet.cpp
-    return 0x8457;
+    return 0x57da;
 }
 
 uint8_t V3OP_HilCrcOk()
@@ -1723,8 +1726,8 @@ int16_t dcdc_Calibrate(uint16_t resistors[5], uint16_t resCount, uint16_t vcc)
 //#pragma optimize = low
 int16_t dcdc_getSubMcuVersion()
 {
-    // MSPFETSim: Determined empirically by printing `expectedDcdcSubMcuVersion` in UpdateManagerFet.cpp
-    return 0x0034;
+    UNIMP_FN();
+    return 0;
 }
 
 int16_t dcdc_getLayerVersion()
