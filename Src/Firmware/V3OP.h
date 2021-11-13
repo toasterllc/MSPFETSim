@@ -907,7 +907,15 @@ int16_t V3OP_Rx (uint8_t *str)
          }
     }
 
-    if(ret_value != MESSAGE_NO_RESPONSE)
+    // MSPFETSim: very subtle issue here due to conversion to 32/64-bit, which requires
+    // an explicit cast: (int16_t)MESSAGE_NO_RESPONSE
+    // Without this cast, both arguments are implicitly converted to `int` (per C rules).
+    // `ret_value` is a `int16_t`, so it's sign-extended, while `MESSAGE_NO_RESPONSE` is
+    // already an `int`, so no sign-extension occurs. The result is that this comparison
+    // is always true! The only case where it wouldn't be true is when `ret_value` has the
+    // bitwise representation 0x8000, but after sign-extension, it would be 0xFFFF8000,
+    // and 0xFFFF8000 != 0x00008000.
+    if(ret_value != (int16_t)MESSAGE_NO_RESPONSE)
     {
         if(ret_value >= 0)
         {
@@ -921,7 +929,8 @@ int16_t V3OP_Rx (uint8_t *str)
         {
             STREAM_out_init(str[MESSAGE_MSG_ID_POS], RESPTYP_EXCEPTION);
             STREAM_put_word(ret_value);
-            if(ret_value == EXCEPTION_MSGID_ERR)
+            // MSPFETSim: See comment above about why we need the explicit cast
+            if(ret_value == (int16_t)EXCEPTION_MSGID_ERR)
             {
                 tmp_char = (bios_rx_record_.last_msg_id + 1) & 0x3F;
                 if(!tmp_char)
