@@ -1,10 +1,16 @@
 ## Overview
 
-MSPFETSim simulates a [MSP-FET](https://www.ti.com/tool/MSP-FET) debug probe in software to allow generic hardware (like FTDI or STM32 chips) to be used to debug MSP430 targets. MSPFETSim runs a modified version of the real MSP-FET firmware published by TI as a part of the [MSP Debug Stack](https://www.ti.com/tool/MSPDS) package. By running the real firmware, MSPFETSim should (in theory) support any MSP430 chip that the real MSP-FET hardware supports.
+MSPFETSim lets you use generic hardware (like FTDI or STM32 chips) to debug MSP430 targets, replacing proprietary debug probes like TI's [MSP-FET](https://www.ti.com/tool/MSP-FET). With MSPFETSim, you can:
 
-MSPFETSim instantiates a simulated USB device which appears to the host system as a real MSP-FET. This strategy means that MSPFETSim should work with existing tools that are compatible with the MSP-FET, such as [TI's Code Composer Studio](https://www.ti.com/tool/CCSTUDIO) or [mspdebug](https://github.com/dlbeer/mspdebug).
+- Use generic probes (like a [FTDI cable](https://ftdichip.com/products/c232hm-ddhsl-0-2/)) to debug MSP430 chips
 
-MSPFETSim only supports Spy-bi-wire (2 wire) debugging of target MSP430 devices. JTAG (4 wire) support is technically feasible but unimplemented.
+- Debug a MSP430 in-system without external hardware, as long as the system has a means to toggle MSP430's `TEST` and `RST` pins
+
+MSPFETSim simulates the TI eZ-FET firmware on the host system and captures the Spy-bi-wire output signals. These signals are then delivered to whatever hardware is wired to the MSP430 `TEST` and `RST` pins. By running the real firmware, MSPFETSim should (in theory) support any MSP430 chip that the real eZ-FET probe supports.
+
+MSPFETSim instantiates a simulated USB device which appears to the host system as a real eZ-FET probe. This strategy means that MSPFETSim works with existing tools that are compatible with the eZ-FET, such as [TI's Code Composer Studio](https://www.ti.com/tool/CCSTUDIO) and [mspdebug](https://github.com/dlbeer/mspdebug).
+
+MSPFETSim only supports Spy-bi-wire (2 wire) debugging of target MSP430 devices.
 
 MSPFETSim currently supports Linux.
 
@@ -26,7 +32,7 @@ MSPFETSim has these hardware drivers:
         - FT2232H
         - FT4232H
     
-    - Supports the [FTDI C232HM](https://ftdichip.com/products/c232hm-ddhsl-0-2/) cable
+    - Supports the [FTDI C232HM cable](https://ftdichip.com/products/c232hm-ddhsl-0-2/)
         - TCK (orange) <-> MSP TEST
         - TDO (green) <-> MSP RST
 
