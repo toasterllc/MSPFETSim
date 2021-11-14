@@ -473,12 +473,12 @@ void hil_2w_SetReg_XBits8_64_Exit_DMA()
 //! \param[out]  Data State - shows state of shifted out data
 //! \return Value shifted out of target device JTAG module
 
-#warning we should try optimizing this function if its called a lot. perhaps just do the full shift?
-
 //#pragma inline=forced
 uint64_t hil_2w_SetReg_XBits8_64_Run_Dma(uint64_t Data, uint8_t * DataState, uint16_t JStateVersion)
 {
-    printf("MEOWMIX hil_2w_SetReg_XBits8_64_Run_Dma CALLED \n");
+    // MSPFETSim: TODO: optimize this function if its called a lot. perhaps just do the full shift
+    // MSPFETSim: TODO: without checking after the first 8 bits whether the output is valid? but
+    // MSPFETSim: TODO: does that change behavior of the target?
     uint64_t      TDOvalue = 0x00000000;
     uint64_t      MSB = 0x8000000000000000;
     uint8_t           currentDeviceState = 0;
