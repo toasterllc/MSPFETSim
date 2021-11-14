@@ -37,7 +37,7 @@ MSPFETSim has these hardware drivers:
 
 ## Supported MSP430 Devices
 
-In theory MSPFETSim should support any MSP430 supported by the real MSP-FET hardware, but in practice there are surely bugs and unimplemented functionality.
+In theory MSPFETSim should support any MSP430 supported by the real eZ-FET hardware, but in practice there are surely bugs and unimplemented functionality.
 
 Flashing and general debugging (with both TI CCS and mspdebug) has been verified working with:
 
@@ -65,7 +65,7 @@ MSPFETSim was developed and tested on Ubuntu 20.04.1.
 
 ### Disable ModemManager Probing
 
-Because the MSP-FET appears to the host as a modem, the ModemManager daemon may attempt to probe the device. For correct operation, a rule needs to be created to disable this behavior:
+Because the eZ-FET appears to the host as a modem, the ModemManager daemon may attempt to probe the device. For correct operation, a rule needs to be created to disable this behavior:
 
     echo 'ATTRS{idVendor}=="2047", ATTRS{idProduct}=="0014", ENV{ID_MM_DEVICE_IGNORE}="1"' | sudo tee /etc/udev/rules.d/42-mspfetsim.rules > /dev/null
     sudo udevadm control -R
@@ -87,7 +87,7 @@ Make sure your FTDI-based debug probe is plugged in, and finally run MSPFETSim:
 
     sudo ./MSPFETSim
 
-At this point `lsusb` should list a MSP-FET device (`Texas Instruments MSP Tools Driver`), and your MSP430 debug tools should see a MSP-FET attached to the system.
+At this point `lsusb` should list a eZ-FET device (`Texas Instruments MSP Tools Driver`), and your MSP430 debug tools should see a eZ-FET attached to the system.
 
 
 ## Writing New Drivers
@@ -112,11 +112,11 @@ Adding support for new debug probe hardware requires implementing a minimal driv
         - MSP Debug Stack/`libmsp430.so` version 3.15.1.001 (as noted in MSPDS's `revisions.txt`)
         - Code Composer Studio version 10.4.0.00006 (as noted in Help > About Code Composer Studio)
     
-    - If your debug software (such as TI CCS or mspdebug) says that it needs to update the MSP-FET's firmware, it's probably using an incompatible version of `libmsp430.so`. Try using the versions specified above.
+    - If your debug software (such as TI CCS or mspdebug) says that it needs to update the eZ-FET's firmware, it's probably using an incompatible version of `libmsp430.so`. Try using the versions specified above.
 
 - Programming flash-based (ie non-FRAM devices) devices correctly requires strobing the `TEST` signal within a certain frequency range. Although the MSPFETSim FTDI driver sets its clock frequency to be in this range, and flashing with MSPFETSim has been tested on the listed hardware (see Supported MSP430 Devices section), adherence to this requirement hasn't been thoroughly investigated.
 
 
 ## Development Notes
 
-As TI adds support for new MSP430 devices, MSPFETSim will need to be updated to reflect the changes made to the MSP-FET firmware. To minimize this maintenance burden, as much of the MSP-FET firmware has been copy-pasted as possible, so that future changes to the MSP-FET firmware can be easily ported to MSPFETSim. This repository also stores firmware separately in Src/Firmware to maintain a clean divide between MSP-FET firmware and the rest of MSPFETSim.
+As TI adds support for new MSP430 devices, MSPFETSim will need to be updated to reflect the changes made to the eZ-FET firmware. To minimize this maintenance burden, as much of the eZ-FET firmware has been copy-pasted as possible, so that future changes to the eZ-FET firmware can be easily ported to MSPFETSim. This repository also stores firmware separately in Src/Firmware to maintain a clean divide between eZ-FET firmware and the rest of MSPFETSim.
