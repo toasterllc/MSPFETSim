@@ -263,8 +263,15 @@ void TCLK()
 */
 float ConvertAD(int16_t  channel)
 {
-    UNIMP_FN();
-    return 0;
+    switch (channel) {
+    case A_VCCOUT:
+        // MSPFETSim: pretend to be at 3.3 volts. This is necessary for the host to allow flashing.
+        return (3.3 * R30) / (R29 + R30);
+    
+    default:
+        UNIMP_FN();
+        return 0;
+    }
 }
 
 // MSPFETSim: SetVCoreUp() isn't used
