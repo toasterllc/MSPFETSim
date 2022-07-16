@@ -15,9 +15,7 @@ MSPFETSim currently supports Linux.
 
 ## Motivation
 
-This project was motivated by the need to flash/debug a MSP430 in a custom device via the device's normal USB port. A STM32 handles USB communication on this device, so the STM32 also needed to handle the MSP430 debugging.
-
-With MSPFETSim, enabling flashing/debugging of the MSP430 on this device was accomplished by simply: (1) creating a new MSPFETSim driver to send GPIO toggling commands to the STM32, and (2) implementing GPIO-toggling commands on the STM32.
+This project was motivated by the need to flash/debug a MSP430 in-system through a STM32, where the STM32 is connected to a host computer via USB. With MSPFETSim, flashing/debugging the MSP430 was accomplished by simply: (1) creating a new MSPFETSim driver to send GPIO toggling commands to the STM32, and (2) implementing GPIO-toggling commands on the STM32.
 
 
 ## Supported Debug Probe Hardware
