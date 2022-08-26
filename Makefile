@@ -1,18 +1,19 @@
 NAME=MSPFETSim
 OBJECTS=Src/main.o
 
-CXX      = g++
-CXXFLAGS = -std=c++17 -O0 -g3 -Wall -Weffc++ $(IDIRS)
-LFLAGS   = -ludev -lpthread -lusb-1.0 -lftdi1
-IDIRS    = -iquote Src							\
-           -iquote Lib							\
-           -iquote Lib/VirtualUSBDevice/Src		\
-           -iquote Lib/MSPDebugStack
+CXX			= g++
+CXXFLAGS	= -std=c++17 -O0 -g3 -Wall -Weffc++ $(IDIRS)
+LFLAGS		= -ludev -lpthread -lusb-1.0 -lftdi1
+IDIRS 		=							\
+	-iquote Src							\
+	-iquote Lib							\
+	-iquote Lib/VirtualUSBDevice/Src	\
+	-iquote Lib/MSPDebugStack
 
 ifneq ($(wildcard ../MDC/*),)
-IDIRS	+= -iquote ../MDC/Tools/Shared			\
-           -iquote ../MDC/Code/Shared			\
-           -iquote ../MDC/Code/STM32/Shared
+IDIRS		+=							\
+	-iquote ../MDC						\
+	-iquote ../MDC/Tools/Shared
 endif
 
 all: ${OBJECTS}

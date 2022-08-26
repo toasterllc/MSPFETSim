@@ -1,13 +1,13 @@
 #pragma once
 
-#if __has_include("MDCDevice.h")
+#if __has_include("MDCUSBDevice.h")
 
 #include <libusb-1.0/libusb.h>
 #include "Toastbox/RuntimeError.h"
 #include "Toastbox/Defer.h"
 #include "Toastbox/USBDevice.h"
 #include "MSPDebugDriver.h"
-#include "MDCDevice.h"
+#include "MDCUSBDevice.h"
 #define MSPDebugDriverMDCExists 1
 
 // This driver is for a custom device and isn't generally useful, however
@@ -57,7 +57,7 @@ public:
 private:
     static constexpr uint32_t _USBInterfaceIdx = 0;
     
-    MDCDevice _dev;
+    MDCUSBDevice _dev;
     std::vector<STM::MSPDebugCmd> _cmds = {};
     size_t _readLen = 0;
     
@@ -67,4 +67,4 @@ private:
     }
 };
 
-#endif // __has_include("MDCDevice.h")
+#endif // __has_include("MDCUSBDevice.h")
