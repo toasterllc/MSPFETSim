@@ -29,19 +29,19 @@ public:
     MSPDebugDriverMDC(USBDevice&& dev) : _dev(std::move(dev)) {}
     
     void sbwTestSet(bool val) override {
-        _cmds.emplace_back(STM::MSPDebugCmd::TestSet, val);
+        _cmds.emplace_back(STM::MSPSBWDebugCmd::TestSet, val);
     }
     
     void sbwRstSet(bool val) override {
-        _cmds.emplace_back(STM::MSPDebugCmd::RstSet, val);
+        _cmds.emplace_back(STM::MSPSBWDebugCmd::RstSet, val);
     }
     
     void sbwTestPulse() override {
-        _cmds.emplace_back(STM::MSPDebugCmd::TestPulse);
+        _cmds.emplace_back(STM::MSPSBWDebugCmd::TestPulse);
     }
     
     void sbwIO(bool tms, bool tclk, bool tdi, bool tdoRead) override {
-        _cmds.emplace_back(STM::MSPDebugCmd::SBWIO, tms, tclk, tdi, tdoRead);
+        _cmds.emplace_back(STM::MSPSBWDebugCmd::SBWIO, tms, tclk, tdi, tdoRead);
         if (tdoRead) _readLen++;
     }
     
@@ -50,7 +50,7 @@ public:
         // Short-circuit if we don't have any commands, and we're not reading any data
         if (_cmds.empty() && !len) return;
         
-        _dev.mspDebug(_cmds.data(), _cmds.size(), buf, len);
+        _dev.mspSBWDebug(_cmds.data(), _cmds.size(), buf, len);
         _cmds.clear();
     }
     
@@ -58,7 +58,7 @@ private:
     static constexpr uint32_t _USBInterfaceIdx = 0;
     
     MDCUSBDevice _dev;
-    std::vector<STM::MSPDebugCmd> _cmds = {};
+    std::vector<STM::MSPSBWDebugCmd> _cmds = {};
     size_t _readLen = 0;
     
     static bool _DeviceMatches(USBDevice& dev) {

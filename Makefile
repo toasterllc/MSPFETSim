@@ -10,10 +10,10 @@ IDIRS 		=							\
 	-iquote Lib/VirtualUSBDevice/Src	\
 	-iquote Lib/MSPDebugStack
 
-ifneq ($(wildcard ../MDC/*),)
+ifneq ($(wildcard ../MDCCode/*),)
 IDIRS		+=							\
-	-iquote ../MDC						\
-	-iquote ../MDC/Tools/Shared
+	-iquote ../MDCCode						\
+	-iquote ../MDCCode/Tools/Shared
 endif
 
 all: ${OBJECTS}
