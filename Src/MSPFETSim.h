@@ -122,7 +122,7 @@ public:
                 printf("GET_LINE_CODING\n");
                 if (payloadLen != sizeof(lineCoding))
                     throw Toastbox::RuntimeError("SET_LINE_CODING: payloadLen doesn't match sizeof(USB::CDC::LineCoding)");
-                _usb.write(USB::Endpoint::DefaultIn, &lineCoding, sizeof(lineCoding));
+                _usb.write(USB::Endpoint::Default, &lineCoding, sizeof(lineCoding));
                 return;
             }
             
